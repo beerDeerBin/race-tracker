@@ -1,0 +1,3 @@
+- https://cdn-learn.adafruit.com/assets/assets/000/123/407/original/Adafruit_ESP32_Feather_V2_Pinout.svg?1691707267
+- https://learn.adafruit.com/adafruit-esp32-feather-v2/overview
+- https://clang.llvm.org/docs/ClangFormatStyleOptions.html
