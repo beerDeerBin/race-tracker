@@ -3,12 +3,15 @@
 #include "../data/data_manager.h"
 #include "../log/log_mod.h"
 
+// IMU manager name
+#define MODULE_IMUMGR "IMU_MGR"
+
 // IMU manager error codes
 #define IMUMGR_NO_ERROR     0x00
 #define IMUMGR_INIT_ERROR   0x01
-#define IMUMGR_CONFIG_ERROR 0x01 << 1
-#define IMUMGR_READ_ERROR   0x01 << 2
-#define IMUMGR_FIFO_ERROR   0x01 << 3
+#define IMUMGR_CONFIG_ERROR (0x01 << 1)
+#define IMUMGR_READ_ERROR   (0x01 << 2)
+#define IMUMGR_FIFO_ERROR   (0x01 << 3)
 
 // IMU manager configuration
 #define IMUMGR_WIRE_CLOCK_HZ 400000
@@ -50,5 +53,5 @@ void     IMUMGR_ConfigureRun(uint32_t runId, uint32_t numberOfSamples, ImuManage
                              ImuManagerAccelRange_t accelRangeG, ImuManagerGyroRange_t gyroRangeDps);
 void     IMUMGR_StartRun(void);
 void     IMUMGR_StopRun(void);
-bool     IMUMGR_IsWatermarkReached(void);
+bool     IMUMGR_IsDataReady(void);
 uint32_t IMUMGR_DrainFifo(void);

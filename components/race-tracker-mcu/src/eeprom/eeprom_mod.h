@@ -2,6 +2,9 @@
 
 #include "../log/log_mod.h"
 
+// EEPROM module name
+#define MODULE_EEPROM "EEPROM"
+
 // EEPROM module error codes
 #define EEPROM_MODULE_NO_ERROR   0x00
 #define EEPROM_MODULE_INIT_ERROR 0x01

@@ -9,11 +9,8 @@
 #define LOG_MODULE_BAUD_RATE     115200
 #define LOG_MODULE_INIT_DELAY_MS 5000
 
-// Log module names
-#define MODULE_LOG    "LOG"
-#define MODULE_EEPROM "EEPROM"
-#define MODULE_DAMGR  "DATA_MGR"
-#define MODULE_IMUMGR "IMU_MGR"
+// Log module name
+#define MODULE_LOG "LOG"
 
 // Log module guard for compilation optimization
 #ifndef LOG_ENABLED

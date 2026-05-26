@@ -21,8 +21,12 @@ static float   IMUMGR_OdrToNumber(ImuManagerOdr_t odr);
 static int32_t IMUMGR_AccelRangeToNumber(ImuManagerAccelRange_t accelRange);
 static int32_t IMUMGR_GyroRangeToNumber(ImuManagerGyroRange_t gyroRange);
 
-static float IMUMGR_AccelRawToMs2(int32_t mg);
-static float IMUMGR_GyroRawToRads(int32_t mdps);
+static float IMUMGR_AccelRawToMs2(float mg);
+static float IMUMGR_GyroRawToRads(float mdps);
+
+// LSM6DSOX FIFO tag sensor identifiers (from datasheet Table 79)
+#define IMUMGR_FIFO_TAG_GYRO  0x01
+#define IMUMGR_FIFO_TAG_ACCEL 0x02
 
 static void IMUMGR_Startup(void);
 static void IMUMGR_Shutdown(void);

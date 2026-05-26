@@ -20,10 +20,7 @@ void DAMGR_Init(void) {
     }
 
     memset((void*)pDataManagerWorkVar->pRingBuf, 0x00, DAMGR_PSRAM_SIZE_BYTES);
-    pDataManagerWorkVar->mutex = xSemaphoreCreateBinary();
-
-    // Give the mutex so that it's available for use immediately
-    xSemaphoreGive(pDataManagerWorkVar->mutex);
+    pDataManagerWorkVar->mutex = xSemaphoreCreateMutex();
 
     LOG_INFO(MODULE_DAMGR, DAMGR_NO_ERROR, "initialized successfully");
 }
@@ -66,6 +63,7 @@ void DAMGR_Pop(SampleRecord_t* pDst, uint32_t numOfRecords) {
 
     if (pDataManagerWorkVar->count < numOfRecords) {
         LOG_WARNING(MODULE_DAMGR, DAMGR_NO_ERROR, "ring buffer underflow");
+        xSemaphoreGive(pDataManagerWorkVar->mutex);
         return;
     }
 
@@ -77,9 +75,17 @@ void DAMGR_Pop(SampleRecord_t* pDst, uint32_t numOfRecords) {
 }
 
 uint32_t DAMGR_Count(void) {
-    return pDataManagerWorkVar->count;
+    xSemaphoreTake(pDataManagerWorkVar->mutex, portMAX_DELAY);
+    uint32_t count = pDataManagerWorkVar->count;
+    xSemaphoreGive(pDataManagerWorkVar->mutex);
+    return count;
 }
 
 void DAMGR_Clear(void) {
-    memset((void*)pDataManagerWorkVar, 0x00, sizeof(DataManagerWorkVar_t));
+    xSemaphoreTake(pDataManagerWorkVar->mutex, portMAX_DELAY);
+    pDataManagerWorkVar->headIdx     = 0;
+    pDataManagerWorkVar->tailIdx     = 0;
+    pDataManagerWorkVar->count       = 0;
+    pDataManagerWorkVar->commitedIdx = 0;
+    xSemaphoreGive(pDataManagerWorkVar->mutex);
 }

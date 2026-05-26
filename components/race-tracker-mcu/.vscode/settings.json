@@ -1,5 +1,14 @@
 {
   "C_Cpp.errorSquiggles": "enabled",
   "C_Cpp.clang_format_style": "file",
-  "editor.formatOnSave": true
+  "editor.formatOnSave": true,
+  "files.exclude": {
+    "**/build": true
+  },
+  "search.exclude": {
+    "**/build": true
+  },
+  "files.watcherExclude": {
+    "**/build/**": true
+  }
 }

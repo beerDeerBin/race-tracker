@@ -35,13 +35,7 @@ void IMUMGR_ConfigureRun(uint32_t runId, uint32_t numberOfSamples, ImuManagerOdr
 
     IMUMGR_Startup();
 
-    // Enable axes and set FIFO to bypass to flush any stale data
-    status |= (uint32_t)imuManagerSox.Enable_X();
-    status |= (uint32_t)imuManagerSox.Enable_G();
-    status |= (uint32_t)imuManagerSox.Set_FIFO_Mode(LSM6DSOX_BYPASS_MODE);
-    if (status != LSM6DSOX_OK) { LOG_ERROR(MODULE_IMUMGR, IMUMGR_CONFIG_ERROR, "failed to enable IMU axes"); }
-
-    // Configure sensor ODR and ranges
+    // Configure sensor ODR, FS, FIFO watermark level and get sensitivity values for later conversion of samples
     status |= (uint32_t)imuManagerSox.Set_X_ODR(odrF);
     status |= (uint32_t)imuManagerSox.Set_G_ODR(odrF);
     status |= (uint32_t)imuManagerSox.Set_FIFO_X_BDR(odrF);
@@ -49,10 +43,15 @@ void IMUMGR_ConfigureRun(uint32_t runId, uint32_t numberOfSamples, ImuManagerOdr
     status |= (uint32_t)imuManagerSox.Set_X_FS(IMUMGR_AccelRangeToNumber(accelRangeG));
     status |= (uint32_t)imuManagerSox.Set_G_FS(IMUMGR_GyroRangeToNumber(gyroRangeDps));
     status |= (uint32_t)imuManagerSox.Set_FIFO_Watermark_Level(IMUMGR_DEFAULT_FIFO_WATERMARK);
-    if (status != LSM6DSOX_OK) { LOG_ERROR(MODULE_IMUMGR, IMUMGR_CONFIG_ERROR, "failed to configure IMU"); }
-
     status |= imuManagerSox.Get_X_Sensitivity(&pImuManagerWorkVar->xSensitivity);
     status |= imuManagerSox.Get_G_Sensitivity(&pImuManagerWorkVar->gSensitivity);
+    if (status != LSM6DSOX_OK) { LOG_ERROR(MODULE_IMUMGR, IMUMGR_CONFIG_ERROR, "failed to configure IMU"); }
+
+    // Enable axes and set FIFO to bypass to flush any stale data
+    status |= (uint32_t)imuManagerSox.Enable_X();
+    status |= (uint32_t)imuManagerSox.Enable_G();
+    status |= (uint32_t)imuManagerSox.Set_FIFO_Mode(LSM6DSOX_BYPASS_MODE);
+    if (status != LSM6DSOX_OK) { LOG_ERROR(MODULE_IMUMGR, IMUMGR_CONFIG_ERROR, "failed to enable IMU axes"); }
 
     pImuManagerWorkVar->configuredRunId           = runId;
     pImuManagerWorkVar->configuredNumberOfSamples = numberOfSamples;
@@ -92,18 +91,21 @@ void IMUMGR_StopRun(void) {
     LOG_INFO(MODULE_IMUMGR, IMUMGR_NO_ERROR, "stopped run");
 }
 
-bool IMUMGR_IsWatermarkReached(void) {
-    uint32_t status  = (uint32_t)LSM6DSOX_OK;
-    uint8_t  wtm     = 0;
-    uint16_t samples = 0;
+bool IMUMGR_IsDataReady(void) {
+    uint32_t status       = (uint32_t)LSM6DSOX_OK;
+    uint16_t numOfSamples = 0;
+    uint8_t  wtm          = 0;
 
-    status = imuManagerSox.Get_FIFO_Watermark_Status(&wtm);
+    status  = imuManagerSox.Get_FIFO_Watermark_Status(&wtm);
+    status |= imuManagerSox.Get_FIFO_Num_Samples(&numOfSamples);
     if (status != LSM6DSOX_OK) { LOG_ERROR(MODULE_IMUMGR, IMUMGR_READ_ERROR, "failed to read FIFO watermark status"); }
 
-    return wtm != 0;
+    if (wtm != 0) return true;
+
+    return (pImuManagerWorkVar->configuredNumberOfSamples - pImuManagerWorkVar->currentSampleCount) <= numOfSamples;
 }
 
-uint32_t IMUMGR_DrainFifo() {
+uint32_t IMUMGR_DrainFifo(void) {
     uint32_t        status         = (uint32_t)LSM6DSOX_OK;
     uint16_t        fifoWords      = 0;
     uint32_t        drainedSamples = 0;
@@ -132,12 +134,12 @@ uint32_t IMUMGR_DrainFifo() {
             return drainedSamples;
         }
 
-        if (fifoData.tag.tag_sensor == 0x01) { //
+        if (fifoData.tag.tag_sensor == IMUMGR_FIFO_TAG_GYRO) {
             gx       = (float)fifoData.x * pImuManagerWorkVar->gSensitivity;
             gy       = (float)fifoData.y * pImuManagerWorkVar->gSensitivity;
             gz       = (float)fifoData.z * pImuManagerWorkVar->gSensitivity;
             gyroRead = true;
-        } else if (fifoData.tag.tag_sensor == 0x02) {
+        } else if (fifoData.tag.tag_sensor == IMUMGR_FIFO_TAG_ACCEL) {
             ax        = (float)fifoData.x * pImuManagerWorkVar->xSensitivity;
             ay        = (float)fifoData.y * pImuManagerWorkVar->xSensitivity;
             az        = (float)fifoData.z * pImuManagerWorkVar->xSensitivity;
@@ -226,10 +228,10 @@ static int32_t IMUMGR_GyroRangeToNumber(ImuManagerGyroRange_t gyroRange) {
     return 0;
 }
 
-static float IMUMGR_AccelRawToMs2(int32_t mg) {
-    return (float)mg * 0.001f * 9.80665f;
+static float IMUMGR_AccelRawToMs2(float mg) {
+    return mg * 0.001f * 9.80665f;
 }
 
-static float IMUMGR_GyroRawToRads(int32_t mdps) {
-    return (float)mdps * 0.001f * ((float)M_PI / 180.0f);
+static float IMUMGR_GyroRawToRads(float mdps) {
+    return mdps * 0.001f * ((float)M_PI / 180.0f);
 }

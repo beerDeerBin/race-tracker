@@ -14,18 +14,26 @@ void EEPROM_Init(void) {
     memset((void*)pEepromWorkVar, 0x00, sizeof(EepromWorkVar_t));
     pEepromWorkVar->pEepromDataBuffer = &eepromDataBuffer;
 
-    EEPROM.begin((uint32_t)EEPROM_MODULE_SIZE);
+    if (!EEPROM.begin((uint32_t)EEPROM_MODULE_SIZE)) {
+        LOG_ERROR(MODULE_EEPROM, EEPROM_MODULE_INIT_ERROR, "failed to initialize EEPROM");
+        return;
+    }
+
     EEPROM_Read(pEepromWorkVar->pEepromDataBuffer);
 
     if ((pEepromWorkVar->pEepromDataBuffer->magicNumber != (uint32_t)EEPROM_MODULE_MAGIC_NUMBER) ||
         (pEepromWorkVar->pEepromDataBuffer->version != (uint32_t)EEPROM_MODULE_VERSION)) {
 
-        LOG_WARNING(MODULE_EEPROM, EEPROM_MODULE_INIT_ERROR, "invalid data in EEPROM");
+        LOG_WARNING(MODULE_EEPROM, EEPROM_MODULE_INIT_ERROR, "invalid data in EEPROM, resetting to defaults");
 
+        memset((void*)pEepromWorkVar->pEepromDataBuffer, 0x00, sizeof(EepromData_t));
         pEepromWorkVar->pEepromDataBuffer->magicNumber = (uint32_t)EEPROM_MODULE_MAGIC_NUMBER;
         pEepromWorkVar->pEepromDataBuffer->version     = (uint32_t)EEPROM_MODULE_VERSION;
         EEPROM_Write(pEepromWorkVar->pEepromDataBuffer);
+        return;
     }
+
+    LOG_INFO(MODULE_EEPROM, EEPROM_MODULE_NO_ERROR, "initialized successfully");
 }
 
 void EEPROM_Read(EepromData_t* pData) {
