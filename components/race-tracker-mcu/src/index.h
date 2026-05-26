@@ -10,3 +10,4 @@
 #include "eeprom/eeprom_mod.h"
 #include "imu/imu_manager.h"
 #include "data/data_manager.h"
+#include "wifi/wifi_mod.h"

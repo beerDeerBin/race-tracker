@@ -9,10 +9,13 @@
         "/home/wild/.arduino15/internal/esp32_esp32-libs_3.3.8_9b0e67df04232d5b/dio_qspi/include/**",
         "/home/wild/.arduino15/internal/esp32_esp32_3.3.8_c667ac33967664f6/cores/esp32/**",
         "/home/wild/.arduino15/internal/esp32_esp32_3.3.8_c667ac33967664f6/variants/adafruit_feather_esp32_v2/**",
+        "/home/wild/.arduino15/internal/ESP_WiFiManager_1.12.1_7ab5f7ab1ec2c13c/ESP_WiFiManager/src/**",
         "/home/wild/.arduino15/internal/STM32duino_LSM6DSOX_2.3.4_15cc042c149dd0f2/STM32duino LSM6DSOX/src/**",
         "/home/wild/.arduino15/internal/esp32_esp32_3.3.8_c667ac33967664f6/libraries/EEPROM/src/**",
         "/home/wild/.arduino15/internal/esp32_esp32_3.3.8_c667ac33967664f6/libraries/Wire/src/**",
-        "/home/wild/.arduino15/internal/esp32_esp32_3.3.8_c667ac33967664f6/libraries/SPI/src/**"
+        "/home/wild/.arduino15/internal/esp32_esp32_3.3.8_c667ac33967664f6/libraries/SPI/src/**",
+        "/home/wild/.arduino15/internal/esp32_esp32_3.3.8_c667ac33967664f6/libraries/WiFi/src/**",
+        "/home/wild/.arduino15/internal/esp32_esp32_3.3.8_c667ac33967664f6/libraries/Network/src/**"
       ],
       "forcedInclude": [
         "/home/wild/.arduino15/internal/esp32_esp32_3.3.8_c667ac33967664f6/cores/esp32/Arduino.h"
@@ -51,10 +54,13 @@
         "-I/home/wild/.arduino15/internal/esp32_esp32-libs_3.3.8_9b0e67df04232d5b/dio_qspi/include",
         "-I/home/wild/.arduino15/internal/esp32_esp32_3.3.8_c667ac33967664f6/cores/esp32",
         "-I/home/wild/.arduino15/internal/esp32_esp32_3.3.8_c667ac33967664f6/variants/adafruit_feather_esp32_v2",
+        "-I/home/wild/.arduino15/internal/ESP_WiFiManager_1.12.1_7ab5f7ab1ec2c13c/ESP_WiFiManager/src",
         "-I/home/wild/.arduino15/internal/STM32duino_LSM6DSOX_2.3.4_15cc042c149dd0f2/STM32duino LSM6DSOX/src",
         "-I/home/wild/.arduino15/internal/esp32_esp32_3.3.8_c667ac33967664f6/libraries/EEPROM/src",
         "-I/home/wild/.arduino15/internal/esp32_esp32_3.3.8_c667ac33967664f6/libraries/Wire/src",
         "-I/home/wild/.arduino15/internal/esp32_esp32_3.3.8_c667ac33967664f6/libraries/SPI/src",
+        "-I/home/wild/.arduino15/internal/esp32_esp32_3.3.8_c667ac33967664f6/libraries/WiFi/src",
+        "-I/home/wild/.arduino15/internal/esp32_esp32_3.3.8_c667ac33967664f6/libraries/Network/src",
         "@/home/wild/Code/github-fh/race-tracker/components/race-tracker-mcu/build/build_profile-race-tracker/build_opt.h",
         "@/home/wild/Code/github-fh/race-tracker/components/race-tracker-mcu/build/build_profile-race-tracker/file_opts",
         "/home/wild/Code/github-fh/race-tracker/components/race-tracker-mcu/build/build_profile-race-tracker/sketch/race-tracker-mcu.ino.cpp",

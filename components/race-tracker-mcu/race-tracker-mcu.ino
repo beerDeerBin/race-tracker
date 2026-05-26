@@ -14,12 +14,40 @@ void setup() {
     EEPROM_Init();
     DAMGR_Init();
     IMUMGR_Init();
+    WIFI_Init();
+    testWifi();
 }
 
 void loop() {
     simulateOneRun();
     runNumber++;
     delay(1000 + millis() % 10);
+}
+
+void testWifi() {
+    LOG_INFO("MAIN", 0, "--- WiFi test begin ---");
+
+    bool connected = WIFI_Connect();
+    if (connected) {
+        LOG_INFO("MAIN", 0, "modem sleep test...");
+        WIFI_EnableModemSleep();
+        delay(500);
+        WIFI_DisableModemSleep();
+        LOG_INFO("MAIN", 0, "isConnected after modem sleep cycle: %s", WIFI_IsConnected() ? "true" : "false");
+
+        LOG_INFO("MAIN", 0, "shutdown/wakeup/reconnect test...");
+        WIFI_Shutdown();
+        LOG_INFO("MAIN", 0, "isConnected after shutdown: %s", WIFI_IsConnected() ? "true" : "false");
+        delay(500);
+        WIFI_Wakeup();
+        connected = WIFI_Connect();
+        LOG_INFO("MAIN", 0, "isConnected after wakeup+connect: %s", connected ? "true" : "false");
+        WIFI_Shutdown();
+    } else {
+        LOG_INFO("MAIN", 0, "WiFi not connected, skipping tests");
+    }
+
+    LOG_INFO("MAIN", 0, "--- WiFi test end ---");
 }
 
 void simulateOneRun() {
