@@ -81,7 +81,8 @@
       background: #1e293b;
       color: #94a3b8;
     }
-    #state-badge.running { background: #14532d; color: #4ade80; }
+    #state-badge.connected  { background: #1e3a5f; color: #60a5fa; }
+    #state-badge.acquiring  { background: #14532d; color: #4ade80; }
 
     /* ── charts ── */
     .charts-grid {
@@ -100,30 +101,49 @@
       font-size: .85rem;
     }
 
-    /* ── keepalive log ── */
-    #keepalive-log {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      max-height: 140px;
+    /* ── keepalive table ── */
+    #keepalive-wrap {
+      max-height: 180px;
       overflow-y: auto;
+    }
+
+    #keepalive-table {
+      width: 100%;
+      border-collapse: collapse;
       font-size: .78rem;
     }
 
-    .ka-row {
-      display: flex;
-      gap: 12px;
-      color: #94a3b8;
-      border-bottom: 1px solid #0f1117;
-      padding-bottom: 3px;
+    #keepalive-table thead th {
+      color: #475569;
+      font-weight: 400;
+      text-align: left;
+      padding: 0 12px 6px 0;
+      border-bottom: 1px solid #334155;
+      white-space: nowrap;
     }
 
-    .ka-row .ka-state { color: #4ade80; }
-    .ka-row .ka-state.idle { color: #64748b; }
+    #keepalive-table tbody tr:hover { background: #263045; }
+
+    #keepalive-table tbody td {
+      color: #94a3b8;
+      padding: 4px 12px 4px 0;
+      border-bottom: 1px solid #1a2540;
+      white-space: nowrap;
+    }
+
+    .ka-state.idle       { color: #64748b; }
+    .ka-state.connected  { color: #60a5fa; }
+    .ka-state.acquiring  { color: #4ade80; }
 
     #no-keepalive { color: #475569; font-size: .8rem; }
 
     /* ── commands ── */
+    .cmd-card-inner {
+      display: grid;
+      grid-template-columns: 1fr 280px;
+      gap: 24px;
+    }
+
     .cmd-section { display: flex; flex-direction: column; gap: 16px; }
 
     .cmd-block { display: flex; flex-direction: column; gap: 8px; }
@@ -171,6 +191,33 @@
       min-height: 1em;
     }
     #cmd-result.error { color: #f87171; }
+
+    /* ── sent queue ── */
+    .sent-queue { display: flex; flex-direction: column; gap: 4px; }
+
+    #sent-list { display: flex; flex-direction: column; gap: 6px; max-height: 280px; overflow-y: auto; }
+
+    .sent-queue h3 {
+      font-size: .72rem;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      margin-bottom: 4px;
+    }
+
+    .sent-entry {
+      background: #0f1117;
+      border-radius: 6px;
+      padding: 5px 8px;
+      font-size: .74rem;
+      color: #64748b;
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+
+    .sent-entry .sent-cmd { color: #94a3b8; font-weight: 600; }
+    .sent-entry .sent-time { font-size: .68rem; color: #475569; }
   </style>
 </head>
 <body>
@@ -178,7 +225,8 @@
   <!-- GUID selector -->
   <div class="card" id="guid-bar">
     <label>Device GUID</label>
-    <input id="guid-input" type="text" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" spellcheck="false" />
+    <input id="guid-input" type="text" list="guid-list" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" spellcheck="false" autocomplete="off" />
+    <datalist id="guid-list"></datalist>
     <button id="guid-btn" onclick="setGuid()">Connect</button>
     <button id="disconnect-btn" onclick="disconnectGuid()" style="background:#7f1d1d;" disabled>Disconnect</button>
     <div id="guid-status" style="font-size:.78rem;color:#64748b"></div>
@@ -201,80 +249,125 @@
   <!-- Keepalive log -->
   <div class="card">
     <h2>Keepalive</h2>
-    <div id="keepalive-log"><span id="no-keepalive">No keepalives yet.</span></div>
+    <div id="keepalive-wrap">
+      <table id="keepalive-table">
+        <thead>
+          <tr>
+            <th>Uptime</th>
+            <th>State</th>
+            <th>Battery</th>
+            <th>Sampled</th>
+          </tr>
+        </thead>
+        <tbody id="keepalive-body">
+          <tr><td colspan="4" id="no-keepalive">No keepalives yet.</td></tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 
   <!-- Commands -->
   <div class="card">
     <h2>Commands</h2>
-    <div class="cmd-section">
+    <div class="cmd-card-inner">
+      <div class="cmd-section">
 
-      <div class="cmd-block">
-        <h3>Connect (0x01)</h3>
-        <div class="cmd-fields">
-          <button onclick="sendConnect()">Send</button>
+        <div class="cmd-block">
+          <h3>Connect (0x01)</h3>
+          <div class="cmd-fields">
+            <button onclick="sendConnect()">Send</button>
+          </div>
         </div>
+
+        <div class="cmd-block">
+          <h3>Disconnect (0x03)</h3>
+          <div class="cmd-fields">
+            <button onclick="sendDisconnect()" style="background:#7f1d1d;">Send</button>
+          </div>
+        </div>
+
+        <div class="cmd-block">
+          <h3>Reset (0x04)</h3>
+          <div class="cmd-fields">
+            <button onclick="sendReset()" style="background:#78350f;">Send</button>
+          </div>
+        </div>
+
+        <div class="cmd-block">
+          <h3>Start Run (0x02)</h3>
+          <div class="cmd-fields">
+            <div class="field">
+              <label>Run ID (GUID)</label>
+              <div style="display:flex;gap:6px;align-items:center">
+                <input id="f-run-id" type="text" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" spellcheck="false" style="width:320px" />
+                <button type="button" onclick="document.getElementById('f-run-id').value = crypto.randomUUID()" style="background:#1e3a5f;padding:5px 10px;font-size:.75rem">⟳</button>
+              </div>
+            </div>
+            <div class="field">
+              <label>Num Samples</label>
+              <input id="f-num-samples" type="number" value="1000" min="1" />
+            </div>
+            <div class="field">
+              <label>ODR</label>
+              <select id="f-odr">
+                <option value="1">12.5 Hz</option>
+                <option value="2">26 Hz</option>
+                <option value="3">52 Hz</option>
+                <option value="4" selected>104 Hz</option>
+                <option value="5">208 Hz</option>
+                <option value="6">417 Hz</option>
+                <option value="7">833 Hz</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Accel Range</label>
+              <select id="f-accel">
+                <option value="0" selected>±2 g</option>
+                <option value="2">±4 g</option>
+                <option value="3">±8 g</option>
+                <option value="1">±16 g</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Gyro Range</label>
+              <select id="f-gyro">
+                <option value="1">±125 dps</option>
+                <option value="0" selected>±250 dps</option>
+                <option value="2">±500 dps</option>
+                <option value="4">±1000 dps</option>
+                <option value="6">±2000 dps</option>
+              </select>
+            </div>
+            <button onclick="sendStartRun()">Send</button>
+          </div>
+        </div>
+
+        <div id="cmd-result"></div>
       </div>
 
-      <div class="cmd-block">
-        <h3>Disconnect (0x03)</h3>
-        <div class="cmd-fields">
-          <button onclick="sendDisconnect()" style="background:#7f1d1d;">Send</button>
-        </div>
+      <!-- Sent queue -->
+      <div class="sent-queue">
+        <h3>Sent</h3>
+        <div id="sent-list"></div>
       </div>
-
-      <div class="cmd-block">
-        <h3>Start Run (0x02)</h3>
-        <div class="cmd-fields">
-          <div class="field">
-            <label>Run ID</label>
-            <input id="f-run-id" type="number" value="1" min="0" />
-          </div>
-          <div class="field">
-            <label>Num Samples</label>
-            <input id="f-num-samples" type="number" value="1000" min="1" />
-          </div>
-          <div class="field">
-            <label>ODR</label>
-            <select id="f-odr">
-              <option value="1">12.5 Hz</option>
-              <option value="2">26 Hz</option>
-              <option value="3">52 Hz</option>
-              <option value="4" selected>104 Hz</option>
-              <option value="5">208 Hz</option>
-              <option value="6">417 Hz</option>
-              <option value="7">833 Hz</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>Accel Range</label>
-            <select id="f-accel">
-              <option value="0" selected>±2 g</option>
-              <option value="2">±4 g</option>
-              <option value="3">±8 g</option>
-              <option value="1">±16 g</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>Gyro Range</label>
-            <select id="f-gyro">
-              <option value="1">±125 dps</option>
-              <option value="0" selected>±250 dps</option>
-              <option value="2">±500 dps</option>
-              <option value="4">±1000 dps</option>
-              <option value="6">±2000 dps</option>
-            </select>
-          </div>
-          <button onclick="sendStartRun()">Send</button>
-        </div>
-      </div>
-
-      <div id="cmd-result"></div>
     </div>
   </div>
 
   <script>
-    const POLL_MS = 2000;
+    const POLL_MS   = 2000;
+    const MAX_SENT  = 8;
+    const sentQueue = [];
+
+    function fmtUptime(ms) {
+      if (!ms) return "—";
+      const s = Math.floor(ms / 1000);
+      const h = Math.floor(s / 3600);
+      const m = Math.floor((s % 3600) / 60);
+      const sec = s % 60;
+      if (h > 0) return `${h}h ${String(m).padStart(2,"0")}m ${String(sec).padStart(2,"0")}s`;
+      if (m > 0) return `${m}m ${String(sec).padStart(2,"0")}s`;
+      return `${sec}.${String(Math.floor((ms % 1000) / 100))}s`;
+    }
 
     const ACCEL_COLORS = { ax: "#f87171", ay: "#4ade80", az: "#60a5fa" };
     const GYRO_COLORS  = { gx: "#fb923c", gy: "#a78bfa", gz: "#34d399" };
@@ -371,18 +464,18 @@
     // ── Keepalive log ─────────────────────────────────────────────────────────
 
     function updateKeepaliveLog(entries) {
-      const el = document.getElementById("keepalive-log");
+      const tbody = document.getElementById("keepalive-body");
       if (!entries.length) {
-        el.innerHTML = '<span id="no-keepalive">No keepalives yet.</span>';
+        tbody.innerHTML = '<tr><td colspan="4" id="no-keepalive">No keepalives yet.</td></tr>';
         return;
       }
-      el.innerHTML = [...entries].reverse().map(e => `
-        <div class="ka-row">
-          <span>${(e.uptimeMs / 1000).toFixed(1)} s</span>
-          <span class="ka-state ${e.state}">${e.state}</span>
-          <span>${e.batteryMv} mV</span>
-          <span>${e.batteryPct} %</span>
-        </div>`).join("");
+      tbody.innerHTML = [...entries].reverse().map(e => `
+        <tr>
+          <td>${fmtUptime(e.uptimeMs)}</td>
+          <td><span class="ka-state ${e.state}">${e.state}</span></td>
+          <td>${e.batteryMv} mV &nbsp; ${e.batteryPct === 255 ? "—" : e.batteryPct + "%"}</td>
+          <td>${e.totalSamples ? e.sampledCount + " / " + e.totalSamples : "—"}</td>
+        </tr>`).join("");
     }
 
     // ── Poll ──────────────────────────────────────────────────────────────────
@@ -399,14 +492,19 @@
 
         document.getElementById("run-id").textContent       = run.runId ?? "—";
         document.getElementById("sample-count").textContent = run.records.filter(Boolean).length;
-        document.getElementById("uptime").textContent       = status.uptimeMs ? (status.uptimeMs / 1000).toFixed(1) + " s" : "—";
+        document.getElementById("uptime").textContent       = fmtUptime(status.uptimeMs);
 
         const badge = document.getElementById("state-badge");
         badge.textContent = status.state;
-        badge.className   = status.state === "running" ? "running" : "";
+        badge.className   = status.state;
 
         if (run.records.length > 0) updateCharts(run.records);
         updateKeepaliveLog(keepalives);
+
+        const gr   = await fetch("/api/guids");
+        const gj   = await gr.json();
+        const dl   = document.getElementById("guid-list");
+        dl.innerHTML = gj.guids.map(g => `<option value="${g}">`).join("");
       } catch (e) {
         console.warn("poll error", e);
       }
@@ -421,14 +519,28 @@
       setTimeout(() => { el.textContent = ""; el.className = ""; }, 3000);
     }
 
+    function pushSentQueue(body, ok) {
+      const time = new Date().toLocaleTimeString();
+      sentQueue.unshift({ cmd: body.cmd, detail: body.runId ?? "", time, ok });
+      if (sentQueue.length > MAX_SENT) sentQueue.pop();
+      const el = document.getElementById("sent-list");
+      el.innerHTML = sentQueue.map(e => `
+        <div class="sent-entry">
+          <span class="sent-cmd" style="color:${e.ok ? "#94a3b8" : "#f87171"}">${e.cmd}</span>
+          ${e.detail ? `<span style="color:#475569;font-size:.68rem;overflow:hidden;text-overflow:ellipsis">${e.detail}</span>` : ""}
+          <span class="sent-time">${e.time}</span>
+        </div>`).join("");
+    }
+
     async function postCmd(body) {
       try {
         const res  = await fetch("/api/send-cmd", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
         const json = await res.json();
-        if (json.ok) showCmdResult("sent: " + body.cmd);
-        else showCmdResult(json.error, true);
+        if (json.ok) { showCmdResult("sent: " + body.cmd); pushSentQueue(body, true); }
+        else { showCmdResult(json.error, true); pushSentQueue(body, false); }
       } catch (e) {
         showCmdResult("request failed", true);
+        pushSentQueue(body, false);
       }
     }
 
@@ -440,17 +552,24 @@
       document.getElementById("sample-count").textContent = "0";
       document.getElementById("uptime").textContent       = "—";
       const badge = document.getElementById("state-badge");
-      badge.textContent = "idle"; badge.className = "";
+      badge.textContent = "idle"; badge.className = "idle";
       updateKeepaliveLog([]);
+      sentQueue.length = 0;
+      document.getElementById("sent-list").innerHTML = "";
     }
 
     function sendConnect()    { postCmd({ cmd: "connect" }); }
     function sendDisconnect() { postCmd({ cmd: "disconnect" }); }
+    function sendReset() {
+      postCmd({ cmd: "reset" });
+      sentQueue.length = 0;
+      document.getElementById("sent-list").innerHTML = "";
+    }
 
     function sendStartRun() {
       postCmd({
         cmd:        "start_run",
-        runId:      parseInt(document.getElementById("f-run-id").value),
+        runId:      document.getElementById("f-run-id").value.trim(),
         numSamples: parseInt(document.getElementById("f-num-samples").value),
         odr:        parseInt(document.getElementById("f-odr").value),
         accelRange: parseInt(document.getElementById("f-accel").value),

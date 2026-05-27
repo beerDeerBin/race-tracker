@@ -24,5 +24,5 @@ bool    MQTT_Connect(void);
 void    MQTT_Disconnect(void);
 bool    MQTT_IsConnected(void);
 void    MQTT_PublishKeepalive(const MqttStatus_t* pStatus);
-void    MQTT_PublishBatch(uint32_t runId, uint32_t startOffset);
+void    MQTT_PublishBatch(const Guid_t* pRunId, uint32_t startOffset);
 uint8_t MQTT_PollCommand(MqttCmdStartRun_t* pOut);

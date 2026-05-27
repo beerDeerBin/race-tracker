@@ -39,7 +39,9 @@ bool WIFI_IsConnected(void) {
 }
 
 void WIFI_Shutdown(void) {
-    if (!WiFi.disconnect(true)) { LOG_WARNING(MODULE_WIFI, WIFI_MODULE_SHUTDOWN_ERROR, "disconnect failed"); }
+    if (pWifiWorkVar->isConnected) {
+        if (!WiFi.disconnect(true)) { LOG_WARNING(MODULE_WIFI, WIFI_MODULE_SHUTDOWN_ERROR, "disconnect failed"); }
+    }
     if (!WiFi.mode(WIFI_OFF)) {
         LOG_ERROR(MODULE_WIFI, WIFI_MODULE_SHUTDOWN_ERROR, "failed to set radio off");
         return;

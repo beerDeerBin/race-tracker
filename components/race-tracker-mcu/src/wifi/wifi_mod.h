@@ -15,7 +15,7 @@
 #define WIFI_MODULE_SLEEP_ERROR    (0x01 << 4)
 
 // Wifi module configuration
-#define WIFI_MODULE_CONNECT_TIMEOUT_MS 10000
+#define WIFI_MODULE_CONNECT_TIMEOUT_MS 5000
 
 // Public function prototypes
 void WIFI_Init(void);

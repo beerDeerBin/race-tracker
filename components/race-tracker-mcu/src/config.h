@@ -16,3 +16,9 @@ typedef struct {
 typedef struct {
     uint16_t data[8];
 } Guid_t;
+
+typedef enum {
+    SYS_STATE_IDLE       = 0,
+    SYS_STATE_CONNECTED  = 1,
+    SYS_STATE_ACQUIRING  = 2,
+} SystemState_t;

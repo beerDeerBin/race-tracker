@@ -4,7 +4,6 @@
 typedef struct {
     PwrState_t state;
     float      lastVbatMv;
-    uint32_t   lastBatCheckMs;
     uint32_t   currentCpuMhz;
 } PwrWorkVar_t;
 

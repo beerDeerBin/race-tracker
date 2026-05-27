@@ -6,15 +6,15 @@ dc_resource(
 )
 
 dc_resource(
-    "decoder",
+    "mqttx-web",
     labels=["broker"],
-    links=[link("http://localhost:5000", "Data Viewer")],
+    links=[link("http://localhost:8080", "MQTT Client")],
     resource_deps=["mosquitto"],
 )
 
 dc_resource(
-    "mqttx-web",
+    "race-tracker-tester",
     labels=["broker"],
-    links=[link("http://localhost:8080", "MQTT Client")],
+    links=[link("http://localhost:5000", "Data Viewer")],
     resource_deps=["mosquitto"],
 )

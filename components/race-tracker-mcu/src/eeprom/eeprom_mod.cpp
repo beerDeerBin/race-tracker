@@ -37,6 +37,7 @@ void EEPROM_Init(void) {
         pEepromWorkVar->pEepromDataBuffer->guid.data[5] = 0xB597;
         pEepromWorkVar->pEepromDataBuffer->guid.data[6] = 0x892C;
         pEepromWorkVar->pEepromDataBuffer->guid.data[7] = 0xABEB;
+        pEepromWorkVar->pEepromDataBuffer->sysState     = SYS_STATE_IDLE;
         EEPROM_Write(pEepromWorkVar->pEepromDataBuffer);
         return;
     }

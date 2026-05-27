@@ -12,9 +12,8 @@
 
 // Board: Adafruit ESP32 Feather V2
 // A13 routes to an internal 200K+200K divider on the BAT pin (not exposed externally)
-#define PWR_PIN_VBAT_SENSE         A13
-#define PWR_VBAT_CHECK_INTERVAL_MS 30000 // 30 s
-#define PWR_VBAT_CRITICAL_MV       3100  // ~8%  — 100 mV above hard cutoff
+#define PWR_PIN_VBAT_SENSE   A13
+#define PWR_VBAT_CRITICAL_MV 3100 // ~8%  — 100 mV above hard cutoff
 #define PWR_VBAT_LOW_MV            3400  // ~33% — early warning
 #define PWR_BATTERY_CAPACITY_MAH   350   // LP-552035
 
@@ -29,10 +28,11 @@ typedef enum {
 
 // Public function prototypes
 void       PWR_Init(void);
-void       PWR_Poll(void);                  // call each loop iteration; auto deep-sleeps if critical
-void       PWR_DeepSleep(uint32_t sleepMs); // caller must shut down WiFi/MQTT first
+void       PWR_Poll(void);
+void       PWR_DeepSleep(uint32_t sleepMs);
 void       PWR_LightSleep(uint32_t durationMs);
 void       PWR_SetCpuFreq(uint32_t mhz);
+bool       PWR_WokeFromDeepSleep(void);
 float      PWR_GetBatteryMv(void);
 uint8_t    PWR_GetBatteryPct(void);
 PwrState_t PWR_GetState(void);

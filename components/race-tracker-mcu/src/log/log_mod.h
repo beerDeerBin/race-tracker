@@ -7,7 +7,7 @@
 
 // Log module configuration
 #define LOG_MODULE_BAUD_RATE     115200
-#define LOG_MODULE_INIT_DELAY_MS 5000
+#define LOG_MODULE_INIT_DELAY_MS 50
 
 // Log module name
 #define MODULE_LOG "LOG"

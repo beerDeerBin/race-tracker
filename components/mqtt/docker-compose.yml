@@ -9,9 +9,9 @@ services:
       - ./config/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
     restart: unless-stopped
 
-  decoder:
-    build: ./decoder
-    container_name: race-tracker-decoder
+  race-tracker-tester:
+    build: ./race-tracker-tester
+    container_name: race-tracker-tester
     ports:
       - "5000:5000"
     depends_on:

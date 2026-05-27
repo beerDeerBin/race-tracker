@@ -9,7 +9,6 @@ static PwrWorkVar_t  pwrWorkVar;
 static PwrWorkVar_t* pPwrWorkVar;
 
 static float _PWR_ReadVbatMv(void) {
-    // analogReadMilliVolts handles ESP32 ADC non-linearity; divider halves voltage so *2 restores it
     uint32_t sum = 0;
     for (int i = 0; i < 16; i++) {
         sum += analogReadMilliVolts(PWR_PIN_VBAT_SENSE);
@@ -29,15 +28,16 @@ static void _PWR_UpdateState(void) {
 }
 
 void PWR_Init(void) {
+    esp_sleep_wakeup_cause_t cause;
+
     pPwrWorkVar = &pwrWorkVar;
     memset((void*)pPwrWorkVar, 0x00, sizeof(PwrWorkVar_t));
     pPwrWorkVar->currentCpuMhz = getCpuFrequencyMhz();
 
-    pPwrWorkVar->lastVbatMv     = _PWR_ReadVbatMv();
-    pPwrWorkVar->lastBatCheckMs = millis();
+    pPwrWorkVar->lastVbatMv = _PWR_ReadVbatMv();
     _PWR_UpdateState();
 
-    esp_sleep_wakeup_cause_t cause = esp_sleep_get_wakeup_cause();
+    cause = esp_sleep_get_wakeup_cause();
     if (cause == ESP_SLEEP_WAKEUP_TIMER) {
         LOG_INFO(MODULE_PWR, PWR_MODULE_NO_ERROR, "woke (timer)");
     } else if (cause == ESP_SLEEP_WAKEUP_EXT0 || cause == ESP_SLEEP_WAKEUP_EXT1) {
@@ -52,11 +52,7 @@ void PWR_Init(void) {
 }
 
 void PWR_Poll(void) {
-    uint32_t now = millis();
-    if (now - pPwrWorkVar->lastBatCheckMs < PWR_VBAT_CHECK_INTERVAL_MS) return;
-
-    pPwrWorkVar->lastBatCheckMs = now;
-    pPwrWorkVar->lastVbatMv     = _PWR_ReadVbatMv();
+    pPwrWorkVar->lastVbatMv = _PWR_ReadVbatMv();
     _PWR_UpdateState();
 
     LOG_INFO(MODULE_PWR, PWR_MODULE_NO_ERROR, "battery: %.0f mV (%u%%), state: %u", pPwrWorkVar->lastVbatMv,
@@ -91,6 +87,10 @@ void PWR_SetCpuFreq(uint32_t mhz) {
     setCpuFrequencyMhz(mhz);
     pPwrWorkVar->currentCpuMhz = mhz;
     LOG_INFO(MODULE_PWR, PWR_MODULE_NO_ERROR, "CPU @ %u MHz", mhz);
+}
+
+bool PWR_WokeFromDeepSleep(void) {
+    return esp_sleep_get_wakeup_cause() == ESP_SLEEP_WAKEUP_TIMER;
 }
 
 float PWR_GetBatteryMv(void) {

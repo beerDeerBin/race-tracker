@@ -70,13 +70,13 @@ void MQTT_PublishKeepalive(const MqttStatus_t* pStatus) {
     }
 }
 
-void MQTT_PublishBatch(uint32_t runId, uint32_t startOffset) {
+void MQTT_PublishBatch(const Guid_t* pRunId, uint32_t startOffset) {
     uint32_t count = min(DAMGR_Count(), (uint32_t)MQTT_MODULE_BATCH_MAX);
     if (count == 0) return;
 
     DAMGR_Pop(pMqttWorkVar->batchBuf, count);
 
-    MqttBatchHeader_t header    = {runId, startOffset, count};
+    MqttBatchHeader_t header    = {*pRunId, startOffset, count};
     uint32_t          totalSize = sizeof(MqttBatchHeader_t) + count * sizeof(SampleRecord_t);
 
     if (!mqttClient.beginPublish(pMqttWorkVar->dataTopic, totalSize, false)) {
@@ -113,6 +113,8 @@ static void MQTT_OnMessage(char* topic, uint8_t* payload, unsigned int length) {
         LOG_INFO(MODULE_MQTT, MQTT_MODULE_NO_ERROR, "received connect from FE");
     } else if (cmd == MQTT_CMD_DISCONNECT) {
         LOG_INFO(MODULE_MQTT, MQTT_MODULE_NO_ERROR, "received disconnect from FE");
+    } else if (cmd == MQTT_CMD_RESET) {
+        LOG_INFO(MODULE_MQTT, MQTT_MODULE_NO_ERROR, "received reset from FE");
     } else {
         LOG_WARNING(MODULE_MQTT, MQTT_MODULE_NO_ERROR, "received unknown command: 0x%02X", cmd);
         pMqttWorkVar->lastCmd = MQTT_CMD_NONE;
