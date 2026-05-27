@@ -23,7 +23,9 @@ typedef struct __attribute__((packed)) {
 // Outbound: keepalive payload
 typedef struct __attribute__((packed)) {
     uint32_t uptimeMs;
-    uint8_t  status; // 0 = idle, 1 = running
+    uint8_t  status;     // 0 = idle, 1 = running
+    uint16_t batteryMv;
+    uint8_t  batteryPct;
 } MqttStatus_t;
 
 // Outbound: batch header (precedes SampleRecord_t array)

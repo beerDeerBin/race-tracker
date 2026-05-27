@@ -12,3 +12,4 @@
 #include "data/data_manager.h"
 #include "wifi/wifi_mod.h"
 #include "mqtt/mqtt_mod.h"
+#include "power/pwr_mod.h"

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Race Tracker — Last Run</title>
+  <title>Race Tracker Tester</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -12,41 +12,13 @@
       color: #e2e8f0;
       font-family: ui-monospace, "Cascadia Code", monospace;
       padding: 24px;
-    }
-
-    header {
       display: flex;
-      align-items: baseline;
-      gap: 20px;
-      margin-bottom: 24px;
+      flex-direction: column;
+      gap: 24px;
     }
 
-    h1 { font-size: 1.2rem; color: #94a3b8; letter-spacing: .05em; }
-
-    #meta {
-      font-size: .85rem;
-      color: #64748b;
-    }
-
-    #meta span { margin-right: 16px; }
-
-    #state-badge {
-      display: inline-block;
-      padding: 2px 8px;
-      border-radius: 9999px;
-      font-size: .75rem;
-      font-weight: 600;
-      background: #1e293b;
-      color: #94a3b8;
-    }
-
-    #state-badge.running { background: #14532d; color: #4ade80; }
-
-    .charts {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-    }
+    h1 { font-size: 1.1rem; color: #94a3b8; letter-spacing: .05em; }
+    h2 { font-size: .75rem; color: #64748b; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 12px; }
 
     .card {
       background: #1e293b;
@@ -54,12 +26,68 @@
       padding: 16px;
     }
 
-    .card h2 {
+    /* ── GUID bar ── */
+    #guid-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    #guid-bar label { font-size: .8rem; color: #64748b; white-space: nowrap; }
+
+    #guid-input {
+      flex: 1;
+      background: #0f1117;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      color: #e2e8f0;
+      font-family: inherit;
+      font-size: .85rem;
+      padding: 6px 10px;
+      outline: none;
+    }
+
+    #guid-input:focus { border-color: #60a5fa; }
+
+    button {
+      background: #1d4ed8;
+      border: none;
+      border-radius: 6px;
+      color: #fff;
+      cursor: pointer;
+      font-family: inherit;
       font-size: .8rem;
+      padding: 6px 14px;
+      white-space: nowrap;
+    }
+    button:hover { background: #2563eb; }
+    button:disabled { background: #334155; color: #64748b; cursor: default; }
+
+    /* ── status bar ── */
+    #status-bar {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-size: .82rem;
       color: #64748b;
-      text-transform: uppercase;
-      letter-spacing: .08em;
-      margin-bottom: 12px;
+    }
+
+    #state-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      font-size: .72rem;
+      font-weight: 600;
+      background: #1e293b;
+      color: #94a3b8;
+    }
+    #state-badge.running { background: #14532d; color: #4ade80; }
+
+    /* ── charts ── */
+    .charts-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
     }
 
     canvas { width: 100% !important; }
@@ -67,25 +95,174 @@
     #no-data {
       grid-column: 1 / -1;
       text-align: center;
-      padding: 60px;
+      padding: 48px;
       color: #475569;
-      font-size: .9rem;
+      font-size: .85rem;
     }
+
+    /* ── keepalive log ── */
+    #keepalive-log {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      max-height: 140px;
+      overflow-y: auto;
+      font-size: .78rem;
+    }
+
+    .ka-row {
+      display: flex;
+      gap: 12px;
+      color: #94a3b8;
+      border-bottom: 1px solid #0f1117;
+      padding-bottom: 3px;
+    }
+
+    .ka-row .ka-state { color: #4ade80; }
+    .ka-row .ka-state.idle { color: #64748b; }
+
+    #no-keepalive { color: #475569; font-size: .8rem; }
+
+    /* ── commands ── */
+    .cmd-section { display: flex; flex-direction: column; gap: 16px; }
+
+    .cmd-block { display: flex; flex-direction: column; gap: 8px; }
+
+    .cmd-block h3 {
+      font-size: .72rem;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+
+    .cmd-fields {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: flex-end;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .field label { font-size: .7rem; color: #64748b; }
+
+    .field input, .field select {
+      background: #0f1117;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      color: #e2e8f0;
+      font-family: inherit;
+      font-size: .82rem;
+      padding: 5px 8px;
+      width: 130px;
+      outline: none;
+    }
+    .field input:focus, .field select:focus { border-color: #60a5fa; }
+
+    .field select { width: 150px; }
+
+    #cmd-result {
+      font-size: .75rem;
+      color: #4ade80;
+      min-height: 1em;
+    }
+    #cmd-result.error { color: #f87171; }
   </style>
 </head>
 <body>
-  <header>
-    <h1>Race Tracker</h1>
-    <div id="meta">
-      <span>Run <strong id="run-id">—</strong></span>
-      <span><strong id="sample-count">0</strong> samples</span>
-      <span>Uptime <strong id="uptime">—</strong></span>
-      <span id="state-badge">idle</span>
-    </div>
-  </header>
 
-  <div class="charts" id="charts">
-    <div id="no-data">Waiting for data…</div>
+  <!-- GUID selector -->
+  <div class="card" id="guid-bar">
+    <label>Device GUID</label>
+    <input id="guid-input" type="text" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" spellcheck="false" />
+    <button id="guid-btn" onclick="setGuid()">Connect</button>
+    <div id="guid-status" style="font-size:.78rem;color:#64748b"></div>
+  </div>
+
+  <!-- Status -->
+  <div id="status-bar">
+    <span>Run <strong id="run-id">—</strong></span>
+    <span><strong id="sample-count">0</strong> samples</span>
+    <span>Uptime <strong id="uptime">—</strong></span>
+    <span id="state-badge">idle</span>
+    <button id="reset-btn" onclick="resetData()" style="margin-left:auto;background:#7f1d1d;">Reset</button>
+  </div>
+
+  <!-- Charts -->
+  <div class="charts-grid" id="charts">
+    <div id="no-data">Connect to a device to see data.</div>
+  </div>
+
+  <!-- Keepalive log -->
+  <div class="card">
+    <h2>Keepalive</h2>
+    <div id="keepalive-log"><span id="no-keepalive">No keepalives yet.</span></div>
+  </div>
+
+  <!-- Commands -->
+  <div class="card">
+    <h2>Commands</h2>
+    <div class="cmd-section">
+
+      <div class="cmd-block">
+        <h3>Connect (0x01)</h3>
+        <div class="cmd-fields">
+          <button onclick="sendConnect()">Send</button>
+        </div>
+      </div>
+
+      <div class="cmd-block">
+        <h3>Start Run (0x02)</h3>
+        <div class="cmd-fields">
+          <div class="field">
+            <label>Run ID</label>
+            <input id="f-run-id" type="number" value="1" min="0" />
+          </div>
+          <div class="field">
+            <label>Num Samples</label>
+            <input id="f-num-samples" type="number" value="1000" min="1" />
+          </div>
+          <div class="field">
+            <label>ODR</label>
+            <select id="f-odr">
+              <option value="1">12.5 Hz</option>
+              <option value="2">26 Hz</option>
+              <option value="3">52 Hz</option>
+              <option value="4" selected>104 Hz</option>
+              <option value="5">208 Hz</option>
+              <option value="6">417 Hz</option>
+              <option value="7">833 Hz</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Accel Range</label>
+            <select id="f-accel">
+              <option value="0" selected>±2 g</option>
+              <option value="2">±4 g</option>
+              <option value="3">±8 g</option>
+              <option value="1">±16 g</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Gyro Range</label>
+            <select id="f-gyro">
+              <option value="1">±125 dps</option>
+              <option value="0" selected>±250 dps</option>
+              <option value="2">±500 dps</option>
+              <option value="4">±1000 dps</option>
+              <option value="6">±2000 dps</option>
+            </select>
+          </div>
+          <button onclick="sendStartRun()">Send</button>
+        </div>
+      </div>
+
+      <div id="cmd-result"></div>
+    </div>
   </div>
 
   <script>
@@ -97,6 +274,29 @@
     let accelChart = null;
     let gyroChart  = null;
 
+    // ── GUID ──────────────────────────────────────────────────────────────────
+
+    async function setGuid() {
+      const guid = document.getElementById("guid-input").value.trim();
+      if (!guid) return;
+      const res  = await fetch("/api/set-guid", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ guid }) });
+      const json = await res.json();
+      const el   = document.getElementById("guid-status");
+      if (json.ok) {
+        el.textContent = "subscribed";
+        el.style.color = "#4ade80";
+        accelChart = gyroChart = null;
+        document.getElementById("charts").innerHTML = '<div id="no-data">Waiting for data…</div>';
+      } else {
+        el.textContent = json.error;
+        el.style.color = "#f87171";
+      }
+    }
+
+    document.getElementById("guid-input").addEventListener("keydown", e => { if (e.key === "Enter") setGuid(); });
+
+    // ── Charts ────────────────────────────────────────────────────────────────
+
     function makeChart(canvasId, label, colorMap) {
       const ctx = document.getElementById(canvasId).getContext("2d");
       return new Chart(ctx, {
@@ -104,80 +304,74 @@
         data: {
           labels: [],
           datasets: Object.entries(colorMap).map(([key, color]) => ({
-            label: key,
-            data: [],
-            borderColor: color,
-            backgroundColor: color + "22",
-            borderWidth: 1.5,
-            pointRadius: 0,
-            tension: 0.3,
+            label: key, data: [], borderColor: color,
+            backgroundColor: color + "22", borderWidth: 1.5, pointRadius: 0, tension: 0.3,
           })),
         },
         options: {
-          animation: false,
-          responsive: true,
+          animation: false, responsive: true,
           interaction: { mode: "index", intersect: false },
           plugins: { legend: { labels: { color: "#94a3b8", boxWidth: 12, font: { size: 11 } } } },
           scales: {
-            x: {
-              ticks: { color: "#475569", maxTicksLimit: 10, font: { size: 10 } },
-              grid:  { color: "#1e293b" },
-              title: { display: true, text: "sample", color: "#475569", font: { size: 10 } },
-            },
-            y: {
-              ticks: { color: "#475569", font: { size: 10 } },
-              grid:  { color: "#334155" },
-              title: { display: true, text: label, color: "#475569", font: { size: 10 } },
-            },
+            x: { ticks: { color: "#475569", maxTicksLimit: 10, font: { size: 10 } }, grid: { color: "#1e293b" },
+                 title: { display: true, text: "sample", color: "#475569", font: { size: 10 } } },
+            y: { ticks: { color: "#475569", font: { size: 10 } }, grid: { color: "#334155" },
+                 title: { display: true, text: label, color: "#475569", font: { size: 10 } } },
           },
         },
       });
     }
 
     function ensureCharts() {
-      const container = document.getElementById("charts");
       if (accelChart) return;
-
-      container.innerHTML = `
-        <div class="card">
-          <h2>Accelerometer (m/s²)</h2>
-          <canvas id="accel-canvas"></canvas>
-        </div>
-        <div class="card">
-          <h2>Gyroscope (rad/s)</h2>
-          <canvas id="gyro-canvas"></canvas>
-        </div>`;
-
+      document.getElementById("charts").innerHTML = `
+        <div class="card"><h2>Accelerometer (m/s²)</h2><canvas id="accel-canvas"></canvas></div>
+        <div class="card"><h2>Gyroscope (rad/s)</h2><canvas id="gyro-canvas"></canvas></div>`;
       accelChart = makeChart("accel-canvas", "m/s²", ACCEL_COLORS);
       gyroChart  = makeChart("gyro-canvas",  "rad/s", GYRO_COLORS);
     }
 
     function updateCharts(records) {
       ensureCharts();
-
       const valid  = records.filter(Boolean);
       const labels = valid.map((_, i) => i);
-
-      accelChart.data.labels = labels;
-      gyroChart.data.labels  = labels;
-
-      const keys = ["ax", "ay", "az", "gx", "gy", "gz"];
-      keys.forEach((key, di) => {
-        const chart  = di < 3 ? accelChart : gyroChart;
-        const dsIdx  = di < 3 ? di : di - 3;
-        chart.data.datasets[dsIdx].data = valid.map(r => r[key]);
+      accelChart.data.labels = gyroChart.data.labels = labels;
+      ["ax","ay","az","gx","gy","gz"].forEach((key, di) => {
+        const chart = di < 3 ? accelChart : gyroChart;
+        chart.data.datasets[di < 3 ? di : di - 3].data = valid.map(r => r[key]);
       });
-
       accelChart.update("none");
       gyroChart.update("none");
     }
+
+    // ── Keepalive log ─────────────────────────────────────────────────────────
+
+    function updateKeepaliveLog(entries) {
+      const el = document.getElementById("keepalive-log");
+      if (!entries.length) {
+        el.innerHTML = '<span id="no-keepalive">No keepalives yet.</span>';
+        return;
+      }
+      el.innerHTML = [...entries].reverse().map(e => `
+        <div class="ka-row">
+          <span>${(e.uptimeMs / 1000).toFixed(1)} s</span>
+          <span class="ka-state ${e.state}">${e.state}</span>
+          <span>${e.batteryMv} mV</span>
+          <span>${e.batteryPct} %</span>
+        </div>`).join("");
+    }
+
+    // ── Poll ──────────────────────────────────────────────────────────────────
 
     async function poll() {
       try {
         const res  = await fetch("/api/data");
         const json = await res.json();
+        const { run, status, keepalives, guid } = json;
 
-        const { run, status } = json;
+        if (guid && document.getElementById("guid-input").value === "") {
+          document.getElementById("guid-input").value = guid;
+        }
 
         document.getElementById("run-id").textContent       = run.runId ?? "—";
         document.getElementById("sample-count").textContent = run.records.filter(Boolean).length;
@@ -187,12 +381,58 @@
         badge.textContent = status.state;
         badge.className   = status.state === "running" ? "running" : "";
 
-        if (run.records.length > 0) {
-          updateCharts(run.records);
-        }
+        if (run.records.length > 0) updateCharts(run.records);
+        updateKeepaliveLog(keepalives);
       } catch (e) {
         console.warn("poll error", e);
       }
+    }
+
+    // ── Commands ──────────────────────────────────────────────────────────────
+
+    function showCmdResult(msg, isError = false) {
+      const el = document.getElementById("cmd-result");
+      el.textContent = msg;
+      el.className   = isError ? "error" : "";
+      setTimeout(() => { el.textContent = ""; el.className = ""; }, 3000);
+    }
+
+    async function postCmd(body) {
+      try {
+        const res  = await fetch("/api/send-cmd", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+        const json = await res.json();
+        if (json.ok) showCmdResult("sent: " + body.cmd);
+        else showCmdResult(json.error, true);
+      } catch (e) {
+        showCmdResult("request failed", true);
+      }
+    }
+
+    async function resetData() {
+      await fetch("/api/reset", { method: "POST" });
+      accelChart = gyroChart = null;
+      document.getElementById("charts").innerHTML = '<div id="no-data">Waiting for data…</div>';
+      document.getElementById("run-id").textContent       = "—";
+      document.getElementById("sample-count").textContent = "0";
+      document.getElementById("uptime").textContent       = "—";
+      const badge = document.getElementById("state-badge");
+      badge.textContent = "idle"; badge.className = "";
+      updateKeepaliveLog([]);
+    }
+
+    function sendConnect() {
+      postCmd({ cmd: "connect" });
+    }
+
+    function sendStartRun() {
+      postCmd({
+        cmd:        "start_run",
+        runId:      parseInt(document.getElementById("f-run-id").value),
+        numSamples: parseInt(document.getElementById("f-num-samples").value),
+        odr:        parseInt(document.getElementById("f-odr").value),
+        accelRange: parseInt(document.getElementById("f-accel").value),
+        gyroRange:  parseInt(document.getElementById("f-gyro").value),
+      });
     }
 
     poll();

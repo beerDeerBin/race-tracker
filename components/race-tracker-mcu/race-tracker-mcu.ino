@@ -12,6 +12,7 @@ static const float odrToNumOfSamples[] = {12.5, 26, 52, 104, 208, 417, 833};
 
 void setup() {
     LOG_Init();
+    PWR_Init();
     EEPROM_Init();
     DAMGR_Init();
     IMUMGR_Init();
@@ -26,6 +27,8 @@ void loop() {
     // runOffset = 0;
     // delay(1000 + millis() % 10);
 
+    PWR_Poll();
+
     uint8_t  cmd      = MQTT_CMD_NONE;
     uint32_t deadline = 0;
 
@@ -39,7 +42,7 @@ void loop() {
 
             while (cmd == MQTT_CMD_NONE && millis() < deadline) {
 
-                MqttStatus_t status = {millis(), 0};
+                MqttStatus_t status = {millis(), 0, (uint16_t)PWR_GetBatteryMv(), PWR_GetBatteryPct()};
                 MQTT_PublishKeepalive(&status);
 
                 cmd = MQTT_PollCommand(nullptr);
@@ -155,7 +158,7 @@ void simulateOneRun() {
                 Serial.println("WIFI connect");
                 if (MQTT_Connect()) {
                     Serial.println("MQTT done");
-                    MqttStatus_t status = {millis(), 0};
+                    MqttStatus_t status = {millis(), 0, (uint16_t)PWR_GetBatteryMv(), PWR_GetBatteryPct()};
                     MQTT_PublishKeepalive(&status);
 
                     while (DAMGR_Count() >= 0) {
