@@ -49,7 +49,7 @@ typedef enum {
 
 // Public function prototypes
 void     IMUMGR_Init(void);
-void     IMUMGR_ConfigureRun(uint32_t runId, uint32_t numberOfSamples, ImuManagerOdr_t odrHz,
+void     IMUMGR_ConfigureRun(uint32_t numberOfSamples, ImuManagerOdr_t odrHz,
                              ImuManagerAccelRange_t accelRangeG, ImuManagerGyroRange_t gyroRangeDps);
 void     IMUMGR_StartRun(void);
 void     IMUMGR_StopRun(void);

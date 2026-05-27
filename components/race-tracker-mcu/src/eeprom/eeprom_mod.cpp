@@ -27,8 +27,16 @@ void EEPROM_Init(void) {
         LOG_WARNING(MODULE_EEPROM, EEPROM_MODULE_INIT_ERROR, "invalid data in EEPROM, resetting to defaults");
 
         memset((void*)pEepromWorkVar->pEepromDataBuffer, 0x00, sizeof(EepromData_t));
-        pEepromWorkVar->pEepromDataBuffer->magicNumber = (uint32_t)EEPROM_MODULE_MAGIC_NUMBER;
-        pEepromWorkVar->pEepromDataBuffer->version     = (uint32_t)EEPROM_MODULE_VERSION;
+        pEepromWorkVar->pEepromDataBuffer->magicNumber  = (uint32_t)EEPROM_MODULE_MAGIC_NUMBER;
+        pEepromWorkVar->pEepromDataBuffer->version      = (uint32_t)EEPROM_MODULE_VERSION;
+        pEepromWorkVar->pEepromDataBuffer->guid.data[0] = 0xDA46;
+        pEepromWorkVar->pEepromDataBuffer->guid.data[1] = 0xCA23;
+        pEepromWorkVar->pEepromDataBuffer->guid.data[2] = 0x7203;
+        pEepromWorkVar->pEepromDataBuffer->guid.data[3] = 0x4015;
+        pEepromWorkVar->pEepromDataBuffer->guid.data[4] = 0x94B1;
+        pEepromWorkVar->pEepromDataBuffer->guid.data[5] = 0xB597;
+        pEepromWorkVar->pEepromDataBuffer->guid.data[6] = 0x892C;
+        pEepromWorkVar->pEepromDataBuffer->guid.data[7] = 0xABEB;
         EEPROM_Write(pEepromWorkVar->pEepromDataBuffer);
         return;
     }

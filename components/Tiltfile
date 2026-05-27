@@ -1,0 +1,20 @@
+docker_compose("./mqtt/docker-compose.yml")
+
+dc_resource(
+    "mosquitto",
+    labels=["broker"],
+)
+
+dc_resource(
+    "decoder",
+    labels=["broker"],
+    links=[link("http://localhost:5000", "Data Viewer")],
+    resource_deps=["mosquitto"],
+)
+
+dc_resource(
+    "mqttx-web",
+    labels=["broker"],
+    links=[link("http://localhost:8080", "MQTT Client")],
+    resource_deps=["mosquitto"],
+)

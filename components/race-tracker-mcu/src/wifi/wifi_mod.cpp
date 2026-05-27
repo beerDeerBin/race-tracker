@@ -12,18 +12,7 @@ void WIFI_Init(void) {
     pWifiWorkVar = &wifiWorkVar;
     memset((void*)pWifiWorkVar, 0x00, sizeof(WifiWorkVar_t));
 
-    if (!WiFi.mode(WIFI_STA)) {
-        LOG_ERROR(MODULE_WIFI, WIFI_MODULE_INIT_ERROR, "failed to set STA mode");
-        return;
-    }
-    if (!WiFi.setAutoReconnect(false)) {
-        LOG_WARNING(MODULE_WIFI, WIFI_MODULE_INIT_ERROR, "failed to disable auto-reconnect");
-    }
-
-    esp_err_t err = esp_wifi_set_ps(WIFI_PS_NONE);
-    if (err != ESP_OK) {
-        LOG_WARNING(MODULE_WIFI, WIFI_MODULE_INIT_ERROR, "failed to set power save mode (err: %d)", err);
-    }
+    WIFI_Shutdown();
 
     LOG_INFO(MODULE_WIFI, WIFI_MODULE_NO_ERROR, "initialized");
 }
@@ -46,7 +35,7 @@ bool WIFI_Connect(void) {
 }
 
 bool WIFI_IsConnected(void) {
-    return WiFi.status() == WL_CONNECTED;
+    return pWifiWorkVar->isConnected;
 }
 
 void WIFI_Shutdown(void) {
@@ -71,10 +60,7 @@ void WIFI_Wakeup(void) {
         return;
     }
 
-    esp_err_t err = esp_wifi_set_ps(WIFI_PS_NONE);
-    if (err != ESP_OK) {
-        LOG_WARNING(MODULE_WIFI, WIFI_MODULE_WAKEUP_ERROR, "failed to set power save mode (err: %d)", err);
-    }
+    WIFI_DisableModemSleep();
 
     LOG_INFO(MODULE_WIFI, WIFI_MODULE_NO_ERROR, "radio on");
 }

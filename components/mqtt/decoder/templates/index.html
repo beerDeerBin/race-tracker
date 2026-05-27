@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Race Tracker — Last Run</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #0f1117;
+      color: #e2e8f0;
+      font-family: ui-monospace, "Cascadia Code", monospace;
+      padding: 24px;
+    }
+
+    header {
+      display: flex;
+      align-items: baseline;
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+
+    h1 { font-size: 1.2rem; color: #94a3b8; letter-spacing: .05em; }
+
+    #meta {
+      font-size: .85rem;
+      color: #64748b;
+    }
+
+    #meta span { margin-right: 16px; }
+
+    #state-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      font-size: .75rem;
+      font-weight: 600;
+      background: #1e293b;
+      color: #94a3b8;
+    }
+
+    #state-badge.running { background: #14532d; color: #4ade80; }
+
+    .charts {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .card {
+      background: #1e293b;
+      border-radius: 10px;
+      padding: 16px;
+    }
+
+    .card h2 {
+      font-size: .8rem;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      margin-bottom: 12px;
+    }
+
+    canvas { width: 100% !important; }
+
+    #no-data {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 60px;
+      color: #475569;
+      font-size: .9rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Race Tracker</h1>
+    <div id="meta">
+      <span>Run <strong id="run-id">—</strong></span>
+      <span><strong id="sample-count">0</strong> samples</span>
+      <span>Uptime <strong id="uptime">—</strong></span>
+      <span id="state-badge">idle</span>
+    </div>
+  </header>
+
+  <div class="charts" id="charts">
+    <div id="no-data">Waiting for data…</div>
+  </div>
+
+  <script>
+    const POLL_MS = 2000;
+
+    const ACCEL_COLORS = { ax: "#f87171", ay: "#4ade80", az: "#60a5fa" };
+    const GYRO_COLORS  = { gx: "#fb923c", gy: "#a78bfa", gz: "#34d399" };
+
+    let accelChart = null;
+    let gyroChart  = null;
+
+    function makeChart(canvasId, label, colorMap) {
+      const ctx = document.getElementById(canvasId).getContext("2d");
+      return new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: [],
+          datasets: Object.entries(colorMap).map(([key, color]) => ({
+            label: key,
+            data: [],
+            borderColor: color,
+            backgroundColor: color + "22",
+            borderWidth: 1.5,
+            pointRadius: 0,
+            tension: 0.3,
+          })),
+        },
+        options: {
+          animation: false,
+          responsive: true,
+          interaction: { mode: "index", intersect: false },
+          plugins: { legend: { labels: { color: "#94a3b8", boxWidth: 12, font: { size: 11 } } } },
+          scales: {
+            x: {
+              ticks: { color: "#475569", maxTicksLimit: 10, font: { size: 10 } },
+              grid:  { color: "#1e293b" },
+              title: { display: true, text: "sample", color: "#475569", font: { size: 10 } },
+            },
+            y: {
+              ticks: { color: "#475569", font: { size: 10 } },
+              grid:  { color: "#334155" },
+              title: { display: true, text: label, color: "#475569", font: { size: 10 } },
+            },
+          },
+        },
+      });
+    }
+
+    function ensureCharts() {
+      const container = document.getElementById("charts");
+      if (accelChart) return;
+
+      container.innerHTML = `
+        <div class="card">
+          <h2>Accelerometer (m/s²)</h2>
+          <canvas id="accel-canvas"></canvas>
+        </div>
+        <div class="card">
+          <h2>Gyroscope (rad/s)</h2>
+          <canvas id="gyro-canvas"></canvas>
+        </div>`;
+
+      accelChart = makeChart("accel-canvas", "m/s²", ACCEL_COLORS);
+      gyroChart  = makeChart("gyro-canvas",  "rad/s", GYRO_COLORS);
+    }
+
+    function updateCharts(records) {
+      ensureCharts();
+
+      const valid  = records.filter(Boolean);
+      const labels = valid.map((_, i) => i);
+
+      accelChart.data.labels = labels;
+      gyroChart.data.labels  = labels;
+
+      const keys = ["ax", "ay", "az", "gx", "gy", "gz"];
+      keys.forEach((key, di) => {
+        const chart  = di < 3 ? accelChart : gyroChart;
+        const dsIdx  = di < 3 ? di : di - 3;
+        chart.data.datasets[dsIdx].data = valid.map(r => r[key]);
+      });
+
+      accelChart.update("none");
+      gyroChart.update("none");
+    }
+
+    async function poll() {
+      try {
+        const res  = await fetch("/api/data");
+        const json = await res.json();
+
+        const { run, status } = json;
+
+        document.getElementById("run-id").textContent       = run.runId ?? "—";
+        document.getElementById("sample-count").textContent = run.records.filter(Boolean).length;
+        document.getElementById("uptime").textContent       = status.uptimeMs ? (status.uptimeMs / 1000).toFixed(1) + " s" : "—";
+
+        const badge = document.getElementById("state-badge");
+        badge.textContent = status.state;
+        badge.className   = status.state === "running" ? "running" : "";
+
+        if (run.records.length > 0) {
+          updateCharts(run.records);
+        }
+      } catch (e) {
+        console.warn("poll error", e);
+      }
+    }
+
+    poll();
+    setInterval(poll, POLL_MS);
+  </script>
+</body>
+</html>

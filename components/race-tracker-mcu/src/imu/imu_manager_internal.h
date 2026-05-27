@@ -2,7 +2,6 @@
 
 // Internal work variables for the IMU manager
 typedef struct {
-    uint32_t configuredRunId;
     uint32_t configuredNumberOfSamples;
     uint32_t currentSampleCount;
     float    xSensitivity;

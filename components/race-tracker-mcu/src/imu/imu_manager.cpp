@@ -28,7 +28,7 @@ void IMUMGR_Init(void) {
     IMUMGR_Shutdown();
 }
 
-void IMUMGR_ConfigureRun(uint32_t runId, uint32_t numberOfSamples, ImuManagerOdr_t odrHz,
+void IMUMGR_ConfigureRun(uint32_t numberOfSamples, ImuManagerOdr_t odrHz,
                          ImuManagerAccelRange_t accelRangeG, ImuManagerGyroRange_t gyroRangeDps) {
     uint32_t status = (uint32_t)LSM6DSOX_OK;
     float    odrF   = IMUMGR_OdrToNumber(odrHz);
@@ -53,12 +53,11 @@ void IMUMGR_ConfigureRun(uint32_t runId, uint32_t numberOfSamples, ImuManagerOdr
     status |= (uint32_t)imuManagerSox.Set_FIFO_Mode(LSM6DSOX_BYPASS_MODE);
     if (status != LSM6DSOX_OK) { LOG_ERROR(MODULE_IMUMGR, IMUMGR_CONFIG_ERROR, "failed to enable IMU axes"); }
 
-    pImuManagerWorkVar->configuredRunId           = runId;
     pImuManagerWorkVar->configuredNumberOfSamples = numberOfSamples;
     pImuManagerWorkVar->currentSampleCount        = 0;
 
     LOG_INFO(MODULE_IMUMGR, IMUMGR_NO_ERROR,
-             "configured for run %d, Samples: %d, ODR: %.1fHz, Accel FS: ±%dg, Gyro FS: ±%ddps", runId, numberOfSamples,
+             "configured: Samples: %d, ODR: %.1fHz, Accel FS: ±%dg, Gyro FS: ±%ddps", numberOfSamples,
              odrF, IMUMGR_AccelRangeToNumber(accelRangeG), IMUMGR_GyroRangeToNumber(gyroRangeDps));
 }
 
@@ -155,8 +154,6 @@ uint32_t IMUMGR_DrainFifo(void) {
             LOG_ERROR(MODULE_IMUMGR, IMUMGR_FIFO_ERROR, "data manager queue full, cannot reserve record");
             return drainedSamples;
         }
-        pRecord->id     = pImuManagerWorkVar->configuredRunId;
-        pRecord->offset = pImuManagerWorkVar->currentSampleCount;
         pRecord->ax     = IMUMGR_AccelRawToMs2(ax);
         pRecord->ay     = IMUMGR_AccelRawToMs2(ay);
         pRecord->az     = IMUMGR_AccelRawToMs2(az);

@@ -1,0 +1,32 @@
+services:
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: race-tracker-mqtt
+    ports:
+      - "1883:1883"   # MQTT (MCU connects here)
+      - "9001:9001"   # WebSocket (MQTTX web client connects here)
+    volumes:
+      - ./config/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+    restart: unless-stopped
+
+  decoder:
+    build: ./decoder
+    container_name: race-tracker-decoder
+    ports:
+      - "5000:5000"
+    depends_on:
+      - mosquitto
+    restart: unless-stopped
+
+  mqttx-web:
+    image: emqx/mqttx-web:latest
+    container_name: race-tracker-mqttx
+    ports:
+      - "8080:80"
+    volumes:
+      - mqttx-web-data:/usr/share/nginx/html/data
+    restart: unless-stopped
+
+volumes:
+  mosquitto-data:
+  mqttx-web-data:

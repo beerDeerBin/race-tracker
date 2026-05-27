@@ -4,23 +4,59 @@
 #define TEST_RUN_ID      1
 #define TEST_NUM_SAMPLES 8330 // 10 seconds of data at 833Hz
 
-static SampleRecord_t buffer[10];
-static uint32_t       runNumber = 0;
+static uint32_t     runNumber = 0;
+static uint32_t     runOffset = 0;
+static EepromData_t eepromData;
 
-static const uint32_t odrToNumOfSamples[] = {125, 260, 520, 1040, 2080, 4170, 8330};
+static const float odrToNumOfSamples[] = {12.5, 26, 52, 104, 208, 417, 833};
 
 void setup() {
     LOG_Init();
     EEPROM_Init();
     DAMGR_Init();
     IMUMGR_Init();
+    EEPROM_Read(&eepromData);
     WIFI_Init();
-    testWifi();
+    MQTT_Init(&eepromData.guid);
 }
 
 void loop() {
-    simulateOneRun();
-    runNumber++;
+    // simulateOneRun();
+    // runNumber++;
+    // runOffset = 0;
+    // delay(1000 + millis() % 10);
+
+    uint8_t  cmd      = MQTT_CMD_NONE;
+    uint32_t deadline = 0;
+
+    WIFI_Wakeup();
+
+    if (WIFI_Connect()) {
+        Serial.println("WIFI connect");
+        if (MQTT_Connect()) {
+
+            deadline = millis() + 1000; // 3 seconds
+
+            while (cmd == MQTT_CMD_NONE && millis() < deadline) {
+
+                MqttStatus_t status = {millis(), 0};
+                MQTT_PublishKeepalive(&status);
+
+                cmd = MQTT_PollCommand(nullptr);
+
+                if (cmd != MQTT_CMD_NONE) { Serial.printf("Got command: %d\n", cmd); }
+
+                delay(1000);
+            }
+
+            MQTT_Disconnect();
+
+            WIFI_Shutdown();
+
+            delay(5000);
+        }
+    }
+
     delay(1000 + millis() % 10);
 }
 
@@ -50,22 +86,58 @@ void testWifi() {
     LOG_INFO("MAIN", 0, "--- WiFi test end ---");
 }
 
+void testMqtt() {
+    LOG_INFO("MAIN", 0, "--- MQTT test begin ---");
+
+    bool wifiOk = WIFI_Connect();
+    if (!wifiOk) {
+        LOG_INFO("MAIN", 0, "WiFi failed, skipping MQTT test");
+        return;
+    }
+
+    bool mqttOk = MQTT_Connect();
+    if (mqttOk) {
+        MqttStatus_t status = {millis(), 0};
+        MQTT_PublishKeepalive(&status);
+
+        LOG_INFO("MAIN", 0, "polling for commands for 3s...");
+        uint32_t          deadline = millis() + 3000;
+        MqttCmdStartRun_t cmd;
+        while (millis() < deadline) {
+            uint8_t cmdType = MQTT_PollCommand(&cmd);
+            if (cmdType == MQTT_CMD_CONNECT) {
+                LOG_INFO("MAIN", 0, "got CONNECT command from FE");
+            } else if (cmdType == MQTT_CMD_START_RUN) {
+                LOG_INFO("MAIN", 0, "got START_RUN: runId=%lu, samples=%lu, odr=%d", cmd.runId, cmd.numSamples,
+                         cmd.odr);
+            }
+            delay(50);
+        }
+
+        MQTT_Disconnect();
+    }
+
+    WIFI_Shutdown();
+    LOG_INFO("MAIN", 0, "--- MQTT test end ---");
+}
+
 void simulateOneRun() {
     uint32_t startTs      = millis();
     uint32_t drained      = 0;
-    uint32_t popped       = 0;
     uint32_t totalDrained = 0;
     uint32_t duration     = 0;
-    uint32_t cnt          = 0;
 
-    uint32_t odr          = micros() % 7 + 1; // Random ODR between 12.5Hz and 833Hz
-    uint32_t numOfSamples = odrToNumOfSamples[odr - 1];
-    LOG_INFO("MAIN", 0, "Starting run %d with ODR: %d Hz", runNumber, numOfSamples / 10);
+    uint32_t runtime = 10;
+    uint32_t odr     = 6;
+    // uint32_t odr          = micros() % 7 + 1;
+    uint32_t numOfSamples = (uint32_t)odrToNumOfSamples[odr - 1] * runtime;
+    LOG_INFO("MAIN", 0, "starting run %lu with %lu samples", runNumber, numOfSamples);
 
-    bool runDone = false;
-    IMUMGR_ConfigureRun(runNumber, numOfSamples, (ImuManagerOdr_t)odr, IMUMGR_ACCEL_FS_4G, IMUMGR_GYRO_FS_500DPS);
+    runOffset = 0;
+    IMUMGR_ConfigureRun(numOfSamples, (ImuManagerOdr_t)odr, IMUMGR_ACCEL_FS_4G, IMUMGR_GYRO_FS_500DPS);
     IMUMGR_StartRun();
 
+    bool runDone = false;
     while (!runDone) {
         while (!IMUMGR_IsDataReady()) { delay(1); }
         drained       = IMUMGR_DrainFifo();
@@ -75,13 +147,29 @@ void simulateOneRun() {
             runDone  = true;
             duration = millis() - startTs;
 
-            while (DAMGR_Count() > 0) {
-                DAMGR_Pop(buffer, 5);
-                popped += 5;
+            Serial.println("Run done");
+
+            WIFI_Wakeup();
+
+            if (WIFI_Connect()) {
+                Serial.println("WIFI connect");
+                if (MQTT_Connect()) {
+                    Serial.println("MQTT done");
+                    MqttStatus_t status = {millis(), 0};
+                    MQTT_PublishKeepalive(&status);
+
+                    while (DAMGR_Count() >= 0) {
+                        MQTT_PublishBatch(runNumber, runOffset);
+                        runOffset += MQTT_MODULE_BATCH_MAX;
+                    }
+
+                    MQTT_Disconnect();
+
+                    WIFI_Shutdown();
+                }
             }
         }
     }
 
-    LOG_INFO("MAIN", 0, "Run %d done. Duration: %d ms, Drained: %d, Popped: %d\n", runNumber, duration, totalDrained,
-             popped);
+    LOG_INFO("MAIN", 0, "run %lu done: %lu ms, %lu samples", runNumber, duration, totalDrained);
 }

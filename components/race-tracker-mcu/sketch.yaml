@@ -15,4 +15,5 @@ profiles:
     libraries:
       - STM32duino LSM6DSOX (2.3.4)
       - ESP_WiFiManager (1.12.1)
+      - PubSubClient (2.8.0)
 default_profile: profile-race-tracker

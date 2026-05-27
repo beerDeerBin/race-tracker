@@ -9,8 +9,10 @@
 //  Shared project data types
 // ---------------------------------------------------------------------------
 typedef struct {
-    uint32_t id;         // Id of the measurement
-    uint32_t offset;     // offset of this record from the start of the measurement session
-    float    ax, ay, az; // Accelerometer data in m/s²
-    float    gx, gy, gz; // Gyroscope data in rad/s
+    float ax, ay, az; // Accelerometer data in m/s²
+    float gx, gy, gz; // Gyroscope data in rad/s
 } SampleRecord_t;
+
+typedef struct {
+    uint16_t data[8];
+} Guid_t;
