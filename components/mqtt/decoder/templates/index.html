@@ -180,6 +180,7 @@
     <label>Device GUID</label>
     <input id="guid-input" type="text" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" spellcheck="false" />
     <button id="guid-btn" onclick="setGuid()">Connect</button>
+    <button id="disconnect-btn" onclick="disconnectGuid()" style="background:#7f1d1d;" disabled>Disconnect</button>
     <div id="guid-status" style="font-size:.78rem;color:#64748b"></div>
   </div>
 
@@ -212,6 +213,13 @@
         <h3>Connect (0x01)</h3>
         <div class="cmd-fields">
           <button onclick="sendConnect()">Send</button>
+        </div>
+      </div>
+
+      <div class="cmd-block">
+        <h3>Disconnect (0x03)</h3>
+        <div class="cmd-fields">
+          <button onclick="sendDisconnect()" style="background:#7f1d1d;">Send</button>
         </div>
       </div>
 
@@ -285,12 +293,28 @@
       if (json.ok) {
         el.textContent = "subscribed";
         el.style.color = "#4ade80";
+        document.getElementById("disconnect-btn").disabled = false;
         accelChart = gyroChart = null;
         document.getElementById("charts").innerHTML = '<div id="no-data">Waiting for data…</div>';
       } else {
         el.textContent = json.error;
         el.style.color = "#f87171";
       }
+    }
+
+    async function disconnectGuid() {
+      await fetch("/api/disconnect-guid", { method: "POST" });
+      document.getElementById("guid-input").value        = "";
+      document.getElementById("guid-status").textContent = "";
+      document.getElementById("disconnect-btn").disabled = true;
+      accelChart = gyroChart = null;
+      document.getElementById("charts").innerHTML = '<div id="no-data">Connect to a device to see data.</div>';
+      document.getElementById("run-id").textContent       = "—";
+      document.getElementById("sample-count").textContent = "0";
+      document.getElementById("uptime").textContent       = "—";
+      const badge = document.getElementById("state-badge");
+      badge.textContent = "idle"; badge.className = "";
+      updateKeepaliveLog([]);
     }
 
     document.getElementById("guid-input").addEventListener("keydown", e => { if (e.key === "Enter") setGuid(); });
@@ -420,9 +444,8 @@
       updateKeepaliveLog([]);
     }
 
-    function sendConnect() {
-      postCmd({ cmd: "connect" });
-    }
+    function sendConnect()    { postCmd({ cmd: "connect" }); }
+    function sendDisconnect() { postCmd({ cmd: "disconnect" }); }
 
     function sendStartRun() {
       postCmd({

@@ -7,9 +7,10 @@
 #define MQTT_TOPIC_CMD    "cmd"
 
 // Command type constants (internal)
-#define MQTT_CMD_NONE      0x00
-#define MQTT_CMD_CONNECT   0x01
-#define MQTT_CMD_START_RUN 0x02
+#define MQTT_CMD_NONE       0x00
+#define MQTT_CMD_CONNECT    0x01
+#define MQTT_CMD_START_RUN  0x02
+#define MQTT_CMD_DISCONNECT 0x03
 
 // Inbound: parsed start_run parameters (follows MQTT_CMD_START_RUN byte)
 typedef struct __attribute__((packed)) {

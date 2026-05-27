@@ -4,6 +4,8 @@
 #define TEST_RUN_ID      1
 #define TEST_NUM_SAMPLES 8330 // 10 seconds of data at 833Hz
 
+#define EEPROM_STATUS_PWR_TEST_PENDING (1 << 0)
+
 static uint32_t     runNumber = 0;
 static uint32_t     runOffset = 0;
 static EepromData_t eepromData;
@@ -19,6 +21,8 @@ void setup() {
     EEPROM_Read(&eepromData);
     WIFI_Init();
     MQTT_Init(&eepromData.guid);
+
+    testPower();
 }
 
 void loop() {
@@ -61,6 +65,53 @@ void loop() {
     }
 
     delay(1000 + millis() % 10);
+}
+
+void testPower() {
+    LOG_INFO("MAIN", 0, "--- power test begin ---");
+
+    // Battery readings
+    float   mv  = PWR_GetBatteryMv();
+    uint8_t pct = PWR_GetBatteryPct();
+    LOG_INFO("MAIN", 0, "battery: %.0f mV, %u%%", mv, pct);
+
+    // Power state
+    PwrState_t  state    = PWR_GetState();
+    const char* stateStr = (state == PWR_STATE_NORMAL)             ? "NORMAL"
+                           : (state == PWR_STATE_LOW_BATTERY)      ? "LOW"
+                           : (state == PWR_STATE_CRITICAL_BATTERY) ? "CRITICAL"
+                                                                   : "UNKNOWN";
+    LOG_INFO("MAIN", 0, "state: %s", stateStr);
+
+    // CPU frequency scaling
+    LOG_INFO("MAIN", 0, "scaling CPU to idle (%u MHz)...", PWR_CPU_FREQ_IDLE_MHZ);
+    PWR_SetCpuFreq(PWR_CPU_FREQ_IDLE_MHZ);
+    delay(200);
+    LOG_INFO("MAIN", 0, "scaling CPU to active (%u MHz)...", PWR_CPU_FREQ_ACTIVE_MHZ);
+    PWR_SetCpuFreq(PWR_CPU_FREQ_ACTIVE_MHZ);
+
+    // Light sleep — 500 ms, should resume here automatically
+    LOG_INFO("MAIN", 0, "light sleep 500 ms...");
+    PWR_LightSleep(500);
+    LOG_INFO("MAIN", 0, "woke from light sleep");
+
+    // Poll — forces a battery check regardless of interval
+    LOG_INFO("MAIN", 0, "manual poll...");
+    PWR_Poll();
+
+    // Deep sleep round-trip test — flag persists across reset in EEPROM
+    if (eepromData.status & EEPROM_STATUS_PWR_TEST_PENDING) {
+        LOG_INFO("MAIN", 0, "deep sleep round-trip: OK");
+        eepromData.status &= ~EEPROM_STATUS_PWR_TEST_PENDING;
+        EEPROM_Write(&eepromData);
+    } else {
+        LOG_INFO("MAIN", 0, "deep sleep 5000 ms...");
+        eepromData.status |= EEPROM_STATUS_PWR_TEST_PENDING;
+        EEPROM_Write(&eepromData);
+        PWR_DeepSleep(5000);
+    }
+
+    LOG_INFO("MAIN", 0, "--- power test end ---");
 }
 
 void testWifi() {

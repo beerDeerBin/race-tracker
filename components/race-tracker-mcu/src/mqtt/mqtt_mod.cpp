@@ -111,6 +111,8 @@ static void MQTT_OnMessage(char* topic, uint8_t* payload, unsigned int length) {
         LOG_INFO(MODULE_MQTT, MQTT_MODULE_NO_ERROR, "received start_run from FE");
     } else if (cmd == MQTT_CMD_CONNECT) {
         LOG_INFO(MODULE_MQTT, MQTT_MODULE_NO_ERROR, "received connect from FE");
+    } else if (cmd == MQTT_CMD_DISCONNECT) {
+        LOG_INFO(MODULE_MQTT, MQTT_MODULE_NO_ERROR, "received disconnect from FE");
     } else {
         LOG_WARNING(MODULE_MQTT, MQTT_MODULE_NO_ERROR, "received unknown command: 0x%02X", cmd);
         pMqttWorkVar->lastCmd = MQTT_CMD_NONE;

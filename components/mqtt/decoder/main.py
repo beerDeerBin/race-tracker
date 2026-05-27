@@ -13,8 +13,9 @@ BATCH_HDR_SIZE = struct.calcsize(BATCH_HDR_FMT)
 STATUS_FMT     = "<IBHB"   # uptimeMs, status, batteryMv, batteryPct
 STATUS_SIZE    = struct.calcsize(STATUS_FMT)
 
-CMD_CONNECT   = 0x01
-CMD_START_RUN = 0x02
+CMD_CONNECT    = 0x01
+CMD_START_RUN  = 0x02
+CMD_DISCONNECT = 0x03
 
 app = Flask(__name__)
 
@@ -122,6 +123,19 @@ def api_data():
         })
 
 
+@app.route("/api/disconnect-guid", methods=["POST"])
+def api_disconnect_guid():
+    global current_guid, last_run, last_status, keepalive_log
+    with _lock:
+        current_guid  = None
+        last_run      = {"runId": None, "records": []}
+        last_status   = {"uptimeMs": 0, "state": "idle", "batteryMv": 0, "batteryPct": 0}
+        keepalive_log = []
+    if _mqtt_client:
+        _mqtt_client.unsubscribe("rt/#")
+    return jsonify({"ok": True})
+
+
 @app.route("/api/reset", methods=["POST"])
 def api_reset():
     global last_run, last_status, keepalive_log
@@ -161,6 +175,8 @@ def api_send_cmd():
 
     if cmd == "connect":
         payload = struct.pack("B", CMD_CONNECT)
+    elif cmd == "disconnect":
+        payload = struct.pack("B", CMD_DISCONNECT)
     elif cmd == "start_run":
         run_id      = int(body["runId"])
         num_samples = int(body["numSamples"])
