@@ -1,7 +1,8 @@
 #pragma once
 
 // Internal work variables for the MQTT module
-typedef struct {
+typedef struct
+{
     char              clientId[48]; // "rt-<uuid>" — UUID is 36 chars, prefix 3, total 39
     char              dataTopic[48];
     char              statusTopic[48];

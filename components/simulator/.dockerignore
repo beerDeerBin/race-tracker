@@ -1,0 +1,5 @@
+*.md
+config.yaml
+config.local.yaml
+# keep vendor/ — it's how the offline build resolves deps
+

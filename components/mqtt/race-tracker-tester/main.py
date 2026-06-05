@@ -10,7 +10,7 @@ SAMPLE_FMT     = "<6f"
 SAMPLE_SIZE    = struct.calcsize(SAMPLE_FMT)
 BATCH_HDR_FMT  = "<8HII"  # Guid_t (8×uint16) + startOffset + count
 BATCH_HDR_SIZE = struct.calcsize(BATCH_HDR_FMT)
-STATUS_FMT     = "<IHBBII"  # uptimeMs, batteryMv, batteryPct, status, sampledCount, totalSamples
+STATUS_FMT     = "<IHBBIIQ"  # uptimeMs, batteryMv, batteryPct, status, sampledCount, totalSamples, errorCode
 STATUS_SIZE    = struct.calcsize(STATUS_FMT)
 
 CMD_CONNECT    = 0x01
@@ -18,14 +18,51 @@ CMD_START_RUN  = 0x02
 CMD_DISCONNECT = 0x03
 CMD_RESET      = 0x04
 
+# Named error codes from ErrorCodeValue_t (src/config.h), keyed by bit position.
+ERROR_CODES = {
+    0:  "EEPROM_PARAMETER_ERROR",
+    1:  "EEPROM_INIT_ERROR",
+    2:  "EEPROM_WRITE_ERROR",
+    8:  "WIFI_INIT_ERROR",
+    9:  "WIFI_CONNECT_ERROR",
+    10: "WIFI_SHUTDOWN_ERROR",
+    11: "WIFI_WAKEUP_ERROR",
+    12: "WIFI_SLEEP_ERROR",
+    16: "DAMGR_INIT_ERROR",
+    17: "DAMGR_ALLOC_ERROR",
+    18: "DAMGR_OVERFLOW_ERROR",
+    24: "MQTT_CONNECT_ERROR",
+    25: "MQTT_PUBLISH_ERROR",
+    26: "MQTT_SUBSCRIBE_ERROR",
+    32: "IMU_INIT_ERROR",
+    33: "IMU_CONFIG_ERROR",
+    34: "IMU_READ_ERROR",
+    35: "IMU_FIFO_ERROR",
+    40: "PWR_INIT_ERROR",
+    41: "PWR_ADC_ERROR",
+    42: "PWR_BATTERY_CRITICAL_ERROR",
+}
+
+
+def decode_errors(code: int) -> list:
+    if not code:
+        return []
+    return [name for bit, name in ERROR_CODES.items() if code & (1 << bit)]
+
 app = Flask(__name__)
+
+
+def _blank_status():
+    return {"uptimeMs": 0, "state": "idle", "batteryMv": 0, "batteryPct": 0,
+            "sampledCount": 0, "totalSamples": 0, "errorCode": 0, "errorNames": []}
+
 
 _lock        = threading.Lock()
 _mqtt_client = None
 
 current_guid  = None
 last_run      = {"runId": None, "records": []}
-last_status   = {"uptimeMs": 0, "state": "idle", "batteryMv": 0, "batteryPct": 0, "sampledCount": 0, "totalSamples": 0}
+last_status   = _blank_status()
 keepalive_log = []
 known_guids   = []   # ordered list, most-recently-seen first
 
@@ -72,10 +109,12 @@ _STATE_MAP = {0: "idle", 1: "connected", 2: "acquiring"}
 def decode_status(payload: bytes) -> None:
     if len(payload) < STATUS_SIZE:
         return
-    uptime_ms, battery_mv, battery_pct, status, sampled_count, total_samples = struct.unpack_from(STATUS_FMT, payload)
+    uptime_ms, battery_mv, battery_pct, status, sampled_count, total_samples, error_code = \
+        struct.unpack_from(STATUS_FMT, payload)
     state = _STATE_MAP.get(status, f"unknown({status})")
     entry = {"uptimeMs": uptime_ms, "state": state, "batteryMv": battery_mv, "batteryPct": battery_pct,
-             "sampledCount": sampled_count, "totalSamples": total_samples}
+             "sampledCount": sampled_count, "totalSamples": total_samples, "errorCode": error_code,
+             "errorNames": decode_errors(error_code)}
     with _lock:
         last_status.update(entry)
         keepalive_log.append(entry)
@@ -170,7 +209,7 @@ def api_disconnect_guid():
     with _lock:
         current_guid  = None
         last_run      = {"runId": None, "records": []}
-        last_status   = {"uptimeMs": 0, "state": "idle", "batteryMv": 0, "batteryPct": 0, "sampledCount": 0, "totalSamples": 0}
+        last_status   = _blank_status()
         keepalive_log = []
     if _mqtt_client:
         _mqtt_client.unsubscribe("rt/#")
@@ -183,7 +222,7 @@ def api_reset():
     global last_run, last_status, keepalive_log
     with _lock:
         last_run      = {"runId": None, "records": []}
-        last_status   = {"uptimeMs": 0, "state": "idle", "batteryMv": 0, "batteryPct": 0, "sampledCount": 0, "totalSamples": 0}
+        last_status   = _blank_status()
         keepalive_log = []
     return jsonify({"ok": True})
 
@@ -198,7 +237,7 @@ def api_set_guid():
     with _lock:
         current_guid  = guid
         last_run      = {"runId": None, "records": []}
-        last_status   = {"uptimeMs": 0, "state": "idle", "batteryMv": 0, "batteryPct": 0, "sampledCount": 0, "totalSamples": 0}
+        last_status   = _blank_status()
         keepalive_log = []
     if _mqtt_client:
         _resubscribe(_mqtt_client)

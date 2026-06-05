@@ -27,6 +27,17 @@ services:
       - mqttx-web-data:/usr/share/nginx/html/data
     restart: unless-stopped
 
+  race-tracker-simulator:
+    build: ../simulator
+    container_name: race-tracker-simulator
+    depends_on:
+      - mosquitto
+    volumes:
+      # Runtime config (seeded from config.example.yaml by the Tiltfile, editable
+      # live from the Tilt web UI). Edit simulator/config.yaml for >1 device.
+      - ../simulator/config.yaml:/app/config.yaml:ro
+    restart: unless-stopped
+
 volumes:
   mosquitto-data:
   mqttx-web-data:

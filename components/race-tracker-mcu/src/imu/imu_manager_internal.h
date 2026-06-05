@@ -1,14 +1,16 @@
 #pragma once
 
 // Internal work variables for the IMU manager
-typedef struct {
+typedef struct
+{
     uint32_t configuredNumberOfSamples;
     uint32_t currentSampleCount;
     float    xSensitivity;
     float    gSensitivity;
 } ImuManagerWorkVar_t;
 
-typedef struct {
+typedef struct
+{
     lsm6dsox_fifo_data_out_tag_t tag;
     int16_t                      x;
     int16_t                      y;
@@ -27,5 +29,5 @@ static float IMUMGR_GyroRawToRads(float mdps);
 #define IMUMGR_FIFO_TAG_GYRO  0x01
 #define IMUMGR_FIFO_TAG_ACCEL 0x02
 
-static void IMUMGR_Startup(void);
-static void IMUMGR_Shutdown(void);
+static ErrorCode_t IMUMGR_Startup(void);
+static ErrorCode_t IMUMGR_Shutdown(void);

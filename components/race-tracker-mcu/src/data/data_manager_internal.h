@@ -1,7 +1,8 @@
 #pragma once
 
 // Internal work variables for the Data manager
-typedef struct {
+typedef struct
+{
     SampleRecord_t*   pRingBuf;    // Ring buffer for storing sample records
     uint32_t          count;       // Number of records currently in the ring buffer
     uint32_t          headIdx;     // Index of the head of the ring buffer

@@ -1,231 +1,285 @@
-#include "../race-tracker-mcu/src/index.h"
+#include "src/index.h"
 #include <Arduino.h>
 
-#define MAIN_CMD_POLL_TIMEOUT_MS 1000
-#define MAIN_CMD_INTERVALL_MS    30000
+// Main loop tuning
+#define MAIN_STATUS_INTERVAL_MS 10000 // keepalive cadence while idle / connected
+#define MAIN_PROGRESS_MARKS     10    // evenly-spaced progress updates per acquisition run
+#define MAIN_LOOP_DELAY_MS      50    // idle pacing so the CPU can run minimal code between polls
 
+// ---------------------------------------------------------------------------
+//  Module-global state (RAM only — the device no longer deep sleeps)
+// ---------------------------------------------------------------------------
 static EepromData_t      eepromData;
 static SystemState_t     sysState = SYS_STATE_IDLE;
 static MqttCmdStartRun_t pendingRun;
 
+static ErrorCode_t gFaultCode    = NO_ERROR; // sticky accumulated faults, reported in the health message
+static uint32_t    gUptimeBaseMs = 0;        // millis() baseline; uptime = millis() - this (reset on RESET)
+static uint32_t    gLastStatusMs = 0;        // last keepalive timestamp
+static bool        gWasOnline    = false;    // tracks online edge so we publish once on (re)connect
+
 // ---------------------------------------------------------------------------
-//  State persistence helpers
+//  Error reporting helpers
 // ---------------------------------------------------------------------------
 
-static SystemState_t MAIN_GetStoredState(void) {
-    return eepromData.sysState;
+/**
+ * @brief Accumulates a fallible operation's result into the sticky fault code.
+ * @param code The ErrorCode_t returned by an operation.
+ */
+static void MAIN_Report(ErrorCode_t code)
+{
+    gFaultCode |= code;
 }
 
-static void MAIN_SaveState(SystemState_t s) {
-    eepromData.sysState = s;
-    EEPROM_Write(&eepromData);
+/**
+ * @brief Builds the error code reported in the health message: the sticky accumulated faults OR'd with any live
+ * condition flags (currently a critical battery).
+ * @return The combined ErrorCode_t bitmask.
+ */
+static ErrorCode_t MAIN_BuildErrorCode(void)
+{
+    ErrorCode_t code = gFaultCode;
+    if (PWR_GetState() == PWR_STATE_CRITICAL_BATTERY)
+    {
+        code |= PWR_BATTERY_CRITICAL_ERROR;
+    }
+    return code;
 }
 
 // ---------------------------------------------------------------------------
-//  Shared helpers
+//  Publishing helpers
 // ---------------------------------------------------------------------------
 
-static uint8_t MAIN_ConnectAndPoll(void) {
-    uint32_t deadline;
-    uint8_t  cmd;
-
-    PWR_Poll();
-
-    WIFI_Wakeup();
-
-    if (!WIFI_Connect()) {
-        MAIN_SleepCycle();
-        return MQTT_CMD_NONE;
-    }
-
-    if (!MQTT_Connect()) {
-        MAIN_SleepCycle();
-        return MQTT_CMD_NONE;
-    }
-
-    MAIN_PublishStatus(0, 0);
-
-    deadline = millis() + MAIN_CMD_POLL_TIMEOUT_MS;
-    cmd      = MQTT_CMD_NONE;
-    while (cmd == MQTT_CMD_NONE && millis() < deadline) {
-        cmd = MQTT_PollCommand(&pendingRun);
-        if (cmd == MQTT_CMD_NONE) delay(50);
-    }
-
-    return cmd;
-}
-
-static void MAIN_PublishStatus(uint32_t sampledCount, uint32_t totalSamples) {
+/**
+ * @brief Publishes a health/keepalive status message reflecting the current state, battery and error code.
+ * @param sampledCount Samples collected so far in the current run (0 outside a run).
+ * @param totalSamples Samples requested for the current run (0 outside a run).
+ */
+static void MAIN_PublishStatus(uint32_t sampledCount, uint32_t totalSamples)
+{
     MqttStatus_t status;
 
-    status.status       = (uint8_t)sysState;
-    status.uptimeMs     = eepromData.uptimeMs + millis();
+    status.uptimeMs     = millis() - gUptimeBaseMs;
     status.batteryMv    = (uint16_t)PWR_GetBatteryMv();
     status.batteryPct   = PWR_GetBatteryPct();
+    status.status       = (uint8_t)sysState;
     status.sampledCount = sampledCount;
     status.totalSamples = totalSamples;
+    status.errorCode    = MAIN_BuildErrorCode();
 
-    MQTT_PublishKeepalive(&status);
+    MAIN_Report(MQTT_PublishKeepalive(&status));
+    gLastStatusMs = millis();
+
+    gFaultCode = NO_ERROR; // clear the sticky fault code on each successful status publish
 }
 
-static void MAIN_SleepCycle(void) {
-    if (MQTT_IsConnected()) MQTT_Disconnect();
-    WIFI_Shutdown();
-    eepromData.uptimeMs      += millis();
-    eepromData.deepSleepFlag  = 1;
-    MAIN_SaveState(sysState);
-    PWR_DeepSleep(MAIN_CMD_INTERVALL_MS);
+// ---------------------------------------------------------------------------
+//  Connectivity
+// ---------------------------------------------------------------------------
+
+/**
+ * @brief Ensures WiFi and the MQTT broker connection are up, reconnecting as needed. On the rising edge of becoming
+ * fully online it enables modem sleep and publishes an initial status.
+ * @return true if the device is fully online (WiFi + MQTT) after this call, false otherwise.
+ */
+static bool MAIN_EnsureOnline(void)
+{
+    if (!WIFI_IsConnected())
+    {
+        MAIN_Report(WIFI_Wakeup()); // set STA mode — WIFI_Init left the radio off (WIFI_OFF)
+        WIFI_Connect();
+    }
+    if (WIFI_IsConnected() && !MQTT_IsConnected())
+    {
+        MQTT_Connect();
+    }
+
+    bool online = WIFI_IsConnected() && MQTT_IsConnected();
+    if (online && !gWasOnline)
+    {
+        MAIN_Report(WIFI_EnableModemSleep());
+        MAIN_PublishStatus(0, 0);
+    }
+    gWasOnline = online;
+    return online;
 }
 
-static void MAIN_Reset(void) {
-    LOG_INFO("MAIN", 0, "reset: uptime cleared, -> IDLE");
-    eepromData.uptimeMs = 0;
-    sysState            = SYS_STATE_IDLE;
-    MAIN_SaveState(SYS_STATE_IDLE);
-    MAIN_PublishStatus(0, 0);
-}
+// ---------------------------------------------------------------------------
+//  State helpers
+// ---------------------------------------------------------------------------
 
-static bool MAIN_ValidateRun(void) {
-    if (PWR_GetState() == PWR_STATE_CRITICAL_BATTERY) {
-        LOG_WARNING("MAIN", 0, "run rejected: critical battery");
+/**
+ * @brief Validates that an acquisition run may start: battery must not be critical and the ring buffer must be empty.
+ * @return true if a run may start, false otherwise.
+ */
+static bool MAIN_ValidateRun(void)
+{
+    if (PWR_GetState() == PWR_STATE_CRITICAL_BATTERY)
+    {
         return false;
     }
-    if (DAMGR_Count() > 0) {
-        LOG_WARNING("MAIN", 0, "run rejected: data buffer not empty (%lu records)", DAMGR_Count());
+    if (DAMGR_Count() > 0)
+    {
         return false;
     }
     return true;
+}
+
+/**
+ * @brief Handles a RESET command: zeroes the uptime baseline and accumulated faults, returns to IDLE and publishes a
+ * fresh status. The GUID is not affected.
+ */
+static void MAIN_Reset(void)
+{
+    gUptimeBaseMs = millis();
+    gFaultCode    = NO_ERROR;
+    sysState      = SYS_STATE_IDLE;
+    MAIN_PublishStatus(0, 0);
+}
+
+// ---------------------------------------------------------------------------
+//  Acquisition
+// ---------------------------------------------------------------------------
+
+/**
+ * @brief Drives a single acquisition run to completion: configures and starts the IMU, drains the FIFO while publishing
+ * evenly-spaced progress updates, publishes the collected data in batches, then returns to the CONNECTED state. Blocks
+ * until the run finishes. (CPU stays at 80 MHz — switching frequency at runtime breaks the live WiFi connection.)
+ */
+static void MAIN_RunAcquiring(void)
+{
+    uint32_t totalDrained = 0;
+    uint32_t markIndex    = 1;
+    uint32_t nextMark;
+
+    MAIN_Report(WIFI_DisableModemSleep());
+
+    MAIN_Report(IMUMGR_ConfigureRun(pendingRun.numSamples, (ImuManagerOdr_t)pendingRun.odr,
+                                    (ImuManagerAccelRange_t)pendingRun.accelRange,
+                                    (ImuManagerGyroRange_t)pendingRun.gyroRange));
+    MAIN_Report(IMUMGR_StartRun());
+
+    nextMark = (uint64_t)pendingRun.numSamples * markIndex / MAIN_PROGRESS_MARKS;
+
+    while (totalDrained < pendingRun.numSamples)
+    {
+        while (!IMUMGR_IsDataReady())
+        {
+            delay(1);
+        }
+        totalDrained += IMUMGR_DrainFifo();
+
+        while (markIndex <= MAIN_PROGRESS_MARKS && totalDrained >= nextMark)
+        {
+            MAIN_PublishStatus(totalDrained, pendingRun.numSamples);
+            markIndex++;
+            nextMark = (uint64_t)pendingRun.numSamples * markIndex / MAIN_PROGRESS_MARKS;
+        }
+    }
+
+    MAIN_Report(IMUMGR_StopRun());
+
+    uint32_t runOffset = 0;
+    while (DAMGR_Count() > 0)
+    {
+        MAIN_Report(MQTT_PublishBatch(&pendingRun.runId, runOffset));
+        runOffset += MQTT_MODULE_BATCH_MAX;
+    }
+
+    MAIN_Report(WIFI_EnableModemSleep());
+
+    sysState = SYS_STATE_CONNECTED;
+    MAIN_PublishStatus(totalDrained, pendingRun.numSamples);
 }
 
 // ---------------------------------------------------------------------------
 //  State handlers
 // ---------------------------------------------------------------------------
 
-static void MAIN_RunIdle(void) {
-    uint8_t cmd;
-
-    cmd = MAIN_ConnectAndPoll();
-
-    if (cmd == MQTT_CMD_CONNECT) {
-        LOG_INFO("MAIN", 0, "-> CONNECTED");
+/**
+ * @brief Handles a polled command while in the IDLE state.
+ * @param cmd The command code returned by MQTT_PollCommand.
+ */
+static void MAIN_HandleIdle(uint8_t cmd)
+{
+    if (cmd == MQTT_CMD_CONNECT)
+    {
         sysState = SYS_STATE_CONNECTED;
         MAIN_PublishStatus(0, 0);
-    } else if (cmd == MQTT_CMD_RESET) {
-        MAIN_Reset();
-    } else if (cmd != MQTT_CMD_NONE) {
-        LOG_WARNING("MAIN", 0, "command 0x%02X ignored in IDLE", cmd);
     }
-
-    MAIN_SleepCycle();
+    else if (cmd == MQTT_CMD_RESET)
+    {
+        MAIN_Reset();
+    }
 }
 
-static void MAIN_RunConnected(void) {
-    uint8_t cmd;
-
-    cmd = MAIN_ConnectAndPoll();
-
-    if (cmd == MQTT_CMD_START_RUN) {
-        if (MAIN_ValidateRun()) {
-            LOG_INFO("MAIN", 0, "run validated, -> ACQUIRING");
+/**
+ * @brief Handles a polled command while in the CONNECTED state.
+ * @param cmd The command code returned by MQTT_PollCommand.
+ */
+static void MAIN_HandleConnected(uint8_t cmd)
+{
+    if (cmd == MQTT_CMD_START_RUN)
+    {
+        if (MAIN_ValidateRun())
+        {
             sysState = SYS_STATE_ACQUIRING;
-            return; // keep WiFi/MQTT alive — go straight into acquiring
         }
-        LOG_WARNING("MAIN", 0, "run rejected, staying CONNECTED");
-    } else if (cmd == MQTT_CMD_DISCONNECT) {
-        LOG_INFO("MAIN", 0, "-> IDLE");
+    }
+    else if (cmd == MQTT_CMD_DISCONNECT)
+    {
         sysState = SYS_STATE_IDLE;
         MAIN_PublishStatus(0, 0);
-    } else if (cmd == MQTT_CMD_RESET) {
+    }
+    else if (cmd == MQTT_CMD_RESET)
+    {
         MAIN_Reset();
-    } else if (cmd != MQTT_CMD_NONE) {
-        LOG_WARNING("MAIN", 0, "command 0x%02X ignored in CONNECTED", cmd);
     }
-
-    MAIN_SleepCycle();
-}
-
-static void MAIN_RunAcquiring(void) {
-    uint32_t totalDrained;
-    uint32_t lastStatusMs;
-    uint32_t runOffset;
-
-    totalDrained = 0;
-    lastStatusMs = 0;
-    runOffset    = 0;
-
-    IMUMGR_ConfigureRun(pendingRun.numSamples, (ImuManagerOdr_t)pendingRun.odr,
-                        (ImuManagerAccelRange_t)pendingRun.accelRange, (ImuManagerGyroRange_t)pendingRun.gyroRange);
-    IMUMGR_StartRun();
-    WIFI_EnableModemSleep();
-
-    LOG_INFO("MAIN", 0, "acquiring: runId=%04X%04X..., samples=%lu", pendingRun.runId.data[0], pendingRun.runId.data[1],
-             pendingRun.numSamples);
-
-    while (totalDrained < pendingRun.numSamples) {
-        while (!IMUMGR_IsDataReady()) { delay(1); }
-        totalDrained += IMUMGR_DrainFifo();
-
-        if (millis() - lastStatusMs >= 1000) {
-            lastStatusMs = millis();
-            WIFI_DisableModemSleep();
-            MAIN_PublishStatus(totalDrained, pendingRun.numSamples);
-            WIFI_EnableModemSleep();
-        }
-    }
-
-    LOG_INFO("MAIN", 0, "run done: %lu samples, publishing batches", totalDrained);
-
-    WIFI_DisableModemSleep();
-    runOffset = 0;
-    while (DAMGR_Count() > 0) {
-        MQTT_PublishBatch(&pendingRun.runId, runOffset);
-        runOffset += MQTT_MODULE_BATCH_MAX;
-    }
-
-    sysState = SYS_STATE_CONNECTED;
-    MAIN_PublishStatus(totalDrained, pendingRun.numSamples);
-    MAIN_SleepCycle();
 }
 
 // ---------------------------------------------------------------------------
 //  Arduino entry points
 // ---------------------------------------------------------------------------
 
-void setup() {
-    const char* stateStr;
-    bool        validWakeup;
-
-    LOG_Init();
+void setup()
+{
     PWR_Init();
-    EEPROM_Init();
-    DAMGR_Init();
-    IMUMGR_Init();
-    EEPROM_Read(&eepromData);
-    WIFI_Init();
-    MQTT_Init(&eepromData.guid);
+    PWR_SetCpuFreq(PWR_CPU_FREQ_IDLE_MHZ); // set the fixed frequency once, before WiFi comes up
 
-    validWakeup = eepromData.deepSleepFlag && PWR_WokeFromDeepSleep();
-    if (!validWakeup) {
-        LOG_INFO("MAIN", 0, "fresh boot — resetting state and uptime");
-        eepromData.sysState = SYS_STATE_IDLE;
-        eepromData.uptimeMs = 0;
-    } else {
-        eepromData.uptimeMs += MAIN_CMD_INTERVALL_MS;
-    }
+    MAIN_Report(EEPROM_Init());
+    MAIN_Report(DAMGR_Init());
+    MAIN_Report(IMUMGR_Init());
+    MAIN_Report(EEPROM_Read(&eepromData));
+    MAIN_Report(WIFI_Init());
+    MAIN_Report(MQTT_Init(&eepromData.guid));
 
-    eepromData.deepSleepFlag = 0;
-
-    sysState = MAIN_GetStoredState();
-    if (sysState == SYS_STATE_ACQUIRING) sysState = SYS_STATE_CONNECTED;
-
-    stateStr = sysState == SYS_STATE_IDLE ? "IDLE" : "CONNECTED";
-    LOG_INFO("MAIN", 0, "state: %s, uptime: %lu ms", stateStr, eepromData.uptimeMs);
+    gUptimeBaseMs = millis();
+    gLastStatusMs = millis();
 }
 
-void loop() {
-    switch (sysState) {
-        case SYS_STATE_IDLE     : MAIN_RunIdle(); break;
-        case SYS_STATE_CONNECTED: MAIN_RunConnected(); break;
+void loop()
+{
+    PWR_Poll();
+
+    if (!MAIN_EnsureOnline())
+    {
+        delay(MAIN_LOOP_DELAY_MS);
+        return;
+    }
+
+    uint8_t cmd = MQTT_PollCommand(&pendingRun);
+
+    switch (sysState)
+    {
+        case SYS_STATE_IDLE     : MAIN_HandleIdle(cmd); break;
+        case SYS_STATE_CONNECTED: MAIN_HandleConnected(cmd); break;
         case SYS_STATE_ACQUIRING: MAIN_RunAcquiring(); break;
     }
+
+    if (sysState != SYS_STATE_ACQUIRING && (millis() - gLastStatusMs) >= MAIN_STATUS_INTERVAL_MS)
+    {
+        MAIN_PublishStatus(0, 0);
+    }
+
+    delay(MAIN_LOOP_DELAY_MS);
 }

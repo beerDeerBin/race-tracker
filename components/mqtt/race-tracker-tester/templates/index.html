@@ -218,6 +218,19 @@
 
     .sent-entry .sent-cmd { color: #94a3b8; font-weight: 600; }
     .sent-entry .sent-time { font-size: .68rem; color: #475569; }
+
+    /* ── error badges ── */
+    .err-ok { color: #4ade80; }
+    .err-badges { display: inline-flex; flex-wrap: wrap; gap: 4px; }
+    .err-badge {
+      display: inline-block;
+      background: #450a0a;
+      color: #f87171;
+      border-radius: 4px;
+      font-size: .68rem;
+      padding: 1px 6px;
+      white-space: nowrap;
+    }
   </style>
 </head>
 <body>
@@ -236,7 +249,9 @@
   <div id="status-bar">
     <span>Run <strong id="run-id">—</strong></span>
     <span><strong id="sample-count">0</strong> samples</span>
+    <span id="progress-wrap" style="display:none">Acquiring <strong id="progress-val">—</strong></span>
     <span>Uptime <strong id="uptime">—</strong></span>
+    <span>Err <strong id="err-code">—</strong></span>
     <span id="state-badge">idle</span>
     <button id="reset-btn" onclick="resetData()" style="margin-left:auto;background:#7f1d1d;">Reset</button>
   </div>
@@ -257,10 +272,11 @@
             <th>State</th>
             <th>Battery</th>
             <th>Sampled</th>
+            <th>Error</th>
           </tr>
         </thead>
         <tbody id="keepalive-body">
-          <tr><td colspan="4" id="no-keepalive">No keepalives yet.</td></tr>
+          <tr><td colspan="5" id="no-keepalive">No keepalives yet.</td></tr>
         </tbody>
       </table>
     </div>
@@ -358,6 +374,14 @@
     const MAX_SENT  = 8;
     const sentQueue = [];
 
+    function fmtErrNames(names, rawHex) {
+      if (!names || !names.length) return '<span class="err-ok">OK</span>';
+      const title = "0x" + rawHex.toString(16);
+      return '<span class="err-badges" title="' + title + '">' +
+        names.map(n => '<span class="err-badge">' + n + '</span>').join("") +
+        '</span>';
+    }
+
     function fmtUptime(ms) {
       if (!ms) return "—";
       const s = Math.floor(ms / 1000);
@@ -405,6 +429,8 @@
       document.getElementById("run-id").textContent       = "—";
       document.getElementById("sample-count").textContent = "0";
       document.getElementById("uptime").textContent       = "—";
+      document.getElementById("err-code").innerHTML        = "—";
+      document.getElementById("progress-wrap").style.display = "none";
       const badge = document.getElementById("state-badge");
       badge.textContent = "idle"; badge.className = "";
       updateKeepaliveLog([]);
@@ -466,7 +492,7 @@
     function updateKeepaliveLog(entries) {
       const tbody = document.getElementById("keepalive-body");
       if (!entries.length) {
-        tbody.innerHTML = '<tr><td colspan="4" id="no-keepalive">No keepalives yet.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" id="no-keepalive">No keepalives yet.</td></tr>';
         return;
       }
       tbody.innerHTML = [...entries].reverse().map(e => `
@@ -475,6 +501,7 @@
           <td><span class="ka-state ${e.state}">${e.state}</span></td>
           <td>${e.batteryMv} mV &nbsp; ${e.batteryPct === 255 ? "—" : e.batteryPct + "%"}</td>
           <td>${e.totalSamples ? e.sampledCount + " / " + e.totalSamples : "—"}</td>
+          <td>${fmtErrNames(e.errorNames, e.errorCode)}</td>
         </tr>`).join("");
     }
 
@@ -493,6 +520,19 @@
         document.getElementById("run-id").textContent       = run.runId ?? "—";
         document.getElementById("sample-count").textContent = run.records.filter(Boolean).length;
         document.getElementById("uptime").textContent       = fmtUptime(status.uptimeMs);
+
+        const errEl = document.getElementById("err-code");
+        errEl.innerHTML = fmtErrNames(status.errorNames, status.errorCode);
+
+        // Live acquisition progress — the status message carries sampledCount/totalSamples
+        // during a run (the device sends ~10 of these), well before the end-of-run data batches.
+        const progWrap = document.getElementById("progress-wrap");
+        if (status.state === "acquiring" && status.totalSamples) {
+          progWrap.style.display = "";
+          document.getElementById("progress-val").textContent = status.sampledCount + " / " + status.totalSamples;
+        } else {
+          progWrap.style.display = "none";
+        }
 
         const badge = document.getElementById("state-badge");
         badge.textContent = status.state;
@@ -551,6 +591,8 @@
       document.getElementById("run-id").textContent       = "—";
       document.getElementById("sample-count").textContent = "0";
       document.getElementById("uptime").textContent       = "—";
+      document.getElementById("err-code").innerHTML        = "—";
+      document.getElementById("progress-wrap").style.display = "none";
       const badge = document.getElementById("state-badge");
       badge.textContent = "idle"; badge.className = "idle";
       updateKeepaliveLog([]);

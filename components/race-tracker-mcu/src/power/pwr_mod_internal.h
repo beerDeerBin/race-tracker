@@ -1,7 +1,8 @@
 #pragma once
 
 // Internal work variables for the power module
-typedef struct {
+typedef struct
+{
     PwrState_t state;
     float      lastVbatMv;
     uint32_t   currentCpuMhz;

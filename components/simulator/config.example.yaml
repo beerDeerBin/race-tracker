@@ -1,0 +1,63 @@
+# race-tracker MCU simulator — example config.
+#
+# Each device runs as an independent goroutine, mimics the ESP32 wake/sleep
+# cycle (publish status, listen 1s for a command, disconnect, sleep 30s), and
+# generates IMU samples on demand using its configured profile.
+#
+# Available profiles:
+#   stationary  — az=9.81, others 0. No params.
+#   circle      — constant centripetal accel + steady yaw.
+#                 params: radius_m, speed_mps
+#   straight    — constant cruise accel + periodic step impulses.
+#                 params: cruise_accel_mps2, bump_period_s, bump_accel_mps2,
+#                         bump_width_s
+#   track       — laps of straight/curve/straight/curve sectors.
+#                 params: lap_time_s, lap_count, straight_fraction, radius_m
+
+broker:
+  host: mosquitto
+  port: 1883
+  connect_timeout_ms: 5000
+
+# Default sleep between wake-ups (matches the real MCU's 30 s poll cadence).
+# Each device can override with its own `sleep_seconds:`. Shorten this during
+# manual testing if you don't want to wait 30 s between command windows.
+default_sleep_seconds: 30
+
+devices:
+  - guid: "00000000-0000-0000-0000-000000000001"
+    battery_mv: 4100
+    profile:
+      name: stationary
+
+  - guid: "00000000-0000-0000-0000-000000000002"
+    battery_mv: 3950
+    profile:
+      name: circle
+      params:
+        radius_m: 5
+        speed_mps: 8
+
+  - guid: "00000000-0000-0000-0000-000000000003"
+    battery_mv: 4050
+    sleep_seconds: 5   # this device wakes more often for quicker testing
+    inject_errors:
+      - IMU_READ_ERROR
+      - WIFI_SLEEP_ERROR
+    profile:
+      name: straight
+      params:
+        cruise_accel_mps2: 0.2
+        bump_period_s: 5
+        bump_accel_mps2: 3
+        bump_width_s: 0.1
+
+  - guid: "00000000-0000-0000-0000-000000000004"
+    battery_mv: 4000
+    profile:
+      name: track
+      params:
+        lap_time_s: 30
+        lap_count: 5
+        straight_fraction: 0.4
+        radius_m: 8
