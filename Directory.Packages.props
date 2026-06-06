@@ -33,6 +33,12 @@
     <PackageVersion Include="MQTTnet" Version="5.1.0.1559" />
   </ItemGroup>
 
+  <ItemGroup Label="Persistence adapters">
+    <!-- TimescaleDB/PostgreSQL access for TP-PERS (/O10/). Raw ADO.NET client, in line
+         with this stack's no-heavy-framework philosophy; added in story 3.1/3.2. -->
+    <PackageVersion Include="Npgsql" Version="9.0.3" />
+  </ItemGroup>
+
   <ItemGroup Label="Microsoft.Extensions (pinned to the net9.0 band)">
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.16" />
     <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="9.0.16" />
@@ -51,6 +57,9 @@
     <!-- High-fidelity integration tests against real dependencies in throwaway
          containers (CONVENTIONS §7); story 2.2 uses it for a real Mosquitto broker. -->
     <PackageVersion Include="Testcontainers" Version="4.12.0" />
+    <!-- PostgreSQL module: robust wait strategy (retries a real query) for the
+         TimescaleDB migration test (story 3.1) — survives the init-time restart. -->
+    <PackageVersion Include="Testcontainers.PostgreSql" Version="4.12.0" />
   </ItemGroup>
 
 </Project>

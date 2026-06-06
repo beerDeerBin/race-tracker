@@ -136,7 +136,7 @@ veröffentlichen, damit nachgelagerte Services entkoppelt konsumieren können.*
 **Ziel:** Normalisierte Telemetrie landet validiert in TimescaleDB.
 **Voraussetzung:** M2 (echte RabbitMQ-Nachrichten fließen).
 
-### 3.1 — TimescaleDB + Schema/Migrations · **M**
+### 3.1 — TimescaleDB + Schema/Migrations · **M** · ✅ Erledigt
 *Als Entwickler möchte ich TimescaleDB mit Hypertable und Run-Metadaten-Schema
 hochfahren, damit Messdaten zeitreihen-effizient gespeichert werden können.*
 **Verweise:** `/F54/`, `/F55/`, §10.2
@@ -149,7 +149,7 @@ hochfahren, damit Messdaten zeitreihen-effizient gespeichert werden können.*
 > 📌 **Offen (später, /O80/):** ob das Outbox (M8) **dieselbe** PostgreSQL-Instanz
 > nutzt wie Timescale. *Vorerst außen vor — hier nur Timescale.*
 
-### 3.2 — Persistenz-Service-Grundgerüst · **M**
+### 3.2 — Persistenz-Service-Grundgerüst · **M** · ✅ Erledigt
 *Als Entwickler möchte ich den Persistenz-Service als 4-Schichten-Service mit
 Observability aufsetzen (Building-Blocks aus M2 wiederverwenden), damit Schreib-
 und Lesepfad darauf aufsetzen.*

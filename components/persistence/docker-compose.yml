@@ -1,0 +1,40 @@
+services:
+  timescaledb:
+    image: timescale/timescaledb:2.17.2-pg16   # PostgreSQL + TimescaleDB extension
+    container_name: race-tracker-timescaledb
+    ports:
+      - "5432:5432"   # psql / services connect here
+    environment:
+      POSTGRES_USER: race
+      POSTGRES_PASSWORD: race
+      POSTGRES_DB: racetracker
+    volumes:
+      - timescaledb-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U race -d racetracker"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  persistence:
+    build:
+      # Repo root so the Dockerfile can copy the hierarchical root build files
+      # (global.json, Directory.*.props, nuget.config) and the building-blocks project.
+      context: ../..
+      dockerfile: components/persistence/src/RaceTracker.Persistence.Api/Dockerfile
+    container_name: race-tracker-persistence
+    depends_on:
+      - rabbitmq
+      - timescaledb
+    ports:
+      - "8082:8080"   # health endpoints: http://localhost:8082/health/{live,ready}
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      # In-network dependency hostnames (override the appsettings defaults if needed).
+      Persistence__RabbitMq__Host: rabbitmq
+      Persistence__Timescale__Host: timescaledb
+    restart: unless-stopped
+
+volumes:
+  timescaledb-data:
