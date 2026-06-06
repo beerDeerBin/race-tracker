@@ -60,7 +60,7 @@ ab der echten Quelle gebaut.
 **Ziel:** Die Basis, auf der alle Services aufsetzen, steht real (Broker, Repo-
 Konventionen). **Voraussetzung:** bestehender Stand.
 
-### 1.1 — RabbitMQ in den Stack aufnehmen · **M**
+### 1.1 — RabbitMQ in den Stack aufnehmen · **M** · ✅ Erledigt
 *Als Entwickler möchte ich RabbitMQ über Tilt/Compose mit hochfahren, damit die
 Services einen echten internen Broker zum Anbinden haben.*
 **Verweise:** `/Z30/`, /TP-BROKER-AMQP/, §10.2
@@ -69,7 +69,7 @@ Services einen echten internen Broker zum Anbinden haben.*
 - RabbitMQ-Management-UI erreichbar (`:15672`), Broker auf `:5672`.
 - Vhost/Exchanges-Konvention dokumentiert (Topic-Exchange für Status & Daten).
 
-### 1.2 — Repo-/Solution-Konventionen festlegen · **M**
+### 1.2 — Repo-/Solution-Konventionen festlegen · **M** · ✅ Erledigt
 *Als Entwickler möchte ich die Solution-Struktur, Namens- und Layer-Konventionen
 einmal festlegen, damit kein späteres Umstrukturieren nötig wird.*
 **Verweise:** `/A10/`, `/A20/`, `/A40/`
@@ -92,7 +92,7 @@ einmal festlegen, damit kein späteres Umstrukturieren nötig wird.*
 **Ziel:** Echte binäre MQTT-Telemetrie wird dekodiert, normalisiert und an
 RabbitMQ republiziert. **Voraussetzung:** M1.
 
-### 2.1 — Gateway-Service-Grundgerüst · **M**
+### 2.1 — Gateway-Service-Grundgerüst · **M** · ✅ Erledigt
 *Als Entwickler möchte ich das Gateway als lauffähigen 4-Schichten-Service mit
 Observability aufsetzen, damit alle weiteren Gateway-Funktionen darauf aufsetzen.*
 **Verweise:** `/A20/`, `/A30/`, `/A40/`, `/A80/`
@@ -107,7 +107,7 @@ Observability aufsetzen, damit alle weiteren Gateway-Funktionen darauf aufsetzen
 > 📌 **Entscheidung hier (/O80/):** RabbitMQ-Bibliothek festlegen und konsistent
 > in allen folgenden Services verwenden.
 
-### 2.2 — MQTT abonnieren & binär dekodieren · **M**
+### 2.2 — MQTT abonnieren & binär dekodieren · **M** · ✅ Erledigt
 *Als System möchte ich Status- und Daten-Topics abonnieren und die gepackten
 Structs hinter einem `IDecoder`-Port dekodieren, damit aus rohen Bytes typisierte
 Messwerte werden.*

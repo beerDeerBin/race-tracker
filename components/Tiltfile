@@ -55,7 +55,10 @@ dc_resource(
     'gateway',
     labels=['services'],
     resource_deps=['mosquitto', 'rabbitmq'],
-    links=[link('http://localhost:8081/health/ready', 'Gateway readiness')],
+    links=[
+        link('http://localhost:8081/health/ready', 'Gateway readiness'),
+        link('http://localhost:8081/metrics', 'Gateway metrics'),
+    ],
 )
 
 # ── simulator ─────────────────────────────────────────────────────────────────

@@ -9,8 +9,8 @@ description: >-
   order, open /Oxx/ decisions, PROTOCOL.md where relevant), plans it in plan
   mode (always with unit tests, never e2e), saves the plan to doc/plans/ as a
   temporary working record, then on approval implements it and runs stack-aware
-  typecheck + lint + format + unit tests, and deletes the plan once the story is
-  done.
+  typecheck + lint + format + unit tests, marks the story done in
+  doc/USER_STORIES.md, and deletes the plan once the story is done.
 ---
 
 # plan-story
@@ -123,7 +123,7 @@ plan-approval tool (ExitPlanMode). The plan must contain, in English:
 After the plan is approved (and only then — Write is unavailable in plan mode),
 write it to `doc/plans/story-<number>.md` (e.g. `doc/plans/story-3.3.md`),
 creating `doc/plans/` if needed. This is a **temporary working record** for the
-build, **not** a permanent doc — it gets cleaned up in §7 once the story is done.
+build, **not** a permanent doc — it gets cleaned up in §8 once the story is done.
 
 ## 6. Implement, then verify
 
@@ -145,7 +145,17 @@ Run format first (so it can't fail the build), then typecheck/lint, then tests.
 Append a short **Verification result** section (pass/fail + command output
 summary) to the saved `doc/plans/story-<number>.md`.
 
-## 7. Clean up the plan (it's temporary — don't keep it permanently)
+## 7. Mark the story done in USER_STORIES.md
+
+Once the story is implemented **and** verification is green, mark it done in
+[doc/USER_STORIES.md](../../../doc/USER_STORIES.md): append ` · ✅ Erledigt` to
+that story's heading, so `### X.Y — Title · <Prio>` becomes
+`### X.Y — Title · <Prio> · ✅ Erledigt`. Edit **only** the target story's
+heading; leave every other story and the rest of the doc untouched. If the
+heading already carries the marker, leave it as is. Do this only when
+verification actually passed — never mark a story done on red or unfinished work.
+
+## 8. Clean up the plan (it's temporary — don't keep it permanently)
 
 The `doc/plans/story-<number>.md` file is a **scratch working record**, not a
 permanent artifact — the user does not want these kept long-term. Once the story
@@ -180,4 +190,5 @@ is fully implemented and verified, **delete the plan file** (and remove
 - **Backward-only dependencies** — assume lower-numbered stories are done; never pull work from a higher-numbered one.
 - **Match PROTOCOL.md byte-for-byte** for any wire-format work.
 - **Don't re-create the "einmalig festgezurrt" things** (GUID key, one-time contracts/DTOs, M5 generic CRUD, M6 realtime service) — define-once / reuse.
+- **Mark the story done only on green** — append ` · ✅ Erledigt` to the story's heading in USER_STORIES.md after verification passes; never on red or unfinished work, and never touch other stories' headings.
 - **The saved plan is temporary** — delete `doc/plans/story-<number>.md` once the story is implemented and verified (after `/review-story` if one is run); it isn't a permanent doc.
