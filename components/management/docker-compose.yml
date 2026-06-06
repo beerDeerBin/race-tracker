@@ -1,0 +1,34 @@
+services:
+  mongodb:
+    image: mongo:8.0   # document DB for TP-MGMT (User/Vehicle)
+    container_name: race-tracker-mongodb
+    ports:
+      - "27017:27017"   # mongosh / services connect here
+    volumes:
+      - mongodb-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  management:
+    build:
+      # Repo root so the Dockerfile can copy the hierarchical root build files
+      # (global.json, Directory.*.props, nuget.config) and the building-blocks project.
+      context: ../..
+      dockerfile: components/management/src/RaceTracker.Management.Api/Dockerfile
+    container_name: race-tracker-management
+    depends_on:
+      - mongodb
+    ports:
+      - "8083:8080"   # health endpoints: http://localhost:8083/health/{live,ready}
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      # In-network dependency hostname (overrides the appsettings default if needed).
+      Management__Mongo__Host: mongodb
+    restart: unless-stopped
+
+volumes:
+  mongodb-data:

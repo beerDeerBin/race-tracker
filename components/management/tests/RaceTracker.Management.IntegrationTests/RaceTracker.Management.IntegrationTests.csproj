@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <!-- Tests may relax the warnings-as-errors gate (doc/CONVENTIONS.md §7). -->
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <!-- Underscored Given_When_Then test names are the intended xUnit convention. -->
+    <NoWarn>$(NoWarn);CA1707</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\RaceTracker.Management.Infrastructure\RaceTracker.Management.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="Shouldly" />
+    <PackageReference Include="coverlet.collector" />
+    <!-- Spins up a real MongoDB in a throwaway container for the connectivity-probe test. -->
+    <PackageReference Include="Testcontainers.MongoDb" />
+    <!-- Builds the real MongoClient handed to the connectivity probe under test. -->
+    <PackageReference Include="MongoDB.Driver" />
+  </ItemGroup>
+
+</Project>

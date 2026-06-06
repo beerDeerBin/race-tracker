@@ -31,6 +31,7 @@ docker_compose([
     './rabbitmq/docker-compose.yml',
     './gateway/docker-compose.yml',
     './persistence/docker-compose.yml',
+    './management/docker-compose.yml',
 ])
 
 # ── brokers ─────────────────────────────────────────────────────────────────
@@ -54,6 +55,9 @@ dc_resource(
 # TimescaleDB (PostgreSQL): time-series store for samples + run metadata (TP-PERS).
 dc_resource('timescaledb', labels=['datastore'])
 
+# MongoDB: document store for the management domain entities (User/Vehicle, TP-MGMT).
+dc_resource('mongodb', labels=['datastore'])
+
 # ── services ──────────────────────────────────────────────────────────────────
 # TP-GW: ingestion gateway. Readiness (/health/ready) gates on MQTT + RabbitMQ.
 dc_resource(
@@ -75,6 +79,17 @@ dc_resource(
     links=[
         link('http://localhost:8082/health/ready', 'Persistence readiness'),
         link('http://localhost:8082/graphql', 'Persistence GraphQL'),
+    ],
+)
+
+# TP-MGMT: management service. Readiness (/health/ready) gates on MongoDB reachability.
+dc_resource(
+    'management',
+    labels=['services'],
+    resource_deps=['mongodb'],
+    links=[
+        link('http://localhost:8083/health/ready', 'Management readiness'),
+        link('http://localhost:8083/metrics', 'Management metrics'),
     ],
 )
 

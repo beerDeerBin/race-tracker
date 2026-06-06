@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Plain models, entities, enums, domain rules. Zero external dependencies (/A20/). -->
+
+</Project>

@@ -228,7 +228,7 @@ Simulation anzeigen kann, ohne im Frontend zu rechnen.*
 Discovery), MQTT-Quelle (für Kommandos). *(Unabhängig von M3/M4 — steht hier wegen
 der Gesamtreihenfolge.)*
 
-### 5.1 — MongoDB + Management-Service-Grundgerüst · **M**
+### 5.1 — MongoDB + Management-Service-Grundgerüst · **M** · ✅ Erledigt
 *Als Entwickler möchte ich den Management-Service (4 Schichten) mit MongoDB-
 Anbindung aufsetzen, damit User/Vehicle darauf aufbauen.*
 **Verweise:** `/A20/`, `/A80/`, §10.2
