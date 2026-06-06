@@ -19,6 +19,10 @@ public sealed partial class NpgsqlDatabaseMigrator : IDatabaseMigrator
     // Embedded-resource names look like "<RootNamespace>.Migrations.Sql.V001__*.sql".
     private const string SqlResourceMarker = ".Migrations.Sql.";
 
+    // A script whose first line carries this marker is applied outside a transaction —
+    // TimescaleDB forbids creating a continuous aggregate inside a transaction block (story 4.2).
+    private const string NoTransactionMarker = "-- timescaledb:no-transaction";
+
     private readonly TimescaleOptions _options;
     private readonly ILogger<NpgsqlDatabaseMigrator> _logger;
 
@@ -84,21 +88,44 @@ public sealed partial class NpgsqlDatabaseMigrator : IDatabaseMigrator
     private static async Task ApplyAsync(
         NpgsqlConnection connection, string id, string sql, CancellationToken cancellationToken)
     {
+        // Most scripts run apply + record atomically in one transaction. A script can opt out with
+        // the no-transaction marker (continuous-aggregate creation cannot run in a transaction):
+        // it then runs auto-commit and the record insert follows separately — safe because such a
+        // script is idempotent on its own (CREATE MATERIALIZED VIEW IF NOT EXISTS). Such a script
+        // must be a single statement: Npgsql wraps a multi-statement command in an implicit
+        // transaction, which would defeat the marker.
+        if (RunsOutsideTransaction(sql))
+        {
+            await ExecuteAsync(connection, sql, transaction: null, cancellationToken);
+            await RecordAppliedAsync(connection, id, transaction: null, cancellationToken);
+            return;
+        }
+
         await using NpgsqlTransaction transaction = await connection.BeginTransactionAsync(cancellationToken);
-
-        await using (var script = new NpgsqlCommand(sql, connection, transaction))
-        {
-            await script.ExecuteNonQueryAsync(cancellationToken);
-        }
-
-        await using (var record = new NpgsqlCommand(
-            "INSERT INTO schema_migrations (id) VALUES (@id);", connection, transaction))
-        {
-            record.Parameters.AddWithValue("id", id);
-            await record.ExecuteNonQueryAsync(cancellationToken);
-        }
-
+        await ExecuteAsync(connection, sql, transaction, cancellationToken);
+        await RecordAppliedAsync(connection, id, transaction, cancellationToken);
         await transaction.CommitAsync(cancellationToken);
+    }
+
+    private static bool RunsOutsideTransaction(string sql)
+        => sql.AsSpan().TrimStart().StartsWith(NoTransactionMarker, StringComparison.Ordinal);
+
+    private static async Task ExecuteAsync(
+        NpgsqlConnection connection, string sql, NpgsqlTransaction? transaction,
+        CancellationToken cancellationToken)
+    {
+        await using var command = new NpgsqlCommand(sql, connection, transaction);
+        await command.ExecuteNonQueryAsync(cancellationToken);
+    }
+
+    private static async Task RecordAppliedAsync(
+        NpgsqlConnection connection, string id, NpgsqlTransaction? transaction,
+        CancellationToken cancellationToken)
+    {
+        await using var command = new NpgsqlCommand(
+            "INSERT INTO schema_migrations (id) VALUES (@id);", connection, transaction);
+        command.Parameters.AddWithValue("id", id);
+        await command.ExecuteNonQueryAsync(cancellationToken);
     }
 
     private static IEnumerable<(string Id, string Sql)> LoadScripts()

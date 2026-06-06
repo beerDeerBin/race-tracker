@@ -17,6 +17,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\RaceTracker.Persistence.Infrastructure\RaceTracker.Persistence.Infrastructure.csproj" />
+    <!-- Drives the GraphQL query resolvers (story 4.1) with a mocked read port. -->
+    <ProjectReference Include="..\..\src\RaceTracker.Persistence.Api\RaceTracker.Persistence.Api.csproj" />
   </ItemGroup>
 
   <ItemGroup>

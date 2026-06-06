@@ -11,10 +11,14 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\RaceTracker.Persistence.Infrastructure\RaceTracker.Persistence.Infrastructure.csproj" />
+    <!-- Executes real GraphQL queries through the query type against a real Timescale (story 4.1). -->
+    <ProjectReference Include="..\..\src\RaceTracker.Persistence.Api\RaceTracker.Persistence.Api.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <!-- HotChocolate request executor for the end-to-end GraphQL read test (story 4.1). -->
+    <PackageReference Include="HotChocolate.AspNetCore" />
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.runner.visualstudio" />
     <PackageReference Include="Shouldly" />

@@ -74,6 +74,7 @@ dc_resource(
     resource_deps=['rabbitmq', 'timescaledb'],
     links=[
         link('http://localhost:8082/health/ready', 'Persistence readiness'),
+        link('http://localhost:8082/graphql', 'Persistence GraphQL'),
     ],
 )
 

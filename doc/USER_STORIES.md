@@ -176,7 +176,7 @@ Timescale upserten, damit ein kompletter Lauf dauerhaft gespeichert ist.*
 **Ziel:** Gespeicherte Daten sind über GraphQL flexibel abfragbar.
 **Voraussetzung:** M3 (echte Daten liegen in Timescale).
 
-### 4.1 — GraphQL-Query-API (Read) · **M**
+### 4.1 — GraphQL-Query-API (Read) · **M** · ✅ Erledigt
 *Als Client möchte ich Samples und Läufe gezielt per GraphQL abfragen (Fahrzeug,
 Lauf, Zeitraum, Felder), damit ich genau die Daten bekomme, die ich brauche.*
 **Verweise:** `/F51/` (Read-Seite), `/F52/`, `/S30/`
@@ -185,7 +185,7 @@ Lauf, Zeitraum, Felder), damit ich genau die Daten bekomme, die ich brauche.*
   `runId` mit Feld-/Zeitraum-Auswahl.
 - Read-Pfad ist vom Write-Pfad getrennt (CQRS-artig).
 
-### 4.2 — Roll-ups / Continuous Aggregates · **S**
+### 4.2 — Roll-ups / Continuous Aggregates · **S** · ✅ Erledigt
 *Als Client möchte ich vorberechnete, heruntergerechnete Sichten abfragen, damit
 Dashboards nicht über Rohdaten rechnen.*
 **Verweise:** `/F53/`, `/L40/`

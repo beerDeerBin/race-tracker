@@ -33,6 +33,12 @@
     <PackageVersion Include="MQTTnet" Version="5.1.0.1559" />
   </ItemGroup>
 
+  <ItemGroup Label="GraphQL (read API)">
+    <!-- /S30/, §10.2: GraphQL read API for TP-PERS. HotChocolate is the chosen library;
+         first introduced in story 4.1 (persistence read path). -->
+    <PackageVersion Include="HotChocolate.AspNetCore" Version="15.1.3" />
+  </ItemGroup>
+
   <ItemGroup Label="Persistence adapters">
     <!-- TimescaleDB/PostgreSQL access for TP-PERS (/O10/). Raw ADO.NET client, in line
          with this stack's no-heavy-framework philosophy; added in story 3.1/3.2. -->
