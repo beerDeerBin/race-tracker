@@ -48,6 +48,17 @@
     <PackageVersion Include="MongoDB.Driver" Version="3.9.0" />
   </ItemGroup>
 
+  <ItemGroup Label="Auth (TP-MGMT)">
+    <!-- /F11/, /F12/, §8 Sicherheit: single-user auth in story 5.2. JWT bearer
+         validation (Api) + token issuing (Infrastructure) and a strong adaptive
+         password hash. JwtBearer 9.0.16 transitively pins the Microsoft.IdentityModel
+         family to 8.0.1, so the issuer's JsonWebTokens reference is pinned to the same
+         8.0.1 to keep the IdentityModel assemblies a consistent set. -->
+    <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.16" />
+    <PackageVersion Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.0.1" />
+    <PackageVersion Include="BCrypt.Net-Next" Version="4.0.3" />
+  </ItemGroup>
+
   <ItemGroup Label="Microsoft.Extensions (pinned to the net9.0 band)">
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.16" />
     <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="9.0.16" />
@@ -71,6 +82,9 @@
     <PackageVersion Include="Testcontainers.PostgreSql" Version="4.12.0" />
     <!-- MongoDB module: throwaway Mongo for the management connectivity-probe test (story 5.1). -->
     <PackageVersion Include="Testcontainers.MongoDb" Version="4.12.0" />
+    <!-- In-memory TestServer (WebApplicationFactory) for the management auth pipeline
+         integration test (story 5.2): real login → 401/200 secure-by-default. -->
+    <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="9.0.16" />
   </ItemGroup>
 
 </Project>

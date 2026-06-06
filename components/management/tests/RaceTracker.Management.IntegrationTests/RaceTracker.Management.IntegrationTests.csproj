@@ -11,6 +11,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\RaceTracker.Management.Infrastructure\RaceTracker.Management.Infrastructure.csproj" />
+    <!-- The auth flow test hosts the real pipeline via WebApplicationFactory<Program>. -->
+    <ProjectReference Include="..\..\src\RaceTracker.Management.Api\RaceTracker.Management.Api.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -19,10 +21,12 @@
     <PackageReference Include="xunit.runner.visualstudio" />
     <PackageReference Include="Shouldly" />
     <PackageReference Include="coverlet.collector" />
-    <!-- Spins up a real MongoDB in a throwaway container for the connectivity-probe test. -->
+    <!-- Spins up a real MongoDB in a throwaway container for the connectivity-probe + auth tests. -->
     <PackageReference Include="Testcontainers.MongoDb" />
-    <!-- Builds the real MongoClient handed to the connectivity probe under test. -->
+    <!-- Builds the real MongoClient handed to the connectivity probe / test host. -->
     <PackageReference Include="MongoDB.Driver" />
+    <!-- In-memory TestServer hosting the real Program for the auth pipeline test (story 5.2). -->
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
   </ItemGroup>
 
 </Project>

@@ -235,7 +235,7 @@ Anbindung aufsetzen, damit User/Vehicle darauf aufbauen.*
 **AK:** MongoDB läuft in Tilt; Service startet, Health live/ready (Readiness prüft
 Mongo); Building-Blocks wiederverwendet.
 
-### 5.2 — Single-User-Auth (Login + secure-by-default) · **M**
+### 5.2 — Single-User-Auth (Login + secure-by-default) · **M** · ✅ Erledigt
 *Als Benutzer möchte ich mich mit dem seeded Konto anmelden und ein signiertes
 Token erhalten, damit geschützte Endpunkte nur mir offenstehen.*
 **Verweise:** `/F11/`, `/F12/`, `/D10/`, §8 Sicherheit
@@ -244,7 +244,7 @@ Token erhalten, damit geschützte Endpunkte nur mir offenstehen.*
 - Geschützter Endpunkt: ohne Token **401**, mit gültigem Token **200**
   (Fallback-Authorization-Policy, secure-by-default).
 
-### 5.3 — Fahrzeug-CRUD + generische Basisklassen + Registry · **M**
+### 5.3 — Fahrzeug-CRUD + generische Basisklassen + Registry · **M** · ✅ Erledigt
 *Als Benutzer möchte ich meine Fahrzeuge anlegen/auflisten/bearbeiten/löschen,
 damit ich sie verwalten kann; intern soll das über generische CRUD-Bausteine
 laufen.*

@@ -10,6 +10,9 @@
     <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" />
     <!-- Document-DB adapter (/O10/): connection + connectivity probe behind the port. -->
     <PackageReference Include="MongoDB.Driver" />
+    <!-- Auth adapters (story 5.2): adaptive password hash + signed JWT issuing (/F11/, §8). -->
+    <PackageReference Include="BCrypt.Net-Next" />
+    <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />
   </ItemGroup>
 
 </Project>

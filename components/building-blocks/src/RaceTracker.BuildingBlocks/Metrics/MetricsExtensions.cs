@@ -31,7 +31,9 @@ public static class MetricsExtensions
     /// <summary>Maps the Prometheus scraping endpoint (default <c>/metrics</c>).</summary>
     public static IEndpointRouteBuilder MapRaceTrackerMetrics(this IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapPrometheusScrapingEndpoint();
+        // AllowAnonymous keeps the scrape endpoint reachable under a secure-by-default fallback
+        // authorization policy (TP-MGMT, story 5.2); a no-op for services without authentication.
+        endpoints.MapPrometheusScrapingEndpoint().AllowAnonymous();
         return endpoints;
     }
 }

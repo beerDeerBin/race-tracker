@@ -27,17 +27,19 @@ public static class HealthEndpoints
 
     public static IEndpointRouteBuilder MapRaceTrackerHealthChecks(this IEndpointRouteBuilder endpoints)
     {
+        // AllowAnonymous keeps the probes reachable when a service runs a secure-by-default fallback
+        // authorization policy (TP-MGMT, story 5.2); a no-op for services without authentication.
         endpoints.MapHealthChecks("/health/live", new HealthCheckOptions
         {
             Predicate = LivenessPredicate,
             ResponseWriter = WriteResponseAsync,
-        });
+        }).AllowAnonymous();
 
         endpoints.MapHealthChecks("/health/ready", new HealthCheckOptions
         {
             Predicate = ReadinessPredicate,
             ResponseWriter = WriteResponseAsync,
-        });
+        }).AllowAnonymous();
 
         return endpoints;
     }

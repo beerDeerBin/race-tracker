@@ -8,4 +8,9 @@
     <ProjectReference Include="..\..\..\building-blocks\src\RaceTracker.BuildingBlocks\RaceTracker.BuildingBlocks.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Bearer-token validation for secure-by-default endpoints (story 5.2, /F11/, /F12/). -->
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
+  </ItemGroup>
+
 </Project>
