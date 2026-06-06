@@ -39,5 +39,4 @@ services:
     restart: unless-stopped
 
 volumes:
-  mosquitto-data:
   mqttx-web-data:
