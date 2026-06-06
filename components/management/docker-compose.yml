@@ -22,12 +22,16 @@ services:
     container_name: race-tracker-management
     depends_on:
       - mongodb
+      - rabbitmq
+      - mosquitto
     ports:
       - "8083:8080"   # health endpoints: http://localhost:8083/health/{live,ready}
     environment:
       ASPNETCORE_ENVIRONMENT: Production
-      # In-network dependency hostname (overrides the appsettings default if needed).
+      # In-network dependency hostnames (override the appsettings defaults if needed).
       Management__Mongo__Host: mongodb
+      Management__RabbitMq__Host: rabbitmq
+      Management__Mqtt__Host: mosquitto
     restart: unless-stopped
 
 volumes:

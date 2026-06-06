@@ -41,4 +41,26 @@ public sealed class VehiclesController
 
     protected override VehicleResponse ToResponse(Vehicle entity) => new(
         entity.Id, entity.Name, entity.Owner, entity.RegistrationStatus, entity.CreatedAt, entity.Metadata);
+
+    /// <summary>
+    /// Claims a discovered vehicle (story 5.4, <c>/F20/</c>): sets its name + owner and flips its
+    /// status to <see cref="RegistrationStatus.Registered"/>. Returns 404 when the GUID is unknown.
+    /// Reuses the generic single-commit CRUD boundary via <see cref="CrudControllerBase{T,T,T,T}.Service"/>.
+    /// </summary>
+    [HttpPost("{id}/claim")]
+    public async Task<ActionResult<VehicleResponse>> Claim(
+        string id, ClaimVehicleRequest request, CancellationToken cancellationToken)
+    {
+        Vehicle? claimed = await Service.UpdateAsync(id, existing =>
+        {
+            existing.Name = request.Name;
+            existing.Owner = string.IsNullOrWhiteSpace(request.Owner)
+                ? (User.Identity?.Name ?? existing.Owner)
+                : request.Owner;
+            existing.RegistrationStatus = RegistrationStatus.Registered;
+            return existing;
+        }, cancellationToken);
+
+        return claimed is null ? NotFound() : Ok(ToResponse(claimed));
+    }
 }

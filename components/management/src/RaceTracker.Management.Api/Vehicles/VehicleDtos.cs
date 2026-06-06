@@ -45,6 +45,20 @@ public sealed class UpdateVehicleRequest
     public Dictionary<string, string>? Metadata { get; init; }
 }
 
+/// <summary>
+/// Claim request (story 5.4, <c>/F20/</c>): names + takes ownership of a discovered <c>pending</c>
+/// vehicle, flipping it to <c>registered</c>. The GUID identity is in the route, not the payload.
+/// </summary>
+public sealed class ClaimVehicleRequest
+{
+    /// <summary>Display name to assign to the claimed vehicle.</summary>
+    [Required]
+    public string Name { get; init; } = "";
+
+    /// <summary>Owner reference; defaults to the authenticated user when omitted.</summary>
+    public string? Owner { get; init; }
+}
+
 /// <summary>The vehicle as returned to clients (<c>/D20/</c>).</summary>
 public sealed record VehicleResponse(
     string DeviceGuid,

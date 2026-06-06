@@ -1,8 +1,10 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using RaceTracker.Management.Application.Auth;
+using RaceTracker.Management.Application.Commands;
 using RaceTracker.Management.Application.Configuration;
 using RaceTracker.Management.Application.Crud;
+using RaceTracker.Management.Application.Discovery;
 using RaceTracker.Management.Application.Observability;
 
 namespace RaceTracker.Management.Application;
@@ -13,8 +15,9 @@ public static class ApplicationServiceCollectionExtensions
     /// Registers the Application layer: binds <see cref="ManagementOptions"/> + <see cref="AuthOptions"/>
     /// (/A40/), the shared <see cref="TimeProvider"/>, the metrics owner, the auth use case
     /// (<see cref="AuthenticationService"/>), the startup <see cref="UserSeeder"/> and the generic CRUD
-    /// use case (<see cref="CrudService{T}"/>, story 5.3). One DI extension per layer (/A30/). Further
-    /// use cases (discovery 5.4, command dispatch 5.5) are added here as they land.
+    /// use case (<see cref="CrudService{T}"/>, story 5.3), the device-discovery use case
+    /// (<see cref="DeviceDiscoveryService"/>, story 5.4) and the command-dispatch use case
+    /// (<see cref="CommandService"/>, story 5.5). One DI extension per layer (/A30/).
     /// </summary>
     public static IServiceCollection AddApplication(
         this IServiceCollection services, IConfiguration configuration)
@@ -33,6 +36,15 @@ public static class ApplicationServiceCollectionExtensions
         // Generic CRUD use case (/A70/): one open-generic registration serves every entity that
         // binds it (Vehicle today). Its IRepository<T>/IUnitOfWork ports are bound in Infrastructure.
         services.AddScoped(typeof(CrudService<>));
+
+        // Device-discovery use case (story 5.4): lazily registers unknown GUIDs as pending vehicles.
+        // Scoped because it reuses the scoped CrudService<Vehicle>; the hosted consumer resolves it
+        // per message from a fresh scope.
+        services.AddScoped<DeviceDiscoveryService>();
+
+        // Command-dispatch use case (story 5.5): encodes + publishes device commands over MQTT. Its
+        // ICommandEncoder/ICommandPublisher ports are bound to real adapters in Infrastructure.
+        services.AddScoped<CommandService>();
 
         return services;
     }

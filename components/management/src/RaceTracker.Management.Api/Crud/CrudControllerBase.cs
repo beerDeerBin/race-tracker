@@ -20,6 +20,13 @@ public abstract class CrudControllerBase<TEntity, TCreate, TUpdate, TResponse> :
 
     protected CrudControllerBase(CrudService<TEntity> service) => _service = service;
 
+    /// <summary>
+    /// The shared CRUD use case, exposed so a concrete controller can add entity-specific actions
+    /// (e.g. vehicle claim, story 5.4) that reuse the same single-commit boundary instead of taking a
+    /// second dependency on it.
+    /// </summary>
+    protected CrudService<TEntity> Service => _service;
+
     /// <summary>Builds a fresh entity from a create request (concrete controller owns the mapping).</summary>
     protected abstract TEntity ToEntity(TCreate request);
 

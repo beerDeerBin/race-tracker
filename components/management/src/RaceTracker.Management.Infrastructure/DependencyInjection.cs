@@ -6,6 +6,9 @@ using RaceTracker.Management.Application.Abstractions.Crud;
 using RaceTracker.Management.Application.Configuration;
 using RaceTracker.Management.Domain.Vehicles;
 using RaceTracker.Management.Infrastructure.Auth;
+using RaceTracker.Management.Infrastructure.Commands;
+using RaceTracker.Management.Infrastructure.Messaging;
+using RaceTracker.Management.Infrastructure.Mqtt;
 using RaceTracker.Management.Infrastructure.Persistence;
 using RaceTracker.Management.Infrastructure.Persistence.Crud;
 
@@ -16,9 +19,11 @@ public static class InfrastructureServiceCollectionExtensions
     /// <summary>
     /// Registers the Infrastructure layer: the shared <see cref="IMongoClient"/> (thread-safe and
     /// connection-pooled, so a single instance is reused) built from <see cref="MongoOptions"/>, the
-    /// real connectivity probe that backs the readiness check, the real auth adapters (user store,
-    /// password hasher, token issuer) and the generic CRUD adapters (<see cref="MongoRepository{T}"/> +
-    /// <see cref="MongoUnitOfWork"/>) bound to their Application ports (anti-stub). One DI extension per
+    /// real connectivity probes that back the readiness checks (Mongo + RabbitMQ), the real auth
+    /// adapters (user store, password hasher, token issuer), the generic CRUD adapters
+    /// (<see cref="MongoRepository{T}"/> + <see cref="MongoUnitOfWork"/>) bound to their Application
+    /// ports, the hosted status-event consumer that backs device discovery (anti-stub), and the real
+    /// command-encoder + MQTT command publisher for command dispatch (story 5.5). One DI extension per
     /// layer (/A30/); the health-check registration + tagging lives in the Api root.
     /// </summary>
     public static IServiceCollection AddInfrastructure(this IServiceCollection services)
@@ -37,6 +42,8 @@ public static class InfrastructureServiceCollectionExtensions
         });
 
         services.AddSingleton<IMongoConnectivityCheck, MongoConnectivityCheck>();
+        services.AddSingleton<IRabbitMqConnectivityCheck, RabbitMqConnectivityCheck>();
+        services.AddSingleton<IMqttConnectivityCheck, MqttConnectivityCheck>();
 
         // Auth ports → real adapters (/F11/, §8). All stateless or backed by the singleton Mongo
         // client, so a single instance is reused.
@@ -58,6 +65,14 @@ public static class InfrastructureServiceCollectionExtensions
             var database = provider.GetRequiredService<IOptions<ManagementOptions>>().Value.Mongo.Database;
             return client.GetDatabase(database).GetCollection<Vehicle>("vehicles");
         });
+
+        // Hosted status-event consumer (story 5.4, anti-stub): drives device discovery off rt.status.
+        services.AddHostedService<RabbitMqStatusConsumer>();
+
+        // Command dispatch (story 5.5): the binary encoder (pure) + the real MQTT publisher adapter.
+        // The publisher is a singleton so its persistent connection is reused across requests.
+        services.AddSingleton<ICommandEncoder, BinaryCommandEncoder>();
+        services.AddSingleton<ICommandPublisher, MqttCommandPublisher>();
 
         return services;
     }

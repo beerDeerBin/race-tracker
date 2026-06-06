@@ -10,6 +10,25 @@ public sealed class ManagementOptions
 
     /// <summary>Document store (MongoDB) for the management domain entities (User/Vehicle).</summary>
     public MongoOptions Mongo { get; init; } = new();
+
+    /// <summary>Internal service broker (RabbitMQ) — status-event source consumed for discovery (5.4).</summary>
+    public RabbitMqOptions RabbitMq { get; init; } = new();
+
+    /// <summary>Device transport (MQTT/Mosquitto) — command-dispatch target on <c>rt/&lt;guid&gt;/cmd</c> (5.5).</summary>
+    public MqttOptions Mqtt { get; init; } = new();
+
+    /// <summary>Status-event consumer topology + flow control for device discovery (5.4).</summary>
+    public DiscoveryOptions Discovery { get; init; } = new();
+}
+
+/// <summary>
+/// MQTT (Mosquitto) connection settings, mirroring the gateway's so both services point at the same
+/// device broker. Management connects to it as a <b>producer</b> to publish commands (5.5).
+/// </summary>
+public sealed class MqttOptions
+{
+    public string Host { get; init; } = "localhost";
+    public int Port { get; init; } = 1883;
 }
 
 /// <summary>
@@ -24,4 +43,40 @@ public sealed class MongoOptions
     public string Database { get; init; } = "racetracker";
     public string Username { get; init; } = "";
     public string Password { get; init; } = "";
+}
+
+/// <summary>
+/// RabbitMQ connection settings, mirroring the producer/consumer settings used by the gateway and
+/// persistence services so all services point at the same internal broker/vhost.
+/// </summary>
+public sealed class RabbitMqOptions
+{
+    public string Host { get; init; } = "localhost";
+    public int Port { get; init; } = 5672;
+    public string VirtualHost { get; init; } = "race-tracker";
+    public string Username { get; init; } = "race";
+    public string Password { get; init; } = "race";
+}
+
+/// <summary>
+/// Topology + flow control for the status-event consumer that backs device discovery (5.4). Binds a
+/// durable work queue to the <c>rt.status</c> topic exchange; poison messages dead-letter rather than
+/// requeue (§8 Zuverlässigkeit).
+/// </summary>
+public sealed class DiscoveryOptions
+{
+    /// <summary>Durable work queue bound to the <c>rt.status</c> exchange.</summary>
+    public string Queue { get; init; } = "rt.management.discovery";
+
+    /// <summary>Routing key the queue binds with (<c>#</c> = every device).</summary>
+    public string BindingKey { get; init; } = "#";
+
+    /// <summary>Dead-letter exchange for poison (parse/validation-failed) messages.</summary>
+    public string DeadLetterExchange { get; init; } = "rt.management.dlx";
+
+    /// <summary>Dead-letter queue bound to <see cref="DeadLetterExchange"/>.</summary>
+    public string DeadLetterQueue { get; init; } = "rt.management.dlq";
+
+    /// <summary>Unacked-message prefetch (QoS) — bounds in-flight work per consumer.</summary>
+    public ushort Prefetch { get; init; } = 32;
 }

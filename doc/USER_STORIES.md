@@ -255,7 +255,7 @@ laufen.*
 - REST-CRUD für Vehicle (mit `guid`, Name, Besitzer, Registrierungsstatus).
 - **Registry**-Endpoint liefert bekannte GUIDs → zugehöriges Fahrzeug.
 
-### 5.4 — Geräte-Discovery (pending) + Claim · **M**
+### 5.4 — Geräte-Discovery (pending) + Claim · **M** · ✅ Erledigt
 *Als Benutzer möchte ich, dass ein unbekanntes Gerät automatisch als „pending"
 auftaucht und ich es benennen/übernehmen kann, damit keine Daten verloren gehen
 und ich Geräte nicht blind abtippen muss.*
@@ -269,7 +269,7 @@ und ich Geräte nicht blind abtippen muss.*
 > Persistenz-Consumer sitzt (wer zuerst auf einer unbekannten GUID aufsetzt).
 > Aktuell: Management. *Lassen wir als Notiz stehen.*
 
-### 5.5 — Kommando-Versand (REST → MQTT) · **M**
+### 5.5 — Kommando-Versand (REST → MQTT) · **M** · ✅ Erledigt
 *Als Benutzer möchte ich ein Gerät verbinden, einen Lauf mit Parametern starten,
 trennen und zurücksetzen, damit ich Messungen steuere.*
 **Verweise:** `/F30/`, `/F31/`, `/F32/`, `/F33/`, `/F35/`, `/S10/`, `/D40/`
@@ -282,6 +282,11 @@ trennen und zurücksetzen, damit ich Messungen steuere.*
   ACQUIRING → Lauf endet → Daten liegen über die M2/M3-Pipeline in Timescale.
 - Geräteseitige Vorab-Validierung berücksichtigt (`/F35/`): Ablehnung ist nur über
   den Status sichtbar (kein NACK).
+
+> **Hinweis:** AK „End-to-End real" (START_RUN → Simulator → Timescale) ist die
+> **manuelle** Verifikation und wurde noch nicht ausgeführt (`tilt up` + Simulator +
+> Timescale erforderlich). Alle automatisiert prüfbaren AK sind durch Unit- und
+> Integrationstests abgedeckt.
 
 ---
 

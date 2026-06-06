@@ -27,6 +27,11 @@
     <PackageReference Include="MongoDB.Driver" />
     <!-- In-memory TestServer hosting the real Program for the auth pipeline test (story 5.2). -->
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+    <!-- Drives a real RabbitMQ broker (declare/bind/publish a status event) for the discovery test (5.4). -->
+    <PackageReference Include="Testcontainers" />
+    <PackageReference Include="RabbitMQ.Client" />
+    <!-- Subscribes to a real Mosquitto broker to assert the published command bytes (5.5). -->
+    <PackageReference Include="MQTTnet" />
   </ItemGroup>
 
 </Project>

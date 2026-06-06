@@ -82,11 +82,13 @@ dc_resource(
     ],
 )
 
-# TP-MGMT: management service. Readiness (/health/ready) gates on MongoDB reachability.
+# TP-MGMT: management service. Readiness (/health/ready) gates on MongoDB + RabbitMQ + MQTT; it
+# consumes status events from RabbitMQ for device discovery (story 5.4) and publishes commands to
+# devices over MQTT (story 5.5).
 dc_resource(
     'management',
     labels=['services'],
-    resource_deps=['mongodb'],
+    resource_deps=['mongodb', 'rabbitmq', 'mosquitto'],
     links=[
         link('http://localhost:8083/health/ready', 'Management readiness'),
         link('http://localhost:8083/metrics', 'Management metrics'),

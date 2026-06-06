@@ -38,11 +38,15 @@ builder.Services.AddAuthorizationBuilder()
     .SetFallbackPolicy(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build());
 
 // Readiness gates on real dependency reachability (anti-stub); liveness stays dependency-free.
+// Management consumes status events for discovery (5.4) and publishes commands over MQTT (5.5),
+// so it gates on MongoDB + RabbitMQ + MQTT.
 builder.Services.AddHealthChecks()
-    .AddCheck<MongoHealthCheck>("mongodb", tags: [HealthEndpoints.ReadyTag]);
+    .AddCheck<MongoHealthCheck>("mongodb", tags: [HealthEndpoints.ReadyTag])
+    .AddCheck<RabbitMqHealthCheck>("rabbitmq", tags: [HealthEndpoints.ReadyTag])
+    .AddCheck<MqttHealthCheck>("mqtt", tags: [HealthEndpoints.ReadyTag]);
 
 // Scrape-friendly metrics (§8) exposed at /metrics via the shared building block; the management
-// meter carries the generic CRUD counter from 5.3 (command counters land in 5.5).
+// meter carries the CRUD (5.3), discovery (5.4) and command-dispatch (5.5) counters.
 builder.Services.AddRaceTrackerMetrics(ManagementMetrics.MeterName);
 
 // MVC controllers host the generic CRUD surface (story 5.3, /A70/). Enums travel as their
