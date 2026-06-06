@@ -24,10 +24,19 @@ else:
         quiet=True,
     )
 
-docker_compose('./mqtt/docker-compose.yml')
+# Load the MQTT stack and the internal RabbitMQ broker as one merged Compose
+# project, so they share a network and future services can reach both brokers.
+docker_compose(['./mqtt/docker-compose.yml', './rabbitmq/docker-compose.yml'])
 
-# ── broker ────────────────────────────────────────────────────────────────────
+# ── brokers ─────────────────────────────────────────────────────────────────
+# Mosquitto = device transport (MQTT); RabbitMQ = internal service broker (AMQP).
 dc_resource('mosquitto', labels=['broker'])
+
+dc_resource(
+    'rabbitmq',
+    labels=['broker'],
+    links=[link('http://localhost:15672', 'RabbitMQ Management')],
+)
 
 dc_resource(
     'mqttx-web',

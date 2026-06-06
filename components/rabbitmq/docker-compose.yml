@@ -1,0 +1,25 @@
+services:
+  rabbitmq:
+    image: rabbitmq:4-management   # management plugin → UI on 15672
+    container_name: race-tracker-rabbitmq
+    ports:
+      - "5672:5672"    # AMQP (internal services connect here)
+      - "15672:15672"  # Management UI (browser)
+    environment:
+      # Dev-only credentials. A dedicated user (not the built-in `guest`) is
+      # required because RabbitMQ restricts `guest` to loopback — containerised
+      # services on the compose network must authenticate as a real user.
+      RABBITMQ_DEFAULT_USER: race
+      RABBITMQ_DEFAULT_PASS: race
+      RABBITMQ_DEFAULT_VHOST: race-tracker
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  rabbitmq-data:

@@ -7,9 +7,10 @@ description: >-
   number. Reads the story plus every cross-cutting part of the docs (guiding
   principles, Pflichtenheft references, architecture principles, dependency
   order, open /Oxx/ decisions, PROTOCOL.md where relevant), plans it in plan
-  mode (always with unit tests, never e2e), saves the plan to doc/plans/, then
-  on approval implements it and runs stack-aware typecheck + lint + format +
-  unit tests.
+  mode (always with unit tests, never e2e), saves the plan to doc/plans/ as a
+  temporary working record, then on approval implements it and runs stack-aware
+  typecheck + lint + format + unit tests, and deletes the plan once the story is
+  done.
 ---
 
 # plan-story
@@ -121,7 +122,8 @@ plan-approval tool (ExitPlanMode). The plan must contain, in English:
 
 After the plan is approved (and only then — Write is unavailable in plan mode),
 write it to `doc/plans/story-<number>.md` (e.g. `doc/plans/story-3.3.md`),
-creating `doc/plans/` if needed. This is the persistent record for the build.
+creating `doc/plans/` if needed. This is a **temporary working record** for the
+build, **not** a permanent doc — it gets cleaned up in §7 once the story is done.
 
 ## 6. Implement, then verify
 
@@ -142,6 +144,19 @@ verification runs once it exists.
 Run format first (so it can't fail the build), then typecheck/lint, then tests.
 Append a short **Verification result** section (pass/fail + command output
 summary) to the saved `doc/plans/story-<number>.md`.
+
+## 7. Clean up the plan (it's temporary — don't keep it permanently)
+
+The `doc/plans/story-<number>.md` file is a **scratch working record**, not a
+permanent artifact — the user does not want these kept long-term. Once the story
+is fully implemented and verified, **delete the plan file** (and remove
+`doc/plans/` if it's now empty).
+
+- If the user will run `/review-story <number>` next, that skill **reads and
+  updates this plan file**, so let the review run first and delete it **after**
+  the review — not before.
+- Tell the user you've deleted it (or, if a review is pending, that it will be
+  removed after the review).
 
 ## Reference — Pflichtenheft id → section
 
@@ -165,3 +180,4 @@ summary) to the saved `doc/plans/story-<number>.md`.
 - **Backward-only dependencies** — assume lower-numbered stories are done; never pull work from a higher-numbered one.
 - **Match PROTOCOL.md byte-for-byte** for any wire-format work.
 - **Don't re-create the "einmalig festgezurrt" things** (GUID key, one-time contracts/DTOs, M5 generic CRUD, M6 realtime service) — define-once / reuse.
+- **The saved plan is temporary** — delete `doc/plans/story-<number>.md` once the story is implemented and verified (after `/review-story` if one is run); it isn't a permanent doc.

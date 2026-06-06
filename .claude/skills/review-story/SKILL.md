@@ -9,7 +9,8 @@ description: >-
   Diffs the working tree (or branch vs main), reviews against the story's AK +
   saved plan and the project's architecture principles (stack-aware: .NET / TS),
   reports findings grouped by severity, ASKS which to apply before touching code,
-  then fixes the chosen ones and re-runs typecheck + lint + format + unit tests.
+  then fixes the chosen ones, re-runs typecheck + lint + format + unit tests, and
+  deletes the temporary plan file once the review is done.
 ---
 
 # review-story
@@ -145,7 +146,22 @@ raw command.
 
 Close with: what was found, what was applied, what you intentionally left (and
 why), and the verification status. If a story number was given and a plan file
-exists, append a short **Review result** section to `doc/plans/story-<number>.md`.
+exists, append a short **Review result** section to `doc/plans/story-<number>.md`
+as its closing entry — then clean the file up in §9.
+
+## 9. Clean up the plan (it's temporary — don't keep it permanently)
+
+`doc/plans/story-<number>.md` is a **scratch working record** the user does not
+keep long-term (it pairs with [plan-story](../plan-story/SKILL.md), which leaves
+it for this review to delete). As the **last step of the plan → implement →
+review lifecycle**, once the review is complete — chosen fixes applied and
+re-verified, summary delivered — **delete the plan file** (and remove
+`doc/plans/` if it's now empty), then tell the user you've removed it.
+
+- Only delete the plan for the **story you just reviewed**, and only after the
+  summary. If no number was passed or no plan file exists, there's nothing to
+  clean up — skip this step silently.
+- Don't delete anything else, and don't commit the deletion unless asked.
 
 ## Guardrails
 
@@ -155,3 +171,4 @@ exists, append a short **Review result** section to `doc/plans/story-<number>.md
 - **Match PROTOCOL.md byte-for-byte** for any wire-format code.
 - **Mocks only in unit tests; real adapters in product code.**
 - **No e2e tests.**
+- **The saved plan is temporary** — after the review, delete `doc/plans/story-<number>.md` (it isn't a permanent doc).
