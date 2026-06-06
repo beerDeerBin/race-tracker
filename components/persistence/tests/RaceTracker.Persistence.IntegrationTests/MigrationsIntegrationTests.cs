@@ -11,11 +11,11 @@ using Xunit;
 namespace RaceTracker.Persistence.IntegrationTests;
 
 /// <summary>
-/// High-fidelity test of the real service-owned schema migrations (story 3.1 + 4.2 AK) against a
-/// real TimescaleDB in a throwaway container — no mocks. It runs the actual
+/// High-fidelity test of the real service-owned schema migrations (story 3.1 + 4.2 + 4.3 AK)
+/// against a real TimescaleDB in a throwaway container — no mocks. It runs the actual
 /// <see cref="NpgsqlDatabaseMigrator"/> and asserts the hypertable, the run-metadata table
-/// and the keys exist, that the 4.2 roll-up continuous aggregate is created, and that re-running
-/// is idempotent. Requires Docker.
+/// and the keys exist, that the 4.2 roll-up continuous aggregate and the 4.3 derived trajectory
+/// table are created, and that re-running is idempotent. Requires Docker.
 /// </summary>
 public sealed class MigrationsIntegrationTests : IAsyncLifetime
 {
@@ -87,9 +87,14 @@ public sealed class MigrationsIntegrationTests : IAsyncLifetime
             + "WHERE view_name = 'samples_rollup';", cts.Token))
             .ShouldBe(1L);
 
-        // Each of the five migrations is recorded exactly once despite running twice.
+        // AK 4.3: the derived trajectory table exists (separate from the raw samples).
+        (await ScalarAsync(connection,
+            "SELECT to_regclass('public.trajectory_points')::text;", cts.Token))
+            .ShouldBe("trajectory_points");
+
+        // Each of the six migrations is recorded exactly once despite running twice.
         (await ScalarAsync(connection, "SELECT count(*) FROM schema_migrations;", cts.Token))
-            .ShouldBe(5L);
+            .ShouldBe(6L);
     }
 
     private static async Task<object?> ScalarAsync(

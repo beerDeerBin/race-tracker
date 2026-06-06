@@ -17,6 +17,8 @@ public sealed class PersistenceMetrics : IDisposable
     private readonly Counter<long> _batchesAcked;
     private readonly Counter<long> _batchesDeadLettered;
     private readonly Counter<long> _batchesRequeued;
+    private readonly Counter<long> _trajectoriesBuilt;
+    private readonly Counter<long> _trajectoryPointsWritten;
 
     public PersistenceMetrics()
     {
@@ -33,6 +35,12 @@ public sealed class PersistenceMetrics : IDisposable
         _batchesRequeued = _meter.CreateCounter<long>(
             "persistence.batches.requeued", unit: "{batch}",
             description: "Sample batches rejected with requeue after a transient failure.");
+        _trajectoriesBuilt = _meter.CreateCounter<long>(
+            "persistence.trajectories.built", unit: "{trajectory}",
+            description: "Run trajectories (re)built and persisted by the projection (story 4.3).");
+        _trajectoryPointsWritten = _meter.CreateCounter<long>(
+            "persistence.trajectory.points.written", unit: "{point}",
+            description: "Trajectory points written across all run rebuilds (story 4.3).");
     }
 
     /// <summary>Counts <paramref name="count"/> newly inserted samples for an acked batch.</summary>
@@ -46,6 +54,12 @@ public sealed class PersistenceMetrics : IDisposable
 
     /// <summary>Counts a batch requeued after a transient failure.</summary>
     public void BatchRequeued() => _batchesRequeued.Add(1);
+
+    /// <summary>Counts one run trajectory (re)built and persisted.</summary>
+    public void TrajectoryBuilt() => _trajectoriesBuilt.Add(1);
+
+    /// <summary>Counts <paramref name="count"/> trajectory points written for a rebuilt run.</summary>
+    public void TrajectoryPointsWritten(long count) => _trajectoryPointsWritten.Add(count);
 
     public void Dispose() => _meter.Dispose();
 }

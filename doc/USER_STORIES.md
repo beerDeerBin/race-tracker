@@ -192,7 +192,7 @@ Dashboards nicht über Rohdaten rechnen.*
 **AK:** Time-Bucket-Aggregate (z. B. Min/Max/Avg je Achse pro Bucket) als
 Continuous Aggregate; eigene GraphQL-Query liefert die Aggregatansicht.
 
-### 4.3 — Fahrstrecke aus Rohdaten berechnen (Dead Reckoning) + persistieren · **M**
+### 4.3 — Fahrstrecke aus Rohdaten berechnen (Dead Reckoning) + persistieren · **M** · ✅ Erledigt
 *Als Client möchte ich pro Lauf die gefahrene **2D-Strecke** abfragen, die aus den
 gespeicherten Rohdaten berechnet wurde, damit ich die Fahrt später als Karte/
 Simulation anzeigen kann, ohne im Frontend zu rechnen.*

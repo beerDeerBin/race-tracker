@@ -47,6 +47,37 @@ therefore partitioned on the **integer `sample_index`** dimension (no wall-clock
 Telemetry is keyed by `device_guid + run_id + sample_index` — the GUID is the cross-service
 correlation key, so there are **no foreign keys to other services' stores**.
 
+## Trajectory / Dead Reckoning (story 4.3)
+
+Per run we derive a **2D ground track** ("Fahrstrecke") from the stored samples so the
+frontend (7.9) can draw a map / play the run back **without computing anything client-side**.
+It is computed behind the swappable `ITrajectoryCalculator` port (adapter:
+`DeadReckoningTrajectoryCalculator`) and persisted into a derived `trajectory_points` table —
+the raw `samples` are **never** modified.
+
+| Object | Kind | Key columns |
+|---|---|---|
+| `trajectory_points` | Plain derived table | `device_guid`, `run_id`, `sample_index`, `t_seconds`, `x`, `y`, `heading` |
+
+**Algorithm.** With step `dt = 1 / odr_hz`: heading is the yaw rate `gz` integrated over time;
+the in-plane acceleration (`ax`, `ay`) is rotated into world coordinates by the heading and
+**double-integrated** (→ velocity → position). The vertical axis `az` (gravity) is ignored — this
+is a ground track. The first sample anchors the path at the **origin** (`(0,0)`, heading 0), and
+`t = sample_index / odr_hz`. Each point depends only on the samples up to it, so the result is
+**deterministic** and stable as more samples arrive.
+
+**Eager build, pure read.** A background `TrajectoryProjectionWorker` periodically rebuilds runs
+whose trajectory is stale (point count ≠ `received_samples`) once they have settled (no new batch
+for a short window) — so the end-of-run batch burst coalesces into a single deterministic recompute
+(`DELETE` + re-`INSERT`, idempotent). The GraphQL `trajectory(runId)` query is therefore a **pure
+read** of the derived table (optionally scoped/`stride`-downsampled). ODR is taken from the run, or
+falls back to **104 Hz** (PROTOCOL default) until 5.x plumbs the real value.
+
+> **Limitation.** Pure IMU dead reckoning **drifts**: double-integrating noisy acceleration
+> accumulates error without bound. The path is a plausible **approximation, not GPS**. A
+> drift-corrected / zero-velocity-update algorithm can replace the adapter behind the port with no
+> contract or schema change.
+
 ## Run & verify
 
 - `tilt up` brings up `timescaledb` + `persistence`; `/health/ready`
@@ -57,4 +88,4 @@ correlation key, so there are **no foreign keys to other services' stores**.
 ## Not here yet (later stories)
 
 Consumer → validate → idempotent upsert and the `Run`/`Sample` domain + repository → **3.3**.
-GraphQL read path → **4.1**. Roll-ups → **4.2**. Trajectory → **4.3**.
+GraphQL read path → **4.1**. Roll-ups → **4.2**. Trajectory → **4.3** (above).

@@ -60,4 +60,28 @@ public sealed class TelemetryQuery
             await readStore.GetRunRollupAsync(query, cancellationToken);
         return [.. buckets.Select(SampleRollupBucketDto.From)];
     }
+
+    /// <summary>
+    /// The run's pre-computed 2D dead-reckoning trajectory (story 4.3) as an ordered point sequence
+    /// <c>{ index, t, x, y, heading }</c> (first point at the origin). The path is derived + persisted
+    /// eagerly on the write side, so this is a <b>pure read</b>. Optionally scoped to a device and a
+    /// sample-index range, downsampled via <paramref name="stride"/>, and paged by
+    /// <paramref name="limit"/> (clamped by <see cref="TrajectoryQuery"/>).
+    /// </summary>
+    public async Task<IReadOnlyList<TrajectoryPointDto>> GetTrajectoryAsync(
+        Guid runId,
+        [Service] ITelemetryReadStore readStore,
+        CancellationToken cancellationToken,
+        Guid? deviceGuid = null,
+        long? fromIndex = null,
+        long? toIndex = null,
+        int? stride = null,
+        int? limit = null)
+    {
+        TrajectoryQuery query =
+            TrajectoryQuery.Create(runId, deviceGuid, fromIndex, toIndex, stride, limit);
+        IReadOnlyList<TrajectoryPoint> points =
+            await readStore.GetTrajectoryAsync(query, cancellationToken);
+        return [.. points.Select(TrajectoryPointDto.From)];
+    }
 }

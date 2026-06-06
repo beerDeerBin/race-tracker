@@ -16,6 +16,9 @@ public sealed class PersistenceOptions
 
     /// <summary>Sample-batch consumer topology + flow control (story 3.3).</summary>
     public ConsumerOptions Consumer { get; init; } = new();
+
+    /// <summary>Derived dead-reckoning trajectory projection (story 4.3).</summary>
+    public TrajectoryOptions Trajectory { get; init; } = new();
 }
 
 public sealed class RabbitMqOptions
@@ -43,6 +46,24 @@ public sealed class ConsumerOptions
 
     /// <summary>Unacked-message prefetch (QoS) — bounds in-flight work per consumer.</summary>
     public ushort Prefetch { get; init; } = 32;
+}
+
+public sealed class TrajectoryOptions
+{
+    /// <summary>
+    /// ODR (Hz) used to derive the time base and integration step when a run carries no
+    /// <c>odr_hz</c> yet (PROTOCOL default 104 Hz; replaced once 5.x plumbs the real ODR).
+    /// </summary>
+    public double DefaultOdrHz { get; init; } = 104;
+
+    /// <summary>How often the projection worker scans for stale runs.</summary>
+    public int RebuildIntervalSeconds { get; init; } = 3;
+
+    /// <summary>
+    /// How long a run must be quiet (no new batch upsert) before it is rebuilt, so the end-of-run
+    /// batch burst coalesces into a single recompute.
+    /// </summary>
+    public int SettleSeconds { get; init; } = 2;
 }
 
 public sealed class TimescaleOptions

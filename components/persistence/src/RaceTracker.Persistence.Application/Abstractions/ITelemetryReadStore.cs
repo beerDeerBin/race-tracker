@@ -26,4 +26,12 @@ public interface ITelemetryReadStore
     /// </summary>
     Task<IReadOnlyList<SampleRollupBucket>> GetRunRollupAsync(
         RollupQuery query, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Returns a run's pre-computed dead-reckoning trajectory (story 4.3) as an ordered point
+    /// sequence, read from the derived <c>trajectory_points</c> table (never recomputed here — pure
+    /// read), scoped, optionally downsampled and paged by <paramref name="query"/>.
+    /// </summary>
+    Task<IReadOnlyList<TrajectoryPoint>> GetTrajectoryAsync(
+        TrajectoryQuery query, CancellationToken cancellationToken);
 }

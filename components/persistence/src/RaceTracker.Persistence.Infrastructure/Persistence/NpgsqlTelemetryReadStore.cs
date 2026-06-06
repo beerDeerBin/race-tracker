@@ -106,6 +106,30 @@ public sealed class NpgsqlTelemetryReadStore : ITelemetryReadStore
         return buckets;
     }
 
+    public async Task<IReadOnlyList<TrajectoryPoint>> GetTrajectoryAsync(
+        TrajectoryQuery query, CancellationToken cancellationToken)
+    {
+        await using var connection = new NpgsqlConnection(_connectionString);
+        await connection.OpenAsync(cancellationToken);
+
+        await using var command = new NpgsqlCommand { Connection = connection };
+        command.CommandText = BuildTrajectorySql(query, command);
+
+        var points = new List<TrajectoryPoint>();
+        await using NpgsqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            points.Add(new TrajectoryPoint(
+                Index: reader.GetInt64(0),
+                T: reader.GetDouble(1),
+                X: reader.GetDouble(2),
+                Y: reader.GetDouble(3),
+                Heading: reader.GetDouble(4)));
+        }
+
+        return points;
+    }
+
     private static string BuildSamplesSql(SampleQuery query, NpgsqlCommand command)
     {
         var sql = new StringBuilder(
@@ -164,6 +188,44 @@ public sealed class NpgsqlTelemetryReadStore : ITelemetryReadStore
         }
 
         sql.Append(" ORDER BY bucket_start LIMIT @limit;");
+        command.Parameters.AddWithValue("limit", query.Limit);
+
+        return sql.ToString();
+    }
+
+    private static string BuildTrajectorySql(TrajectoryQuery query, NpgsqlCommand command)
+    {
+        // Column order must match the ordinals read in GetTrajectoryAsync.
+        var sql = new StringBuilder(
+            "SELECT sample_index, t_seconds, x, y, heading FROM trajectory_points WHERE run_id = @r");
+        command.Parameters.AddWithValue("r", query.RunId);
+
+        if (query.DeviceGuid is { } deviceGuid)
+        {
+            sql.Append(" AND device_guid = @g");
+            command.Parameters.AddWithValue("g", deviceGuid);
+        }
+
+        if (query.FromIndex is { } fromIndex)
+        {
+            sql.Append(" AND sample_index >= @from");
+            command.Parameters.AddWithValue("from", fromIndex);
+        }
+
+        if (query.ToIndex is { } toIndex)
+        {
+            sql.Append(" AND sample_index <= @to");
+            command.Parameters.AddWithValue("to", toIndex);
+        }
+
+        if (query.Stride > 1)
+        {
+            // Downsample to every stride-th point; index 0 is on a boundary so the origin is kept.
+            sql.Append(" AND sample_index % @stride = 0");
+            command.Parameters.AddWithValue("stride", (long)query.Stride);
+        }
+
+        sql.Append(" ORDER BY sample_index LIMIT @limit;");
         command.Parameters.AddWithValue("limit", query.Limit);
 
         return sql.ToString();
