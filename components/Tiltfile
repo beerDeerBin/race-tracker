@@ -3,231 +3,57 @@
 # Tilt web UI tips:
 #   • Every resource has an enable/disable toggle in the UI — use it to turn the
 #     simulator, tester, or mqttx client on/off without editing anything.
-#   • The `race-tracker-simulator` resource has four buttons:
-#       – Edit / Delete Device : pick an existing device from a dropdown, update or remove it
-#       – Add Device           : type a new GUID and configure it from scratch
-#       – Overall Config       : edit broker settings and default sleep, then restart
-#       – Restart              : restart the simulator with the current config unchanged
+#   • Open "Config Editor" under tooling to edit simulator/config.yaml in the browser.
 
-load('ext://uibutton', 'cmd_button', 'text_input', 'choice_input')
+# ── platform detection ────────────────────────────────────────────────────────
+# os.environ['OS'] == 'Windows_NT' on Windows; unset or different on Linux/Mac.
+_is_windows = os.environ.get('OS', '').lower() == 'windows_nt'
+_python = 'python' if _is_windows else 'python3'
 
-# The simulator reads simulator/config.yaml (bind-mounted into the container).
-# Seed it from the committed example on first run so the bind mount has a real
-# file to map (a missing source would be created as a directory by Docker).
-local(
-    'test -f simulator/config.yaml || cp simulator/config.example.yaml simulator/config.yaml',
-    quiet=True,
-)
+# ── seed config.yaml on first run ─────────────────────────────────────────────
+# The simulator bind-mounts this file; if the source is missing Docker would
+# create it as a directory instead of a file.
+if _is_windows:
+    local(
+        'if not exist simulator\\config.yaml copy simulator\\config.example.yaml simulator\\config.yaml',
+        quiet=True,
+    )
+else:
+    local(
+        'test -f simulator/config.yaml || cp simulator/config.example.yaml simulator/config.yaml',
+        quiet=True,
+    )
 
 docker_compose('./mqtt/docker-compose.yml')
 
-# ── broker ───────────────────────────────────────────────────────────────────
+# ── broker ────────────────────────────────────────────────────────────────────
 dc_resource('mosquitto', labels=['broker'])
 
-# ── tooling ──────────────────────────────────────────────────────────────────
 dc_resource(
     'mqttx-web',
-    labels=['tooling'],
+    labels=['broker'],
     links=[link('http://localhost:8080', 'MQTT Client')],
     resource_deps=['mosquitto'],
 )
 
-dc_resource(
-    'race-tracker-tester',
-    labels=['tooling'],
-    links=[link('http://localhost:5000', 'Data Viewer')],
-    resource_deps=['mosquitto'],
-)
-
-# ── simulator ────────────────────────────────────────────────────────────────
+# ── simulator ─────────────────────────────────────────────────────────────────
 dc_resource(
     'race-tracker-simulator',
     labels=['simulator'],
     resource_deps=['mosquitto'],
 )
 
-# Re-evaluate this file (refreshing device dropdowns) whenever config.yaml changes.
-# Requires pyyaml on the host: pip install pyyaml
-watch_file('simulator/config.yaml')
-
-_guids_raw = local(
-    'python3 -c "import yaml; cfg=yaml.safe_load(open(\'simulator/config.yaml\')) or {}; [print(d[\'guid\']) for d in cfg.get(\'devices\', [])]" 2>/dev/null',
-    quiet=True,
-)
-_device_guids = [g for g in str(_guids_raw).strip().split('\n') if g.strip()]
-_device_choices = _device_guids if _device_guids else ['(no devices configured)']
-
-# ── Edit / Delete: pick from dropdown of current devices ─────────────────────
-_edit_device_script = """
-set -e
-python3 - << 'PYEOF'
-import yaml, os
-
-config_path = 'simulator/config.yaml'
-with open(config_path) as f:
-    cfg = yaml.safe_load(f) or {}
-if 'devices' not in cfg:
-    cfg['devices'] = []
-
-action = os.environ['SIM_ACTION']
-guid = os.environ['SIM_GUID'].strip()
-
-if action == 'delete':
-    before = len(cfg['devices'])
-    cfg['devices'] = [d for d in cfg['devices'] if d.get('guid') != guid]
-    print('Removed {} device(s) with guid {}'.format(before - len(cfg['devices']), guid))
-else:
-    battery_mv = int((os.environ.get('SIM_BATTERY_MV') or '4100').strip())
-    sleep_raw = (os.environ.get('SIM_SLEEP_SECONDS') or '').strip()
-    inject_raw = (os.environ.get('SIM_INJECT_ERRORS') or '').strip()
-    profile_name = os.environ['SIM_PROFILE']
-    params_raw = (os.environ.get('SIM_PROFILE_PARAMS') or '').strip()
-
-    profile = {'name': profile_name}
-    if params_raw:
-        params = yaml.safe_load(params_raw)
-        if isinstance(params, dict):
-            profile['params'] = params
-
-    device = {'guid': guid, 'battery_mv': battery_mv, 'profile': profile}
-    if sleep_raw:
-        device['sleep_seconds'] = float(sleep_raw)
-    if inject_raw:
-        device['inject_errors'] = [e.strip() for e in inject_raw.split(',') if e.strip()]
-
-    idx = next((i for i, d in enumerate(cfg['devices']) if d.get('guid') == guid), None)
-    if idx is not None:
-        cfg['devices'][idx] = device
-        print('Updated device {}'.format(guid))
-    else:
-        print('Device {} not found — nothing updated'.format(guid))
-
-with open(config_path, 'w') as f:
-    yaml.dump(cfg, f, default_flow_style=False, sort_keys=False)
-print('Wrote simulator/config.yaml')
-PYEOF
-docker restart race-tracker-simulator
-"""
-
-cmd_button(
-    name='sim-edit-device',
-    resource='race-tracker-simulator',
-    text='Edit / Delete Device',
-    icon_name='tune',
-    argv=['sh', '-c', _edit_device_script],
-    inputs=[
-        choice_input('SIM_GUID', label='Device', choices=_device_choices),
-        choice_input('SIM_ACTION', label='Action', choices=['update', 'delete']),
-        choice_input('SIM_PROFILE', label='Motion profile', choices=['stationary', 'circle', 'straight', 'track']),
-        text_input('SIM_PROFILE_PARAMS', label='Profile params (YAML, e.g. "radius: 5.0\\nspeed: 8.0")', default=''),
-        text_input('SIM_BATTERY_MV', label='Battery (mV)', default='4100'),
-        text_input('SIM_SLEEP_SECONDS', label='Sleep seconds (blank = global default)', default=''),
-        text_input('SIM_INJECT_ERRORS', label='Inject errors (comma-separated, blank = none)', default=''),
-    ],
+local_resource(
+    'config-editor',
+    serve_cmd='{} simulator/config_editor.py'.format(_python),
+    labels=['simulator'],
+    links=[link('http://localhost:5001', 'Config Editor')],
 )
 
-# ── Add: type a new GUID and configure from scratch ──────────────────────────
-_add_device_script = """
-set -e
-python3 - << 'PYEOF'
-import yaml, os
-
-config_path = 'simulator/config.yaml'
-with open(config_path) as f:
-    cfg = yaml.safe_load(f) or {}
-if 'devices' not in cfg:
-    cfg['devices'] = []
-
-guid = os.environ['SIM_GUID'].strip()
-battery_mv = int((os.environ.get('SIM_BATTERY_MV') or '4100').strip())
-sleep_raw = (os.environ.get('SIM_SLEEP_SECONDS') or '').strip()
-inject_raw = (os.environ.get('SIM_INJECT_ERRORS') or '').strip()
-profile_name = os.environ['SIM_PROFILE']
-params_raw = (os.environ.get('SIM_PROFILE_PARAMS') or '').strip()
-
-profile = {'name': profile_name}
-if params_raw:
-    params = yaml.safe_load(params_raw)
-    if isinstance(params, dict):
-        profile['params'] = params
-
-device = {'guid': guid, 'battery_mv': battery_mv, 'profile': profile}
-if sleep_raw:
-    device['sleep_seconds'] = float(sleep_raw)
-if inject_raw:
-    device['inject_errors'] = [e.strip() for e in inject_raw.split(',') if e.strip()]
-
-if any(d.get('guid') == guid for d in cfg['devices']):
-    print('Device {} already exists — use Edit to change it'.format(guid))
-else:
-    cfg['devices'].append(device)
-    with open(config_path, 'w') as f:
-        yaml.dump(cfg, f, default_flow_style=False, sort_keys=False)
-    print('Added device {}'.format(guid))
-    print('Wrote simulator/config.yaml')
-PYEOF
-docker restart race-tracker-simulator
-"""
-
-cmd_button(
-    name='sim-add-device',
-    resource='race-tracker-simulator',
-    text='Add Device',
-    icon_name='add',
-    argv=['sh', '-c', _add_device_script],
-    inputs=[
-        text_input('SIM_GUID', label='Device GUID', default='00000000-0000-0000-0000-000000000001'),
-        choice_input('SIM_PROFILE', label='Motion profile', choices=['stationary', 'circle', 'straight', 'track']),
-        text_input('SIM_PROFILE_PARAMS', label='Profile params (YAML, e.g. "radius: 5.0\\nspeed: 8.0")', default=''),
-        text_input('SIM_BATTERY_MV', label='Battery (mV)', default='4100'),
-        text_input('SIM_SLEEP_SECONDS', label='Sleep seconds (blank = global default)', default=''),
-        text_input('SIM_INJECT_ERRORS', label='Inject errors (comma-separated, blank = none)', default=''),
-    ],
-)
-
-# Edit broker and global settings in simulator/config.yaml, then restart.
-_overall_config_script = """
-set -e
-python3 - << 'PYEOF'
-import yaml, os
-
-config_path = 'simulator/config.yaml'
-with open(config_path) as f:
-    cfg = yaml.safe_load(f) or {}
-
-host = (os.environ.get('SIM_BROKER_HOST') or 'mosquitto').strip()
-port = int((os.environ.get('SIM_BROKER_PORT') or '1883').strip())
-timeout_ms = int((os.environ.get('SIM_CONNECT_TIMEOUT_MS') or '5000').strip())
-sleep_sec = float((os.environ.get('SIM_DEFAULT_SLEEP_SECONDS') or '30').strip())
-
-cfg['broker'] = {'host': host, 'port': port, 'connect_timeout_ms': timeout_ms}
-cfg['default_sleep_seconds'] = sleep_sec
-
-with open(config_path, 'w') as f:
-    yaml.dump(cfg, f, default_flow_style=False, sort_keys=False)
-print('broker={}:{} timeout={}ms sleep={}s'.format(host, port, timeout_ms, sleep_sec))
-PYEOF
-docker restart race-tracker-simulator
-"""
-
-cmd_button(
-    name='sim-overall-config',
-    resource='race-tracker-simulator',
-    text='Overall Config',
-    icon_name='settings',
-    argv=['sh', '-c', _overall_config_script],
-    inputs=[
-        text_input('SIM_BROKER_HOST', label='Broker host', default='mosquitto'),
-        text_input('SIM_BROKER_PORT', label='Broker port', default='1883'),
-        text_input('SIM_CONNECT_TIMEOUT_MS', label='Connect timeout (ms)', default='5000'),
-        text_input('SIM_DEFAULT_SLEEP_SECONDS', label='Default sleep (s)', default='30'),
-    ],
-)
-
-cmd_button(
-    name='sim-restart',
-    resource='race-tracker-simulator',
-    text='Restart Simulator',
-    icon_name='restart_alt',
-    argv=['sh', '-c', 'docker restart race-tracker-simulator'],
+# ── tooling ───────────────────────────────────────────────────────────────────
+dc_resource(
+    'race-tracker-tester',
+    labels=['tooling'],
+    links=[link('http://localhost:5000', 'Data Viewer')],
+    resource_deps=['mosquitto'],
 )
