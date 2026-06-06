@@ -192,6 +192,33 @@ Dashboards nicht über Rohdaten rechnen.*
 **AK:** Time-Bucket-Aggregate (z. B. Min/Max/Avg je Achse pro Bucket) als
 Continuous Aggregate; eigene GraphQL-Query liefert die Aggregatansicht.
 
+### 4.3 — Fahrstrecke aus Rohdaten berechnen (Dead Reckoning) + persistieren · **M**
+*Als Client möchte ich pro Lauf die gefahrene **2D-Strecke** abfragen, die aus den
+gespeicherten Rohdaten berechnet wurde, damit ich die Fahrt später als Karte/
+Simulation anzeigen kann, ohne im Frontend zu rechnen.*
+**Verweise:** `/F51/`, `/F52/`, `/F54/`, `/D40/`, `/D50/`, `/A30/`, `/L40/`
+**AK:**
+- Aus den gespeicherten Samples eines Laufs wird eine **2D-Bodenbahn** berechnet:
+  **Heading** aus `gz` (integriert), Beschleunigung damit in Weltkoordinaten
+  gedreht und **zweifach integriert** zu Position; **Start fix bei `(0,0)`,
+  Heading 0**; Zeitbezug aus ODR (`t = index / odr_hz`, vgl. `/F54/`).
+- Die Berechnung liegt hinter einem **Port** (z. B. `ITrajectoryCalculator`) in
+  Application, Adapter in Infrastructure (`/A30/`) → Algorithmus austauschbar
+  (simple Integration jetzt; Drift-Korrektur / Zero-Velocity-Update später
+  andockbar, **ohne** Vertrags-/Schema-Umbau).
+- Die Bahn wird **vorberechnet und persistiert** (abgeleitete Tabelle, getrennt
+  von den Rohdaten — **Rohdaten bleiben unverändert** erhalten), je `guid/runId`
+  **idempotent** neu erzeugbar.
+- **GraphQL-Query** (Read-Pfad, CQRS-artig getrennt vom Write-Pfad, `/F51/`,
+  `/F52/`) liefert die Bahn je `runId` als **geordnete Punktfolge**
+  `{ index, t, x, y, heading }` (optional heruntergerechnet für große Läufe).
+- Gegen einen **echten** Simulator-Lauf: Query liefert die erwartete Punktzahl,
+  erster Punkt = `(0,0)`, Ergebnis **deterministisch** reproduzierbar (per
+  GraphQL-Playground prüfbar).
+- **Grenzen dokumentiert:** reine IMU-Koppelnavigation **driftet** (Doppel-
+  integration summiert Rauschen) — die Bahn ist eine plausible **Näherung**,
+  kein GPS.
+
 ---
 
 ## M5 — Management & Steuerung (TP-MGMT)
@@ -351,6 +378,23 @@ damit die Oberfläche verständlich ist.*
 **Verweise:** `/U30/`, `/U40/`
 **AK:** errorCode-Bitmaske → benannte Klartexte (PROTOCOL §5.1); alle Strings
 externalisiert (i18n).
+
+### 7.9 — Streckenkarte + Fahrt-Simulation (Playback) · **M**
+*Als Benutzer möchte ich die gefahrene Strecke eines Laufs als **Karte** sehen und
+die Fahrt als **Animation abspielen**, damit ich visuell nachvollziehe, wie sich
+das Fahrzeug bewegt hat.*
+**Verweise:** `/F80/`, `/U20/`, `/U40/`, `/F52/`, `/D50/` · baut auf **4.3** auf
+**AK:**
+- Aus der Lauf-Detail-Ansicht (7.5) erreichbar: die Karte zeichnet die **2D-Bahn**
+  (Punktfolge aus **4.3** via GraphQL) als Pfad; **Startpunkt `(0,0)`** markiert,
+  Auto-Fit/Skalierung der Karte auf die Bahn.
+- **Playback-Steuerung:** Play/Pause + **Zeitschieber**; ein Fahrzeug-Marker
+  bewegt sich entlang der Bahn entsprechend der Zeit (aus ODR), Ausrichtung =
+  `heading`. Scrubben springt an die zugehörige Position.
+- Wiedergabe-Geschwindigkeit wählbar (z. B. 1×/2× / Echtzeit).
+- **Reine Anzeige** — keine Bahn-Berechnung im Frontend (alle Werte kommen aus
+  4.3); Schichtung `services → hooks → components`, Strings externalisiert
+  (`/U40/`).
 
 ---
 
