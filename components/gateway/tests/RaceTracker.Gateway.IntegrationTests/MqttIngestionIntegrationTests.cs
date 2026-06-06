@@ -4,6 +4,7 @@ using DotNet.Testcontainers.Containers;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using MQTTnet;
+using RaceTracker.Gateway.Application.Abstractions;
 using RaceTracker.Gateway.Application.Configuration;
 using RaceTracker.Gateway.Application.Ingestion;
 using RaceTracker.Gateway.Application.Observability;
@@ -13,6 +14,7 @@ using RaceTracker.Gateway.Infrastructure.Mqtt;
 using RaceTracker.Gateway.UnitTests.Support;
 using Shouldly;
 using Xunit;
+using Contracts = RaceTracker.BuildingBlocks.Contracts.Telemetry;
 
 namespace RaceTracker.Gateway.IntegrationTests;
 
@@ -47,8 +49,11 @@ public sealed class MqttIngestionIntegrationTests : IAsyncLifetime
         });
         using var metrics = new GatewayMetrics();
         using var collector = new MetricsCollector(GatewayMetrics.MeterName);
+        // This test exercises the MQTT subscribe→decode→metric path; publishing has its own
+        // RabbitMQ integration test, so a no-op publisher keeps the broker out of scope here.
         var handler = new TelemetryMessageHandler(
-            new BinaryDecoder(), metrics, NullLogger<TelemetryMessageHandler>.Instance);
+            new BinaryDecoder(), new NoOpTelemetryPublisher(), metrics, TimeProvider.System,
+            NullLogger<TelemetryMessageHandler>.Instance);
         var subscriber = new MqttTelemetrySubscriber(
             options, NullLogger<MqttTelemetrySubscriber>.Instance);
 
@@ -117,5 +122,15 @@ public sealed class MqttIngestionIntegrationTests : IAsyncLifetime
 
             await Task.Delay(100);
         }
+    }
+
+    /// <summary>Republish is out of scope for this MQTT-focused test, so swallow it.</summary>
+    private sealed class NoOpTelemetryPublisher : ITelemetryPublisher
+    {
+        public Task PublishStatusAsync(Contracts.StatusEvent statusEvent, CancellationToken cancellationToken)
+            => Task.CompletedTask;
+
+        public Task PublishSampleBatchAsync(Contracts.SampleBatchEvent batchEvent, CancellationToken cancellationToken)
+            => Task.CompletedTask;
     }
 }

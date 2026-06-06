@@ -118,7 +118,7 @@ Messwerte werden.*
 - Little-Endian/Packing exakt nach [PROTOCOL.md](../components/race-tracker-mcu/PROTOCOL.md).
 - Fehlerhafte Payloads werden **verworfen + Metrik erhöht** (nicht weitergereicht).
 
-### 2.3 — Normalisieren & an RabbitMQ republizieren · **M**
+### 2.3 — Normalisieren & an RabbitMQ republizieren · **M** · ✅ Erledigt
 *Als System möchte ich dekodierte Nachrichten als typisierte Verträge an RabbitMQ
 veröffentlichen, damit nachgelagerte Services entkoppelt konsumieren können.*
 **Verweise:** `/F42/`, `/F43/`, `/S50/`, `/L30/`

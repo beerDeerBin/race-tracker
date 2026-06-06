@@ -18,6 +18,7 @@ public static class ApplicationServiceCollectionExtensions
     {
         services.Configure<GatewayOptions>(configuration.GetSection(GatewayOptions.Section));
 
+        services.AddSingleton(TimeProvider.System);
         services.AddSingleton<GatewayMetrics>();
         services.AddSingleton<TelemetryMessageHandler>();
         services.AddHostedService<MqttIngestionWorker>();

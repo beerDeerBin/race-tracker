@@ -29,6 +29,8 @@
     <PackageReference Include="coverlet.collector" />
     <PackageReference Include="Testcontainers" />
     <PackageReference Include="MQTTnet" />
+    <!-- Drives the real broker in RabbitMqPublisherIntegrationTests (declare/bind/consume). -->
+    <PackageReference Include="RabbitMQ.Client" />
   </ItemGroup>
 
 </Project>

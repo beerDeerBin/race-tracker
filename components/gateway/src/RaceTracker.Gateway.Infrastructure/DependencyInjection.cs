@@ -20,6 +20,7 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddSingleton<IRabbitMqConnectivityCheck, RabbitMqConnectivityCheck>();
         services.AddSingleton<IDecoder, BinaryDecoder>();
         services.AddSingleton<ITelemetrySubscriber, MqttTelemetrySubscriber>();
+        services.AddSingleton<ITelemetryPublisher, RabbitMqTelemetryPublisher>();
         return services;
     }
 }
