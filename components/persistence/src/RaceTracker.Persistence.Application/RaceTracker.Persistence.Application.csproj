@@ -4,6 +4,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\RaceTracker.Persistence.Domain\RaceTracker.Persistence.Domain.csproj" />
+    <!-- Shared /S50/ message contracts (framework-free), defined once in story 2.3. -->
+    <ProjectReference Include="..\..\..\building-blocks\src\RaceTracker.BuildingBlocks.Contracts\RaceTracker.BuildingBlocks.Contracts.csproj" />
   </ItemGroup>
 
   <ItemGroup>

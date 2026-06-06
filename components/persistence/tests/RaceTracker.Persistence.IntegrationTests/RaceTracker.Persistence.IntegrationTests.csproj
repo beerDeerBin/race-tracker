@@ -20,6 +20,9 @@
     <PackageReference Include="Shouldly" />
     <PackageReference Include="coverlet.collector" />
     <PackageReference Include="Testcontainers.PostgreSql" />
+    <!-- Drives a real RabbitMQ broker (declare/bind/publish) for the consumer test. -->
+    <PackageReference Include="Testcontainers" />
+    <PackageReference Include="RabbitMQ.Client" />
     <!-- Asserts the real Timescale schema (hypertable, tables, PK) after migrating. -->
     <PackageReference Include="Npgsql" />
   </ItemGroup>

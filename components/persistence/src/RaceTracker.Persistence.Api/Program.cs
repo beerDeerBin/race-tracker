@@ -1,8 +1,10 @@
 using RaceTracker.BuildingBlocks.Correlation;
 using RaceTracker.BuildingBlocks.Health;
 using RaceTracker.BuildingBlocks.Logging;
+using RaceTracker.BuildingBlocks.Metrics;
 using RaceTracker.Persistence.Api;
 using RaceTracker.Persistence.Application;
+using RaceTracker.Persistence.Application.Observability;
 using RaceTracker.Persistence.Infrastructure;
 using RaceTracker.Persistence.Infrastructure.Health;
 using Serilog;
@@ -19,6 +21,9 @@ builder.Services.AddHealthChecks()
     .AddCheck<TimescaleHealthCheck>("timescaledb", tags: [HealthEndpoints.ReadyTag])
     .AddCheck<RabbitMqHealthCheck>("rabbitmq", tags: [HealthEndpoints.ReadyTag]);
 
+// Scrape-friendly write-path metrics (§8) exposed at /metrics via the shared building block.
+builder.Services.AddRaceTrackerMetrics(PersistenceMetrics.MeterName);
+
 builder.Services.AddProblemDetails();
 
 var app = builder.Build();
@@ -29,6 +34,7 @@ app.UseExceptionHandler();
 app.UseSerilogRequestLogging();
 
 app.MapRaceTrackerHealthChecks();
+app.MapRaceTrackerMetrics();
 
 // Schema is service-owned (story 3.1): apply migrations at startup, retrying while Timescale
 // comes up, so the service only serves once its store is at the expected schema version.

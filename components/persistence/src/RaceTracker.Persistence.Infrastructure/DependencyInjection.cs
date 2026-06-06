@@ -9,15 +9,18 @@ namespace RaceTracker.Persistence.Infrastructure;
 public static class InfrastructureServiceCollectionExtensions
 {
     /// <summary>
-    /// Registers the Infrastructure layer: the real connectivity probes that back the
-    /// readiness checks and the real Npgsql schema migrator (anti-stub). One DI extension
-    /// per layer (/A30/). The health-check registration + tagging lives in the Api root.
+    /// Registers the Infrastructure layer: the real connectivity probes that back the readiness
+    /// checks, the real Npgsql schema migrator, the Timescale write adapter and the hosted
+    /// RabbitMQ sample-batch consumer (anti-stub). One DI extension per layer (/A30/). The
+    /// health-check registration + tagging lives in the Api root.
     /// </summary>
     public static IServiceCollection AddInfrastructure(this IServiceCollection services)
     {
         services.AddSingleton<IRabbitMqConnectivityCheck, RabbitMqConnectivityCheck>();
         services.AddSingleton<ITimescaleConnectivityCheck, TimescaleConnectivityCheck>();
         services.AddSingleton<IDatabaseMigrator, NpgsqlDatabaseMigrator>();
+        services.AddSingleton<ITelemetryRepository, NpgsqlTelemetryRepository>();
+        services.AddHostedService<RabbitMqTelemetryConsumer>();
         return services;
     }
 }

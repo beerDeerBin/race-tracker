@@ -157,7 +157,7 @@ und Lesepfad darauf aufsetzen.*
 **AK:** Service startet, Health live/ready (Readiness prüft RabbitMQ + Timescale),
 strukturierte Logs; Building-Blocks referenziert (nicht kopiert).
 
-### 3.3 — RabbitMQ-Consumer → Upsert in Timescale · **M**
+### 3.3 — RabbitMQ-Consumer → Upsert in Timescale · **M** · ✅ Erledigt
 *Als System möchte ich normalisierte Status/Daten konsumieren, validieren und in
 Timescale upserten, damit ein kompletter Lauf dauerhaft gespeichert ist.*
 **Verweise:** `/F50/`, `/F51/` (Write-Seite), `/F54/`, `/F55/`, `/L10/`, `/A50/`

@@ -13,6 +13,9 @@ public sealed class PersistenceOptions
 
     /// <summary>Time-series store (TimescaleDB/PostgreSQL) for samples + run metadata.</summary>
     public TimescaleOptions Timescale { get; init; } = new();
+
+    /// <summary>Sample-batch consumer topology + flow control (story 3.3).</summary>
+    public ConsumerOptions Consumer { get; init; } = new();
 }
 
 public sealed class RabbitMqOptions
@@ -22,6 +25,24 @@ public sealed class RabbitMqOptions
     public string VirtualHost { get; init; } = "race-tracker";
     public string Username { get; init; } = "race";
     public string Password { get; init; } = "race";
+}
+
+public sealed class ConsumerOptions
+{
+    /// <summary>Durable work queue bound to the <c>rt.data</c> exchange.</summary>
+    public string Queue { get; init; } = "rt.persistence.samples";
+
+    /// <summary>Routing key the queue binds with (<c>#</c> = every device).</summary>
+    public string BindingKey { get; init; } = "#";
+
+    /// <summary>Dead-letter exchange for poison (parse/validation-failed) messages.</summary>
+    public string DeadLetterExchange { get; init; } = "rt.persistence.dlx";
+
+    /// <summary>Dead-letter queue bound to <see cref="DeadLetterExchange"/>.</summary>
+    public string DeadLetterQueue { get; init; } = "rt.persistence.dlq";
+
+    /// <summary>Unacked-message prefetch (QoS) — bounds in-flight work per consumer.</summary>
+    public ushort Prefetch { get; init; } = 32;
 }
 
 public sealed class TimescaleOptions
