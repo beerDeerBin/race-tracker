@@ -1,0 +1,14 @@
+# Build context is the repo root (see components/gateway/.../Dockerfile). Keep it lean:
+# only the .NET sources + root build files are needed to restore/publish a service.
+.git
+.vscode
+**/bin
+**/obj
+**/.vs
+
+# Heavy non-.NET assets that no service build needs.
+components/race-tracker-mcu/datasheets
+components/simulator/vendor
+components/mqtt/race-tracker-tester
+doc
+*.pdf

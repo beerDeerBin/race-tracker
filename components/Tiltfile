@@ -24,9 +24,13 @@ else:
         quiet=True,
     )
 
-# Load the MQTT stack and the internal RabbitMQ broker as one merged Compose
-# project, so they share a network and future services can reach both brokers.
-docker_compose(['./mqtt/docker-compose.yml', './rabbitmq/docker-compose.yml'])
+# Load the MQTT stack, the internal RabbitMQ broker and the backend services as one
+# merged Compose project, so they share a network and services can reach both brokers.
+docker_compose([
+    './mqtt/docker-compose.yml',
+    './rabbitmq/docker-compose.yml',
+    './gateway/docker-compose.yml',
+])
 
 # ── brokers ─────────────────────────────────────────────────────────────────
 # Mosquitto = device transport (MQTT); RabbitMQ = internal service broker (AMQP).
@@ -43,6 +47,15 @@ dc_resource(
     labels=['broker'],
     links=[link('http://localhost:8080', 'MQTT Client')],
     resource_deps=['mosquitto'],
+)
+
+# ── services ──────────────────────────────────────────────────────────────────
+# TP-GW: ingestion gateway. Readiness (/health/ready) gates on MQTT + RabbitMQ.
+dc_resource(
+    'gateway',
+    labels=['services'],
+    resource_deps=['mosquitto', 'rabbitmq'],
+    links=[link('http://localhost:8081/health/ready', 'Gateway readiness')],
 )
 
 # ── simulator ─────────────────────────────────────────────────────────────────
