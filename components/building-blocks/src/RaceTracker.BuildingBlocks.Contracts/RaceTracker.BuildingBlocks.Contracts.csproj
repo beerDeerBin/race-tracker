@@ -7,9 +7,10 @@
     (M3 persistence, M5 management, M6 realtime) via <ProjectReference> — never rebuilt.
 
     Deliberately framework-free (no FrameworkReference, no package refs): pure records
-    so a consumer's inner layers can reference the contracts without pulling in the
-    ASP.NET Core shared framework that the sibling RaceTracker.BuildingBlocks needs.
-    JSON serialization lives in the producer/consumer transport adapters, not here.
+    plus BCL-only wire helpers (e.g. Protocol/RunIdCodec, the runId/guid uint16[8] codec
+    shared by the gateway decoder and the M5 command encoder) so a consumer's inner layers
+    can reference them without pulling in the ASP.NET Core shared framework that the sibling
+    RaceTracker.BuildingBlocks needs. JSON serialization lives in the transport adapters, not here.
   -->
 
 </Project>

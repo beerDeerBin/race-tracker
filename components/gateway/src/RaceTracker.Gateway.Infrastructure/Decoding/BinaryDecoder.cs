@@ -1,4 +1,5 @@
 using System.Buffers.Binary;
+using RaceTracker.BuildingBlocks.Contracts.Protocol;
 using RaceTracker.Gateway.Application.Abstractions;
 using RaceTracker.Gateway.Domain.Telemetry;
 
