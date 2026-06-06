@@ -85,6 +85,9 @@
     <!-- In-memory TestServer (WebApplicationFactory) for the management auth pipeline
          integration test (story 5.2): real login → 401/200 secure-by-default. -->
     <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="9.0.16" />
+    <!-- Real SignalR client driving the realtime hub over the in-memory TestServer for the
+         live-relay integration test (stories 6.2/6.3). Server SignalR ships in the Web SDK. -->
+    <PackageVersion Include="Microsoft.AspNetCore.SignalR.Client" Version="9.0.16" />
   </ItemGroup>
 
 </Project>

@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <!-- Tests may relax the warnings-as-errors gate (doc/CONVENTIONS.md §7). -->
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <!-- Underscored Given_When_Then test names are the intended xUnit convention. -->
+    <NoWarn>$(NoWarn);CA1707</NoWarn>
+  </PropertyGroup>
+
+  <!-- Brings the concrete Microsoft.Extensions.* (Configuration, DI), health-check and
+       SignalR types used by the relay, hub, options-binding and readiness tests. -->
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\RaceTracker.Realtime.Api\RaceTracker.Realtime.Api.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="NSubstitute" />
+    <PackageReference Include="Shouldly" />
+    <PackageReference Include="coverlet.collector" />
+  </ItemGroup>
+
+</Project>

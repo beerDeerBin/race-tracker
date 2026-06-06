@@ -32,6 +32,7 @@ docker_compose([
     './gateway/docker-compose.yml',
     './persistence/docker-compose.yml',
     './management/docker-compose.yml',
+    './realtime/docker-compose.yml',
 ])
 
 # ── brokers ─────────────────────────────────────────────────────────────────
@@ -92,6 +93,18 @@ dc_resource(
     links=[
         link('http://localhost:8083/health/ready', 'Management readiness'),
         link('http://localhost:8083/metrics', 'Management metrics'),
+    ],
+)
+
+# TP-RT: realtime/notification service. Readiness (/health/ready) gates on RabbitMQ; it consumes
+# status events and pushes them live to SignalR clients (group per vehicle, stories 6.1–6.3).
+dc_resource(
+    'realtime',
+    labels=['services'],
+    resource_deps=['rabbitmq'],
+    links=[
+        link('http://localhost:8084/health/ready', 'Realtime readiness'),
+        link('http://localhost:8084/metrics', 'Realtime metrics'),
     ],
 )
 

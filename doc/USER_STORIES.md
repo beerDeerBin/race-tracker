@@ -296,21 +296,21 @@ trennen und zurücksetzen, damit ich Messungen steuere.*
 gepusht. **Voraussetzung:** M2 (Status-Events). *Dieser Service wird in **M8 nur
 erweitert** (Regeln/Outbox) — keine Neuanlage.*
 
-### 6.1 — Realtime-Service-Grundgerüst + SignalR-Hub · **M**
+### 6.1 — Realtime-Service-Grundgerüst + SignalR-Hub · **M** · ✅ Erledigt
 *Als Entwickler möchte ich den Realtime/Notification-Service mit einem SignalR-Hub
 aufsetzen, der Gruppen **pro Fahrzeug (guid)** führt, damit Push gezielt erfolgt.*
 **Verweise:** `/F62/`, `/S40/`, `/A80/`
 **AK:** Service startet (Health live/ready); SignalR-Hub-Endpoint erreichbar;
 Client kann eine `guid`-Gruppe abonnieren/abbestellen.
 
-### 6.2 — Live-Status-Relay · **M**
+### 6.2 — Live-Status-Relay · **M** · ✅ Erledigt
 *Als Benutzer möchte ich den Gerätestatus live sehen, damit ich Zustand, Uptime,
 Batterie und Fehlercodes in Echtzeit verfolge.*
 **Verweise:** `/F60/`, `/L20/`, `/D30/`
 **AK:** Service konsumiert Status-Events aus RabbitMQ und pusht an die `guid`-
 Gruppe; ein SignalR-Testclient empfängt live, während der Simulator publiziert.
 
-### 6.3 — Fortschritts-Push während eines Laufs · **M**
+### 6.3 — Fortschritts-Push während eines Laufs · **M** · ✅ Erledigt
 *Als Benutzer möchte ich den Lauf-Fortschritt live sehen, damit ich den Verlauf
 mitbekomme.*
 **Verweise:** `/F61/`

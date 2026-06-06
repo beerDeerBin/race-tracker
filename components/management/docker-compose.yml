@@ -6,6 +6,9 @@ services:
       - "27017:27017"   # mongosh / services connect here
     volumes:
       - mongodb-data:/data/db
+      # mongo declares /data/configdb as a VOLUME too; name it so it isn't regenerated
+      # as an anonymous (hash-named) volume on every `tilt up`.
+      - mongodb-configdb:/data/configdb
     healthcheck:
       test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
       interval: 10s
@@ -36,3 +39,4 @@ services:
 
 volumes:
   mongodb-data:
+  mongodb-configdb:
