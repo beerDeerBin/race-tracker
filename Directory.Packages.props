@@ -1,0 +1,23 @@
+<Project>
+
+  <!--
+    Central Package Management (CPM): NuGet versions are declared ONCE here with
+    <PackageVersion>, and individual projects reference packages WITHOUT a Version
+    attribute (just <PackageReference Include="..." />). This keeps every service on
+    the same, single-sourced version. See doc/CONVENTIONS.md.
+
+    Versions are added per service from M2 onward. The .NET RabbitMQ client choice
+    (/O80/: RabbitMQ.Client vs. MassTransit) is decided in story 2.1 and pinned then
+    — intentionally NOT pre-pinned here.
+  -->
+
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- e.g. <PackageVersion Include="Serilog.AspNetCore" Version="x.y.z" /> (added in 2.1) -->
+  </ItemGroup>
+
+</Project>

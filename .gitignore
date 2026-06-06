@@ -7,3 +7,26 @@ desktop.ini
 
 # Claude
 .claude/settings.json
+
+# .NET build output
+[Bb]in/
+[Oo]bj/
+[Oo]ut/
+
+# IDEs (Visual Studio / Rider / VS Code)
+.vs/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Test / coverage results
+[Tt]est[Rr]esults/
+*.trx
+*.coverage
+*.coveragexml
+
+# NuGet artifacts
+*.nupkg
+*.snupkg
