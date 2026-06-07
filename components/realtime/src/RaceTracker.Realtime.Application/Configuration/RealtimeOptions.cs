@@ -13,6 +13,9 @@ public sealed class RealtimeOptions
 
     /// <summary>Live status-relay consumer topology + flow control (stories 6.2/6.3).</summary>
     public RelayOptions Relay { get; init; } = new();
+
+    /// <summary>Key-value cache (Redis) for notification TTL idempotency (story 8.2).</summary>
+    public RedisOptions Redis { get; init; } = new();
 }
 
 public sealed class RabbitMqOptions
@@ -31,4 +34,16 @@ public sealed class RelayOptions
 
     /// <summary>Unacked-message prefetch (QoS) — bounds in-flight relays per consumer.</summary>
     public ushort Prefetch { get; init; } = 64;
+}
+
+public sealed class RedisOptions
+{
+    public string Host { get; init; } = "localhost";
+    public int Port { get; init; } = 6379;
+
+    /// <summary>
+    /// Debounce window (seconds) for rule notifications (<c>/F72/</c>): the same condition on
+    /// the same device notifies at most once per window. Default 5 minutes.
+    /// </summary>
+    public int NotificationTtlSeconds { get; init; } = 300;
 }

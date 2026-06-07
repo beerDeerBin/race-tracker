@@ -8,10 +8,12 @@ services:
     container_name: race-tracker-realtime
     depends_on:
       - rabbitmq
+      - redis
     ports:
       - "8084:8080"   # health endpoints: http://localhost:8084/health/{live,ready}; hub: /hubs/telemetry
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       # In-network dependency hostnames (override the appsettings defaults if needed).
       Realtime__RabbitMq__Host: rabbitmq
+      Realtime__Redis__Host: redis
     restart: unless-stopped

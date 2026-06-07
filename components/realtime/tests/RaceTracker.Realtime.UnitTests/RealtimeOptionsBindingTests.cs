@@ -24,6 +24,9 @@ public sealed class RealtimeOptionsBindingTests
                 ["Realtime:RabbitMq:Password"] = "race",
                 ["Realtime:Relay:BindingKey"] = "#",
                 ["Realtime:Relay:Prefetch"] = "64",
+                ["Realtime:Redis:Host"] = "redis",
+                ["Realtime:Redis:Port"] = "6379",
+                ["Realtime:Redis:NotificationTtlSeconds"] = "300",
             })
             .Build();
 
@@ -40,6 +43,9 @@ public sealed class RealtimeOptionsBindingTests
         options.RabbitMq.Password.ShouldBe("race");
         options.Relay.BindingKey.ShouldBe("#");
         options.Relay.Prefetch.ShouldBe((ushort)64);
+        options.Redis.Host.ShouldBe("redis");
+        options.Redis.Port.ShouldBe(6379);
+        options.Redis.NotificationTtlSeconds.ShouldBe(300);
     }
 
     // Story 7.2: the hub validates management-issued JWTs; the shared validation options bind

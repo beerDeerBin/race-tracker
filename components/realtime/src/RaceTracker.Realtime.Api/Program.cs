@@ -61,7 +61,8 @@ builder.Services.AddSingleton<IClientNotifier, SignalRClientNotifier>();
 
 // Readiness gates on real dependency reachability (anti-stub); liveness stays dependency-free.
 builder.Services.AddHealthChecks()
-    .AddCheck<RabbitMqHealthCheck>("rabbitmq", tags: [HealthEndpoints.ReadyTag]);
+    .AddCheck<RabbitMqHealthCheck>("rabbitmq", tags: [HealthEndpoints.ReadyTag])
+    .AddCheck<RedisHealthCheck>("redis", tags: [HealthEndpoints.ReadyTag]);
 
 // Scrape-friendly relay metrics (§8) exposed at /metrics via the shared building block.
 builder.Services.AddRaceTrackerMetrics(RealtimeMetrics.MeterName);

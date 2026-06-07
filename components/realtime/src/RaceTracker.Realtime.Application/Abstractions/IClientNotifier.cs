@@ -1,4 +1,5 @@
 using RaceTracker.Realtime.Application.Realtime;
+using RaceTracker.Realtime.Application.Rules;
 
 namespace RaceTracker.Realtime.Application.Abstractions;
 
@@ -17,4 +18,8 @@ public interface IClientNotifier
     /// <summary>Pushes live run progress (story 6.3) to the <paramref name="deviceGuid"/> group.</summary>
     Task PushRunProgressAsync(
         string deviceGuid, RunProgressUpdate update, CancellationToken cancellationToken);
+
+    /// <summary>Pushes a deduped rule notification (story 8.2) to the <paramref name="deviceGuid"/> group.</summary>
+    Task PushNotificationAsync(
+        string deviceGuid, NotificationUpdate update, CancellationToken cancellationToken);
 }

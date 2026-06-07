@@ -13,6 +13,8 @@
     <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
     <!-- /O80/: official low-level RabbitMQ client (decided in story 2.1). -->
     <PackageReference Include="RabbitMQ.Client" />
+    <!-- Key-value cache for notification TTL idempotency (story 8.2, /O10/). -->
+    <PackageReference Include="StackExchange.Redis" />
   </ItemGroup>
 
 </Project>

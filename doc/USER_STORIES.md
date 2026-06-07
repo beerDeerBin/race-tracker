@@ -417,7 +417,7 @@ sind.*
 **AK:** Regelsatz als Daten; Auswerteschleife erzeugt Ereignisse (zunächst in Log/
 Metrik sichtbar); Hinzufügen einer Regel ändert nur die Datentabelle.
 
-### 8.2 — Regel „kritische Batterie" + TTL-Idempotenz · **S**
+### 8.2 — Regel „kritische Batterie" + TTL-Idempotenz · **S** · ✅ Erledigt
 *Als Benutzer möchte ich bei kritischer Batterie benachrichtigt werden, aber nicht
 wiederholt, damit die Warnung nützlich bleibt.*
 **Verweise:** `/F71/`, `/F72/`, `/D60/`

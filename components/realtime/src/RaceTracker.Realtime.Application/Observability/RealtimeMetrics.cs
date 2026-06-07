@@ -5,9 +5,9 @@ namespace RaceTracker.Realtime.Application.Observability;
 /// <summary>
 /// Owns the realtime <see cref="Meter"/> so the scrape-friendly <c>/metrics</c> endpoint is wired
 /// from the grundgerüst on (§8, <c>/A80/</c>). Carries the consumed-status counter (stories
-/// 6.2/6.3), the SignalR push counter, the group subscription counter (story 6.1) and the
-/// rule-event counter (story 8.1). The Api registers <see cref="MeterName"/> with the shared
-/// Prometheus exporter.
+/// 6.2/6.3), the SignalR push counter, the group subscription counter (story 6.1), the
+/// rule-event counter (story 8.1) and the notification counter (story 8.2). The Api registers
+/// <see cref="MeterName"/> with the shared Prometheus exporter.
 /// </summary>
 public sealed class RealtimeMetrics : IDisposable
 {
@@ -19,6 +19,7 @@ public sealed class RealtimeMetrics : IDisposable
     private readonly Counter<long> _pushes;
     private readonly Counter<long> _subscriptions;
     private readonly Counter<long> _ruleEvents;
+    private readonly Counter<long> _notifications;
 
     public RealtimeMetrics()
     {
@@ -41,6 +42,11 @@ public sealed class RealtimeMetrics : IDisposable
             "racetracker_realtime_rule_events_total",
             unit: "events",
             description: "Rule events produced by the rule engine, tagged by rule (story 8.1).");
+        _notifications = _meter.CreateCounter<long>(
+            "racetracker_realtime_notifications_total",
+            unit: "notifications",
+            description: "Rule notifications, tagged by outcome (sent/suppressed) — TTL "
+                + "idempotency, story 8.2.");
     }
 
     /// <summary>
@@ -67,6 +73,13 @@ public sealed class RealtimeMetrics : IDisposable
     /// <summary>Records a fired rule event (story 8.1) tagged by the <paramref name="rule"/>.</summary>
     public void RecordRuleEvent(Rules.RuleType rule) =>
         _ruleEvents.Add(1, new KeyValuePair<string, object?>("rule", rule.ToString()));
+
+    /// <summary>
+    /// Records a notification (story 8.2) tagged by <paramref name="outcome"/> (<c>sent</c> when
+    /// it passed the TTL gate, <c>suppressed</c> when debounced).
+    /// </summary>
+    public void RecordNotification(string outcome) =>
+        _notifications.Add(1, new KeyValuePair<string, object?>("outcome", outcome));
 
     public void Dispose() => _meter.Dispose();
 }
