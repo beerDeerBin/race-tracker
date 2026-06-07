@@ -9,4 +9,13 @@ public enum RuleType
 {
     /// <summary>Battery critically low or the firmware's battery-critical error bit is set (/F71/).</summary>
     BatteryCritical,
+
+    /// <summary>A run completed: the device left <c>Acquiring</c> for an idle/connected state (/F74/).</summary>
+    RunFinished,
+
+    /// <summary>No status keepalive seen for longer than the offline threshold (/F74/, /O70/).</summary>
+    DeviceOffline,
+
+    /// <summary>The status carries a non-zero <c>errorCode</c> bitmask (/F74/).</summary>
+    ErrorCode,
 }

@@ -432,7 +432,7 @@ Push-Empfänger kurz weg war, damit nichts verloren geht.*
 (PostgreSQL) geschrieben; Background-Dispatcher pusht per SignalR; Zustellung
 übersteht einen Service-Neustart (genau-einmal-Wirkung).
 
-### 8.4 — Weitere Regeln (Lauf fertig / offline / Fehlercode) · **S**
+### 8.4 — Weitere Regeln (Lauf fertig / offline / Fehlercode) · **S** · ✅ Erledigt
 *Als Benutzer möchte ich auch über „Lauf abgeschlossen", „Gerät offline" und
 „Fehlercode gesetzt" informiert werden, damit ich den Betrieb im Blick habe.*
 **Verweise:** `/F74/`

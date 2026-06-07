@@ -16,6 +16,9 @@ public sealed class RealtimeOptions
 
     /// <summary>Key-value cache (Redis) for notification TTL idempotency (story 8.2).</summary>
     public RedisOptions Redis { get; init; } = new();
+
+    /// <summary>Tunables for the stateful story-8.4 rules (run-finished / offline thresholds).</summary>
+    public RulesOptions Rules { get; init; } = new();
 }
 
 public sealed class RabbitMqOptions
@@ -46,4 +49,16 @@ public sealed class RedisOptions
     /// the same device notifies at most once per window. Default 5 minutes.
     /// </summary>
     public int NotificationTtlSeconds { get; init; } = 300;
+}
+
+public sealed class RulesOptions
+{
+    /// <summary>
+    /// Seconds without a status keepalive after which a device counts as offline (story 8.4,
+    /// <c>/O70/</c>). The firmware publishes every ~5 s; the default 15 s = three missed keepalives.
+    /// </summary>
+    public int OfflineThresholdSeconds { get; init; } = 15;
+
+    /// <summary>How often (seconds) the offline monitor sweeps last-seen timestamps. Default 5 s.</summary>
+    public int OfflineSweepSeconds { get; init; } = 5;
 }

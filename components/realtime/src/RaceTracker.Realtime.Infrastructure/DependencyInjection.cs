@@ -4,6 +4,7 @@ using RaceTracker.Realtime.Application.Abstractions;
 using RaceTracker.Realtime.Application.Configuration;
 using RaceTracker.Realtime.Infrastructure.Idempotency;
 using RaceTracker.Realtime.Infrastructure.Messaging;
+using RaceTracker.Realtime.Infrastructure.Monitoring;
 using StackExchange.Redis;
 
 namespace RaceTracker.Realtime.Infrastructure;
@@ -12,15 +13,16 @@ public static class InfrastructureServiceCollectionExtensions
 {
     /// <summary>
     /// Registers the Infrastructure layer: the real RabbitMQ connectivity probe, the hosted
-    /// status-relay consumer, and the Redis multiplexer + notification deduplicator / connectivity
-    /// probe (anti-stub, story 8.2). One DI extension per layer (/A30/). The health-check
-    /// registration + tagging and the SignalR client adapter (which satisfies the
-    /// <c>IClientNotifier</c> port) live in the Api composition root.
+    /// status-relay consumer, the hosted device-offline monitor (story 8.4), and the Redis
+    /// multiplexer + notification deduplicator / connectivity probe (anti-stub, story 8.2). One DI
+    /// extension per layer (/A30/). The health-check registration + tagging and the SignalR client
+    /// adapter (which satisfies the <c>IClientNotifier</c> port) live in the Api composition root.
     /// </summary>
     public static IServiceCollection AddInfrastructure(this IServiceCollection services)
     {
         services.AddSingleton<IRabbitMqConnectivityCheck, RabbitMqConnectivityCheck>();
         services.AddHostedService<RabbitMqStatusRelayConsumer>();
+        services.AddHostedService<DeviceOfflineMonitor>();
 
         // Single shared Redis multiplexer (StackExchange.Redis best practice). AbortOnConnectFail
         // = false so the service still starts when Redis is briefly down — readiness gates on it,

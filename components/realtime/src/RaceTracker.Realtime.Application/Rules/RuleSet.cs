@@ -3,8 +3,11 @@ namespace RaceTracker.Realtime.Application.Rules;
 /// <summary>
 /// The declarative rule table (<c>/F70/</c>): rules are <b>data</b>, not code. Adding a rule is
 /// a new entry here — the <see cref="RuleEngine"/> loop is generic and never changes. Story 8.1
-/// seeds the battery-critical rule (<c>/F71/</c>); 8.4 appends run-finished / offline /
-/// error-code rows.
+/// seeds the battery-critical rule (<c>/F71/</c>); 8.4 appends the stateless error-code row here.
+/// Run-finished and device-offline (story 8.4) are inherently <b>stateful</b> — a state transition
+/// and an absence of events — so they live in dedicated detectors (run-finished in the relay,
+/// offline in a sweep) that emit the same <see cref="RuleEvent"/>; the table stays for the
+/// stateless threshold rules.
 /// </summary>
 public static class RuleSet
 {
@@ -27,5 +30,14 @@ public static class RuleSet
             static status =>
                 $"Battery critical on device {status.DeviceGuid} "
                 + $"({status.BatteryMv} mV, errorCode 0x{status.ErrorCode:X})"),
+
+        // 8.4 (/F74/): any non-zero error bitmask. Deliberately overlaps the battery bit — a
+        // critical battery surfaces as both BatteryCritical and ErrorCode under distinct dedup
+        // keys; the frontend (7.8) decodes the individual bit names.
+        new RuleDefinition(
+            RuleType.ErrorCode,
+            static status => status.ErrorCode != 0,
+            static status =>
+                $"Error code set on device {status.DeviceGuid} (0x{status.ErrorCode:X})"),
     ];
 }

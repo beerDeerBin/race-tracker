@@ -27,6 +27,8 @@ public sealed class RealtimeOptionsBindingTests
                 ["Realtime:Redis:Host"] = "redis",
                 ["Realtime:Redis:Port"] = "6379",
                 ["Realtime:Redis:NotificationTtlSeconds"] = "300",
+                ["Realtime:Rules:OfflineThresholdSeconds"] = "15",
+                ["Realtime:Rules:OfflineSweepSeconds"] = "5",
             })
             .Build();
 
@@ -46,6 +48,8 @@ public sealed class RealtimeOptionsBindingTests
         options.Redis.Host.ShouldBe("redis");
         options.Redis.Port.ShouldBe(6379);
         options.Redis.NotificationTtlSeconds.ShouldBe(300);
+        options.Rules.OfflineThresholdSeconds.ShouldBe(15);
+        options.Rules.OfflineSweepSeconds.ShouldBe(5);
     }
 
     // Story 7.2: the hub validates management-issued JWTs; the shared validation options bind

@@ -7,9 +7,10 @@ using Xunit;
 namespace RaceTracker.Realtime.UnitTests;
 
 /// <summary>
-/// Unit tests for the declarative rule engine (story 8.1, <c>/F70/</c>/<c>/F71/</c>): the
-/// battery-critical rule fires on a low reading or the error bit, never on the unknown sentinel,
-/// and an all-healthy status yields no events. Pure logic — no infrastructure.
+/// Unit tests for the declarative rule engine (stories 8.1/8.4, <c>/F70/</c>/<c>/F71/</c>/<c>/F74/</c>):
+/// the battery-critical rule fires on a low reading or the error bit, never on the unknown sentinel;
+/// the story-8.4 error-code rule fires on any non-zero mask and coexists with the battery rule; and
+/// an all-healthy status yields no events. Pure logic — no infrastructure.
 /// </summary>
 public sealed class RuleEngineTests
 {
@@ -44,12 +45,13 @@ public sealed class RuleEngineTests
     [Fact]
     public void Battery_critical_fires_on_the_error_bit_even_with_a_healthy_voltage()
     {
-        // Bit 42 = PWR_BATTERY_CRITICAL_ERROR.
+        // Bit 42 = PWR_BATTERY_CRITICAL_ERROR. (Since 8.4 the generic error-code rule also fires on
+        // any non-zero mask, so assert the battery rule is present rather than that it's alone.)
         ulong errorCode = 1UL << 42;
 
         IReadOnlyList<RuleEvent> events = _engine.Evaluate(Status(batteryMv: 4000, errorCode));
 
-        events.ShouldHaveSingleItem().Type.ShouldBe(RuleType.BatteryCritical);
+        events.ShouldContain(e => e.Type == RuleType.BatteryCritical);
     }
 
     [Fact]
@@ -67,16 +69,17 @@ public sealed class RuleEngineTests
         // Unknown ADC reading but the firmware asserted the critical flag → still fires.
         IReadOnlyList<RuleEvent> events = _engine.Evaluate(Status(batteryMv: 65535, 1UL << 42));
 
-        events.ShouldHaveSingleItem().Type.ShouldBe(RuleType.BatteryCritical);
+        events.ShouldContain(e => e.Type == RuleType.BatteryCritical);
     }
 
     [Fact]
     public void Battery_critical_does_not_fire_on_an_unrelated_error_bit()
     {
-        // Bit 25 = MQTT_PUBLISH_ERROR — proves the mask is bit-specific, not "any error".
+        // Bit 25 = MQTT_PUBLISH_ERROR — proves the battery mask is bit-specific, not "any error"
+        // (the generic error-code rule does fire on it, but the battery rule must not).
         IReadOnlyList<RuleEvent> events = _engine.Evaluate(Status(batteryMv: 4000, 1UL << 25));
 
-        events.ShouldBeEmpty();
+        events.ShouldNotContain(e => e.Type == RuleType.BatteryCritical);
     }
 
     [Fact]
@@ -94,6 +97,36 @@ public sealed class RuleEngineTests
         IReadOnlyList<RuleEvent> events = _engine.Evaluate(Status(batteryMv: 4000, errorCode: 0));
 
         events.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void Error_code_rule_fires_on_any_non_zero_mask()
+    {
+        // 8.4 (/F74/): a non-battery error bit (bit 25 = MQTT_PUBLISH_ERROR) trips the error-code rule.
+        IReadOnlyList<RuleEvent> events = _engine.Evaluate(Status(batteryMv: 4000, 1UL << 25));
+
+        RuleEvent fired = events.ShouldHaveSingleItem();
+        fired.Type.ShouldBe(RuleType.ErrorCode);
+        fired.Message.ShouldContain(Guid);
+    }
+
+    [Fact]
+    public void Error_code_rule_does_not_fire_on_a_zero_mask()
+    {
+        IReadOnlyList<RuleEvent> events = _engine.Evaluate(Status(batteryMv: 4000, errorCode: 0));
+
+        events.ShouldNotContain(e => e.Type == RuleType.ErrorCode);
+    }
+
+    [Fact]
+    public void Battery_critical_bit_fires_both_battery_and_error_code_rules()
+    {
+        // 8.4: a critical-battery mask trips both rules (distinct dedup keys downstream) — the
+        // error-code rule fires on any non-zero mask, including the battery bit.
+        IReadOnlyList<RuleEvent> events = _engine.Evaluate(Status(batteryMv: 4000, 1UL << 42));
+
+        events.Select(e => e.Type).ShouldBe(
+            [RuleType.BatteryCritical, RuleType.ErrorCode], ignoreOrder: true);
     }
 
     [Fact]

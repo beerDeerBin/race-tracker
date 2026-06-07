@@ -2,6 +2,11 @@
 
   <!-- Adapters implementing the Application ports (/A30/). Depends on Application. -->
 
+  <!-- The offline monitor's sweep step (story 8.4) is internal but unit-tested directly. -->
+  <ItemGroup>
+    <InternalsVisibleTo Include="RaceTracker.Realtime.UnitTests" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\RaceTracker.Realtime.Application\RaceTracker.Realtime.Application.csproj" />
     <!-- Shared /S50/ message contracts: the relay deserializes StatusEvent off the broker. -->

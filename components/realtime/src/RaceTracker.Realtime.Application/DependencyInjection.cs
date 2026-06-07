@@ -11,10 +11,11 @@ public static class ApplicationServiceCollectionExtensions
 {
     /// <summary>
     /// Registers the Application layer: binds <see cref="RealtimeOptions"/> (/A40/), the shared
-    /// <see cref="TimeProvider"/>, the realtime metrics, the declarative rule engine (story 8.1)
-    /// and the live status-relay use case (stories 6.2/6.3). One DI extension per layer (/A30/).
-    /// The SignalR client adapter that satisfies the <c>IClientNotifier</c> port is registered in
-    /// the Api (it needs the hub type).
+    /// <see cref="TimeProvider"/>, the realtime metrics, the declarative rule engine (story 8.1),
+    /// the shared rule-notification path + device-activity tracker (story 8.4) and the live
+    /// status-relay use case (stories 6.2/6.3). One DI extension per layer (/A30/). The SignalR
+    /// client adapter that satisfies the <c>IClientNotifier</c> port — and the hosted offline
+    /// monitor that drives the tracker — are registered in the Api / Infrastructure.
     /// </summary>
     public static IServiceCollection AddApplication(
         this IServiceCollection services, IConfiguration configuration)
@@ -24,6 +25,8 @@ public static class ApplicationServiceCollectionExtensions
         services.AddSingleton(TimeProvider.System);
         services.AddSingleton<RealtimeMetrics>();
         services.AddSingleton<RuleEngine>();
+        services.AddSingleton<RuleNotifier>();
+        services.AddSingleton<DeviceActivityTracker>();
         services.AddSingleton<StatusRelayService>();
 
         return services;

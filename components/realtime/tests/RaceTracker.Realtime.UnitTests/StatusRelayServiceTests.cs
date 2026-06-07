@@ -13,10 +13,12 @@ using Xunit;
 namespace RaceTracker.Realtime.UnitTests;
 
 /// <summary>
-/// Unit tests for the live-relay use case (stories 6.2/6.3/8.2) with the ports mocked
+/// Unit tests for the live-relay use case (stories 6.2/6.3/8.2/8.4) with the ports mocked
 /// (architecture §9): a status event is always relayed as a device-status push, a run-progress
-/// push is added only while ACQUIRING a sized run, and a fired rule notifies once through the
-/// TTL gate without ever disturbing the relay.
+/// push is added only while ACQUIRING a sized run, a fired rule notifies once through the shared
+/// <see cref="RuleNotifier"/> TTL gate without ever disturbing the relay, and the ACQUIRING→idle
+/// transition raises a run-finished notification (8.4). The notifier is exercised end-to-end with a
+/// mocked deduplicator + client (its own isolation is covered in <see cref="RuleNotifierTests"/>).
 /// </summary>
 public sealed class StatusRelayServiceTests : IDisposable
 {
@@ -32,10 +34,13 @@ public sealed class StatusRelayServiceTests : IDisposable
         // Default: the dedup gate lets notifications through unless a test overrides it.
         _dedup.ShouldNotifyAsync(Arg.Any<string>(), Arg.Any<TimeSpan>(), Arg.Any<CancellationToken>())
             .Returns(true);
+        IOptions<RealtimeOptions> options = Options.Create(new RealtimeOptions());
+        var ruleNotifier = new RuleNotifier(
+            _notifier, _dedup, options, _metrics, NullLogger<RuleNotifier>.Instance);
+        var tracker = new DeviceActivityTracker(TimeProvider.System, options);
         _service = new StatusRelayService(
             _notifier, new RuleEngine(TimeProvider.System, NullLogger<RuleEngine>.Instance),
-            _dedup, Options.Create(new RealtimeOptions()), _metrics,
-            NullLogger<StatusRelayService>.Instance);
+            ruleNotifier, tracker, _metrics, NullLogger<StatusRelayService>.Instance);
     }
 
     public void Dispose() => _metrics.Dispose();
@@ -114,17 +119,7 @@ public sealed class StatusRelayServiceTests : IDisposable
         // 8.1: a rule-triggering status must still push live status AND surface the rule
         // event to the metric. Capture the counter via a MeterListener.
         long ruleEvents = 0;
-        using var listener = new MeterListener();
-        listener.InstrumentPublished = (instrument, l) =>
-        {
-            if (instrument.Meter.Name == RealtimeMetrics.MeterName
-                && instrument.Name == "racetracker_realtime_rule_events_total")
-            {
-                l.EnableMeasurementEvents(instrument);
-            }
-        };
-        listener.SetMeasurementEventCallback<long>((_, measurement, _, _) => ruleEvents += measurement);
-        listener.Start();
+        using MeterListener listener = ListenForRuleEvents(m => ruleEvents += m);
 
         var statusEvent = new StatusEvent(
             Guid, UptimeMs: 1000, BatteryMv: 2900, BatteryPct: 5, State: DeviceState.Connected,
@@ -141,17 +136,7 @@ public sealed class StatusRelayServiceTests : IDisposable
     public async Task Healthy_status_fires_no_rule_event()
     {
         long ruleEvents = 0;
-        using var listener = new MeterListener();
-        listener.InstrumentPublished = (instrument, l) =>
-        {
-            if (instrument.Meter.Name == RealtimeMetrics.MeterName
-                && instrument.Name == "racetracker_realtime_rule_events_total")
-            {
-                l.EnableMeasurementEvents(instrument);
-            }
-        };
-        listener.SetMeasurementEventCallback<long>((_, measurement, _, _) => ruleEvents += measurement);
-        listener.Start();
+        using MeterListener listener = ListenForRuleEvents(m => ruleEvents += m);
 
         await _service.RelayAsync(
             StatusFor(DeviceState.Connected, sampledCount: 0, totalSamples: 0),
@@ -214,6 +199,60 @@ public sealed class StatusRelayServiceTests : IDisposable
 
         await _dedup.DidNotReceive().ShouldNotifyAsync(
             Arg.Any<string>(), Arg.Any<TimeSpan>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Run_finished_transition_fires_one_notification()
+    {
+        // 8.4: ACQUIRING then idle/connected on the same device → a run-finished notification,
+        // pushed once through the shared notifier (the relay drives the tracker).
+        await _service.RelayAsync(
+            StatusFor(DeviceState.Acquiring, sampledCount: 100, totalSamples: 100),
+            CancellationToken.None);
+        await _service.RelayAsync(
+            StatusFor(DeviceState.Connected, sampledCount: 0, totalSamples: 0),
+            CancellationToken.None);
+
+        await _dedup.Received(1).ShouldNotifyAsync(
+            $"notify:{RuleType.RunFinished}:{Guid}", Arg.Any<TimeSpan>(),
+            Arg.Any<CancellationToken>());
+        await _notifier.Received(1).PushNotificationAsync(
+            Guid,
+            Arg.Is<NotificationUpdate>(n => n.Type == RuleType.RunFinished && n.DeviceGuid == Guid),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task A_state_change_that_is_not_leaving_acquiring_fires_no_run_finished()
+    {
+        // Idle → Connected is a real transition driven through the tracker, but not a run ending —
+        // run-finished must fire only when leaving ACQUIRING, not on any state change.
+        await _service.RelayAsync(
+            StatusFor(DeviceState.Idle, sampledCount: 0, totalSamples: 0), CancellationToken.None);
+        await _service.RelayAsync(
+            StatusFor(DeviceState.Connected, sampledCount: 0, totalSamples: 0),
+            CancellationToken.None);
+
+        await _notifier.DidNotReceive().PushNotificationAsync(
+            Arg.Any<string>(),
+            Arg.Is<NotificationUpdate>(n => n.Type == RuleType.RunFinished),
+            Arg.Any<CancellationToken>());
+    }
+
+    private static MeterListener ListenForRuleEvents(Action<long> onMeasured)
+    {
+        var listener = new MeterListener();
+        listener.InstrumentPublished = (instrument, l) =>
+        {
+            if (instrument.Meter.Name == RealtimeMetrics.MeterName
+                && instrument.Name == "racetracker_realtime_rule_events_total")
+            {
+                l.EnableMeasurementEvents(instrument);
+            }
+        };
+        listener.SetMeasurementEventCallback<long>((_, measurement, _, _) => onMeasured(measurement));
+        listener.Start();
+        return listener;
     }
 
     private static StatusEvent CriticalBatteryStatus() =>
