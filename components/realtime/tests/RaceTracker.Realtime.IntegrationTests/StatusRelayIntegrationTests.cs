@@ -20,6 +20,7 @@ using RaceTracker.BuildingBlocks.Contracts.Auth;
 using RaceTracker.BuildingBlocks.Contracts.Telemetry;
 using RaceTracker.Realtime.Application.Realtime;
 using Shouldly;
+using Testcontainers.PostgreSql;
 using Xunit;
 
 namespace RaceTracker.Realtime.IntegrationTests;
@@ -37,6 +38,7 @@ public sealed class StatusRelayIntegrationTests : IAsyncLifetime
     private const string User = "race";
     private const string Pass = "race";
     private const string Vhost = "race-tracker";
+    private const string Database = "racetracker";
 
     private const string DeviceGuid = "00000000-0000-0000-0000-0000000000aa";
     private const string OtherGuid = "00000000-0000-0000-0000-0000000000bb";
@@ -50,11 +52,22 @@ public sealed class StatusRelayIntegrationTests : IAsyncLifetime
         .WithWaitStrategy(Wait.ForUnixContainer().UntilMessageIsLogged("Server startup complete"))
         .Build();
 
+    // The host boots the full Program, which applies the outbox migration at startup (story 8.3),
+    // so it needs a reachable Postgres even though the relay/auth assertions never touch the outbox.
+    // Without this the migrator resolves the default compose host ("postgres"), which is unresolvable
+    // off the Docker network → startup throws and EnsureServer fails.
+    private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder("postgres:16-alpine")
+        .WithDatabase(Database)
+        .WithUsername(User)
+        .WithPassword(Pass)
+        .Build();
+
     private WebApplicationFactory<Program> _factory = null!;
 
     public async Task InitializeAsync()
     {
         await _rabbit.StartAsync();
+        await _postgres.StartAsync();
         _factory = new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
         {
             builder.UseEnvironment("Development");
@@ -67,6 +80,12 @@ public sealed class StatusRelayIntegrationTests : IAsyncLifetime
                     ["Realtime:RabbitMq:VirtualHost"] = Vhost,
                     ["Realtime:RabbitMq:Username"] = User,
                     ["Realtime:RabbitMq:Password"] = Pass,
+                    ["Realtime:Outbox:Host"] = _postgres.Hostname,
+                    ["Realtime:Outbox:Port"] =
+                        _postgres.GetMappedPublicPort(5432).ToString(CultureInfo.InvariantCulture),
+                    ["Realtime:Outbox:Database"] = Database,
+                    ["Realtime:Outbox:Username"] = User,
+                    ["Realtime:Outbox:Password"] = Pass,
                 }));
         });
     }
@@ -75,6 +94,7 @@ public sealed class StatusRelayIntegrationTests : IAsyncLifetime
     {
         await _factory.DisposeAsync();
         await _rabbit.DisposeAsync();
+        await _postgres.DisposeAsync();
     }
 
     [Fact]
