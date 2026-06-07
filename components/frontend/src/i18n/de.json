@@ -87,6 +87,15 @@
     "runId": "Lauf-ID",
     "open": "Öffnen"
   },
+  "chartToolbar": {
+    "view": "Ansicht",
+    "raw": "Rohdaten",
+    "aggregate": "Aggregat",
+    "from": "Von [s]",
+    "to": "Bis [s]",
+    "reset": "Zurücksetzen",
+    "axes": "Achsen"
+  },
   "runDetail": {
     "title": "Lauf-Detail",
     "backToRuns": "Laufliste",

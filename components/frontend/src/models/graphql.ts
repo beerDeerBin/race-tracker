@@ -29,3 +29,23 @@ export interface Sample {
     gy: number;
     gz: number;
 }
+
+export interface AxisRollup {
+    min: number;
+    max: number;
+    avg: number;
+}
+
+/** One 4.2 continuous-aggregate bucket (100 raw samples per bucket). */
+export interface SampleRollupBucket {
+    /** First raw sample index folded into this bucket. */
+    bucketStartIndex: number;
+    ax: AxisRollup;
+    ay: AxisRollup;
+    az: AxisRollup;
+    gx: AxisRollup;
+    gy: AxisRollup;
+    gz: AxisRollup;
+    /** Raw samples folded into this bucket. */
+    sampleCount: number;
+}

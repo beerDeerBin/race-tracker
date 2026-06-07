@@ -365,7 +365,7 @@ der sechs Achsen, damit ich die Messung auswerte.*
 > ✅ Nach 7.5 ist der Happy-Path im Frontend vollständig → **Flask-Tester
 > abgelöst** (`/O40/`), bleibt nur noch Debug-Hilfe.
 
-### 7.6 — Filter + Aggregatansicht · **S**
+### 7.6 — Filter + Aggregatansicht · **S** · ✅ Erledigt
 *Als Benutzer möchte ich Zeitraum/Achsen filtern und zwischen Roh- und
 Aggregatansicht wählen, damit große Läufe übersichtlich bleiben.*
 **Verweise:** `/F82/`, `/F53/`
