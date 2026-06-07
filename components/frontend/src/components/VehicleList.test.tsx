@@ -83,12 +83,13 @@ describe('VehicleList', () => {
         expect(screen.getByText('registered')).toBeInTheDocument();
     });
 
-    it('shows the error indicator only when error bits are set', () => {
+    it('shows plaintext error chips only when error bits are set', () => {
+        // bit 2 = EEPROM write error
         useDeviceStatusMock.mockReturnValue({ ...liveStatus, errorCode: 4 });
 
         render(<VehicleList vehicles={[registeredVehicle]} />);
 
-        expect(screen.getByTitle('Device reports error codes')).toBeInTheDocument();
+        expect(screen.getByText('EEPROM write error')).toBeInTheDocument();
     });
 
     it('offers the claim action on pending rows only', () => {

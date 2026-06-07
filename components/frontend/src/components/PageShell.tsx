@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import type { PropsWithChildren, ReactNode } from 'react';
 import { ThemeToggle } from './ThemeToggle';
+import { LanguageSwitcher } from './LanguageSwitcher';
 import { useAuth } from '../hooks/useAuth';
 
 /**
@@ -22,6 +23,7 @@ export function PageShell({ title, children }: PropsWithChildren<{ title: ReactN
                     <span className="text-slate-500 dark:text-slate-400">
                         {t('dashboard.loggedInAs', { user })}
                     </span>
+                    <LanguageSwitcher />
                     <ThemeToggle />
                     <button
                         type="button"

@@ -5,6 +5,7 @@ import { StatusBadge } from './StatusBadge';
 import { ClaimDialog } from './ClaimDialog';
 import { RunControls } from './RunControls';
 import { RunProgressBar } from './RunProgressBar';
+import { ErrorCodeList } from './ErrorCodeList';
 import { useDeviceStatus } from '../hooks/useDeviceStatus';
 import { encodeGuid } from '../utils/encodeGuid';
 import { formatBattery, formatUptime, secondsSince } from '../utils/format';
@@ -79,15 +80,8 @@ function VehicleRow({ vehicle, onClaim }: { vehicle: VehicleResponse; onClaim: (
                 )}
             </td>
             <td className="px-4 py-3">
-                <span className="flex items-center gap-2">
-                    <StatusBadge state={status?.state ?? null} />
-                    {status !== null && status.errorCode !== 0 && (
-                        <span
-                            title={t('vehicles.hasErrors')}
-                            className="inline-block h-2 w-2 rounded-full bg-red-500"
-                        />
-                    )}
-                </span>
+                <StatusBadge state={status?.state ?? null} />
+                {status && <ErrorCodeList errorCode={status.errorCode} />}
                 {status?.state === 'Acquiring' && (
                     <RunProgressBar deviceGuid={vehicle.deviceGuid} />
                 )}

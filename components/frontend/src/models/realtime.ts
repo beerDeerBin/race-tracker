@@ -16,8 +16,9 @@ export interface DeviceStatusUpdate {
     /** Battery charge 0–100; 255 = unknown. */
     batteryPct: number;
     /**
-     * 64-bit error bitmask (PROTOCOL §5.1). JSON numbers lose precision above 2^53, so this
-     * field is only safe for zero/nonzero checks until the BigInt-based decoder lands in 7.8.
+     * 64-bit error bitmask (PROTOCOL §5.1), decoded to plaintext via utils/errorBitmask
+     * (BigInt-safe). Typed as number: the highest defined bit is 42, well under 2^53, so
+     * the value stays exact through JSON parsing.
      */
     errorCode: number;
     /** ISO 8601 timestamp of the gateway observation — used for newest-wins merging. */

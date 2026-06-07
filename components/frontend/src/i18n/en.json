@@ -29,9 +29,36 @@
     "lastSeen": "Last seen",
     "pending": "pending",
     "registered": "registered",
-    "hasErrors": "Device reports error codes",
     "secondsAgo": "{{seconds}}s ago",
     "actions": "Actions"
+  },
+  "errors": {
+    "eepromParameter": "EEPROM parameter error",
+    "eepromInit": "EEPROM init error",
+    "eepromWrite": "EEPROM write error",
+    "wifiInit": "Wi-Fi init error",
+    "wifiConnect": "Wi-Fi connect error",
+    "wifiShutdown": "Wi-Fi shutdown error",
+    "wifiWakeup": "Wi-Fi wakeup error",
+    "wifiSleep": "Wi-Fi sleep error",
+    "damgrInit": "Data manager init error",
+    "damgrAlloc": "Data manager allocation error",
+    "damgrOverflow": "Data manager overflow",
+    "mqttConnect": "MQTT connect error",
+    "mqttPublish": "MQTT publish error",
+    "mqttSubscribe": "MQTT subscribe error",
+    "imuInit": "IMU init error",
+    "imuConfig": "IMU config error",
+    "imuRead": "IMU read error",
+    "imuFifo": "IMU FIFO error",
+    "pwrInit": "Power init error",
+    "pwrAdc": "Power ADC error",
+    "pwrBatteryCritical": "Battery critical"
+  },
+  "language": {
+    "en": "English",
+    "de": "German",
+    "switchTo": "Switch language: {{lang}}"
   },
   "claim": {
     "button": "Claim",

@@ -377,7 +377,7 @@ den Lauf live mitverfolge.*
 **Verweise:** `/F64/`
 **AK:** Während/nach einem Lauf erscheinen neue Batches ohne Seiten-Reload.
 
-### 7.8 — Fehlercode-Klartext + i18n · **S**
+### 7.8 — Fehlercode-Klartext + i18n · **S** · ✅ Erledigt
 *Als Benutzer möchte ich Fehlercodes im Klartext und Texte in meiner Sprache,
 damit die Oberfläche verständlich ist.*
 **Verweise:** `/U30/`, `/U40/`

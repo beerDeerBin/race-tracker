@@ -3,6 +3,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useVehicles } from '../hooks/useVehicles';
 import { VehicleList } from '../components/VehicleList';
 import { ThemeToggle } from '../components/ThemeToggle';
+import { LanguageSwitcher } from '../components/LanguageSwitcher';
 
 /** The device dashboard (/F83/, /U20/): all vehicles incl. pending, with live status. */
 export function DashboardPage() {
@@ -18,6 +19,7 @@ export function DashboardPage() {
                     <span className="text-slate-500 dark:text-slate-400">
                         {t('dashboard.loggedInAs', { user })}
                     </span>
+                    <LanguageSwitcher />
                     <ThemeToggle />
                     <button
                         type="button"

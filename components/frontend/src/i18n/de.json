@@ -29,9 +29,36 @@
     "lastSeen": "Zuletzt gesehen",
     "pending": "ausstehend",
     "registered": "registriert",
-    "hasErrors": "Gerät meldet Fehlercodes",
     "secondsAgo": "vor {{seconds}}s",
     "actions": "Aktionen"
+  },
+  "errors": {
+    "eepromParameter": "EEPROM-Parameterfehler",
+    "eepromInit": "EEPROM-Initialisierungsfehler",
+    "eepromWrite": "EEPROM-Schreibfehler",
+    "wifiInit": "WLAN-Initialisierungsfehler",
+    "wifiConnect": "WLAN-Verbindungsfehler",
+    "wifiShutdown": "WLAN-Abschaltfehler",
+    "wifiWakeup": "WLAN-Aufweckfehler",
+    "wifiSleep": "WLAN-Schlaffehler",
+    "damgrInit": "Datenmanager-Initialisierungsfehler",
+    "damgrAlloc": "Datenmanager-Speicherfehler",
+    "damgrOverflow": "Datenmanager-Überlauf",
+    "mqttConnect": "MQTT-Verbindungsfehler",
+    "mqttPublish": "MQTT-Veröffentlichungsfehler",
+    "mqttSubscribe": "MQTT-Abonnementfehler",
+    "imuInit": "IMU-Initialisierungsfehler",
+    "imuConfig": "IMU-Konfigurationsfehler",
+    "imuRead": "IMU-Lesefehler",
+    "imuFifo": "IMU-FIFO-Fehler",
+    "pwrInit": "Stromversorgungs-Initialisierungsfehler",
+    "pwrAdc": "Stromversorgungs-ADC-Fehler",
+    "pwrBatteryCritical": "Batterie kritisch"
+  },
+  "language": {
+    "en": "Englisch",
+    "de": "Deutsch",
+    "switchTo": "Sprache wechseln: {{lang}}"
   },
   "claim": {
     "button": "Übernehmen",
