@@ -17,6 +17,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\RaceTracker.Management.Infrastructure\RaceTracker.Management.Infrastructure.csproj" />
+    <!-- Shared JWT validation parameters (story 7.2) used to round-trip issued tokens. -->
+    <ProjectReference Include="..\..\..\building-blocks\src\RaceTracker.BuildingBlocks\RaceTracker.BuildingBlocks.csproj" />
   </ItemGroup>
 
   <ItemGroup>

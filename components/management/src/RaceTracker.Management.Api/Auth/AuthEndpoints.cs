@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using RaceTracker.BuildingBlocks.Contracts.Auth;
 using RaceTracker.Management.Application.Abstractions;
 using RaceTracker.Management.Application.Auth;
 

@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
+using RaceTracker.BuildingBlocks.Auth;
 using RaceTracker.Management.Application.Abstractions;
 using RaceTracker.Management.Application.Configuration;
 using RaceTracker.Management.Domain.Auth;
@@ -45,7 +46,12 @@ public sealed class JwtTokenIssuerTests
         AccessToken token = issuer.Issue(TestUser());
 
         TokenValidationResult result = await new JsonWebTokenHandler()
-            .ValidateTokenAsync(token.Value, JwtTokenValidation.Build(_options.Jwt));
+            .ValidateTokenAsync(token.Value, JwtTokenValidation.Build(new JwtValidationOptions
+            {
+                SigningKey = _options.Jwt.SigningKey,
+                Issuer = _options.Jwt.Issuer,
+                Audience = _options.Jwt.Audience,
+            }));
 
         result.IsValid.ShouldBeTrue();
         result.ClaimsIdentity.Name.ShouldBe("admin");

@@ -1,4 +1,5 @@
 using RaceTracker.BuildingBlocks.Correlation;
+using RaceTracker.BuildingBlocks.Cors;
 using RaceTracker.BuildingBlocks.Health;
 using RaceTracker.BuildingBlocks.Logging;
 using RaceTracker.BuildingBlocks.Metrics;
@@ -16,6 +17,10 @@ builder.UseRaceTrackerSerilog("Persistence");
 
 builder.Services.AddApplication(builder.Configuration);
 builder.Services.AddInfrastructure();
+
+// CORS (story 7.1, /U50/): the SPA queries /graphql cross-origin from the Vite dev server;
+// allowed origins come from the shared building block's "Cors" section.
+builder.Services.AddRaceTrackerCors(builder.Configuration);
 
 // Readiness gates on real dependency reachability (anti-stub); liveness stays dependency-free.
 builder.Services.AddHealthChecks()
@@ -35,10 +40,12 @@ builder.Services.AddProblemDetails();
 
 var app = builder.Build();
 
-// Pipeline order (§7): correlation-id → global exception handling → request logging → endpoints.
+// Pipeline order (§7): correlation-id → global exception handling → request logging → CORS →
+// endpoints.
 app.UseCorrelationId();
 app.UseExceptionHandler();
 app.UseSerilogRequestLogging();
+app.UseRaceTrackerCors();
 
 app.MapRaceTrackerHealthChecks();
 app.MapRaceTrackerMetrics();

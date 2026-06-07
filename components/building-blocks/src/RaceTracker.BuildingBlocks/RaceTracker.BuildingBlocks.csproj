@@ -17,6 +17,14 @@
     <PackageReference Include="Serilog.Sinks.File" />
     <PackageReference Include="OpenTelemetry.Extensions.Hosting" />
     <PackageReference Include="OpenTelemetry.Exporter.Prometheus.AspNetCore" />
+    <!-- Shared JWT validation parameters (story 7.2): TokenValidationParameters +
+         SymmetricSecurityKey for every service validating the management-issued tokens. -->
+    <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Claim names are a cross-service contract shared with the issuer. -->
+    <ProjectReference Include="../RaceTracker.BuildingBlocks.Contracts/RaceTracker.BuildingBlocks.Contracts.csproj" />
   </ItemGroup>
 
 </Project>

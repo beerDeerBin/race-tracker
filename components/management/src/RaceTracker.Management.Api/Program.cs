@@ -2,16 +2,16 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using RaceTracker.BuildingBlocks.Auth;
 using RaceTracker.BuildingBlocks.Correlation;
+using RaceTracker.BuildingBlocks.Cors;
 using RaceTracker.BuildingBlocks.Health;
 using RaceTracker.BuildingBlocks.Logging;
 using RaceTracker.BuildingBlocks.Metrics;
 using RaceTracker.Management.Api.Auth;
 using RaceTracker.Management.Application;
-using RaceTracker.Management.Application.Configuration;
 using RaceTracker.Management.Application.Observability;
 using RaceTracker.Management.Infrastructure;
-using RaceTracker.Management.Infrastructure.Auth;
 using RaceTracker.Management.Infrastructure.Health;
 using Serilog;
 
@@ -22,11 +22,16 @@ builder.UseRaceTrackerSerilog("Management");
 builder.Services.AddApplication(builder.Configuration);
 builder.Services.AddInfrastructure();
 
+// CORS (story 7.1, /U50/): the SPA calls this REST API cross-origin from the Vite dev server;
+// allowed origins come from the shared building block's "Cors" section.
+builder.Services.AddRaceTrackerCors(builder.Configuration);
+
 // Auth (/F11/, /F12/, §8): validate signed bearer tokens against the same parameters the issuer
-// signs with, then make every endpoint secure-by-default via a fallback authorization policy.
-// Only /login (AllowAnonymous) and the probes are opened explicitly.
-var jwtOptions = builder.Configuration.GetSection(AuthOptions.Section).Get<AuthOptions>()?.Jwt
-    ?? new JwtOptions();
+// signs with (shared building block since 7.2, so all validating services stay in sync), then
+// make every endpoint secure-by-default via a fallback authorization policy. Only /login
+// (AllowAnonymous) and the probes are opened explicitly.
+var jwtOptions = builder.Configuration.GetSection(JwtValidationOptions.Section)
+    .Get<JwtValidationOptions>() ?? new JwtValidationOptions();
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -60,10 +65,11 @@ builder.Services.AddProblemDetails();
 var app = builder.Build();
 
 // Pipeline order (§7): correlation-id → global exception handling → request logging →
-// authentication → authorization → endpoints.
+// CORS → authentication → authorization → endpoints.
 app.UseCorrelationId();
 app.UseExceptionHandler();
 app.UseSerilogRequestLogging();
+app.UseRaceTrackerCors();
 app.UseAuthentication();
 app.UseAuthorization();
 

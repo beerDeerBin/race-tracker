@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using RaceTracker.Realtime.Application.Observability;
 
@@ -9,7 +10,9 @@ namespace RaceTracker.Realtime.Api.Realtime;
 /// interested clients — never a broadcast. The group name is the device <c>guid</c> used
 /// <b>verbatim</b> (the cross-service correlation key; never round-tripped through
 /// <see cref="System.Guid"/>, so its casing matches the gateway's MQTT topic exactly).
+/// Requires an authenticated principal since story 7.2 (<c>/F12/</c> secure-by-default).
 /// </summary>
+[Authorize]
 public sealed class TelemetryHub : Hub
 {
     private readonly RealtimeMetrics _metrics;

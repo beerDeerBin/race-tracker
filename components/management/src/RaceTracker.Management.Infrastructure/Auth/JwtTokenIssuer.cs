@@ -3,8 +3,8 @@ using System.Text;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
+using RaceTracker.BuildingBlocks.Contracts.Auth;
 using RaceTracker.Management.Application.Abstractions;
-using RaceTracker.Management.Application.Auth;
 using RaceTracker.Management.Application.Configuration;
 using RaceTracker.Management.Domain.Auth;
 

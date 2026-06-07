@@ -8,4 +8,9 @@
     <ProjectReference Include="..\..\..\building-blocks\src\RaceTracker.BuildingBlocks\RaceTracker.BuildingBlocks.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Hub JWT (story 7.2, /F12/): validates the management-issued bearer tokens. -->
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
+  </ItemGroup>
+
 </Project>
