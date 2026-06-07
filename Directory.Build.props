@@ -1,0 +1,35 @@
+<Project>
+
+  <!--
+    Common MSBuild properties inherited by every .NET project in the monorepo
+    (MSBuild walks up from each *.csproj and imports the nearest Directory.Build.props).
+    Service projects live under components/<service>/; see doc/CONVENTIONS.md.
+    Test projects relax some of these in their own folder (e.g. IsPackable=false).
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>$(MSBuildProjectName)</RootNamespace>
+    <AssemblyName>$(MSBuildProjectName)</AssemblyName>
+  </PropertyGroup>
+
+  <!-- Quality gate: analyzers + code style enforced at build, warnings are errors. -->
+  <PropertyGroup>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <!-- Pinned to the SDK band (not 'latest-recommended') so analyzer results stay
+         reproducible with the global.json SDK pin and a newer band can't break the
+         warnings-as-errors build. -->
+    <AnalysisLevel>9.0-recommended</AnalysisLevel>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <Deterministic>true</Deterministic>
+    <!-- Required so IDE0005 (remove unnecessary usings) runs on build; we don't
+         ship XML docs, so suppress CS1591 (missing XML comment on public member). -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+
+</Project>

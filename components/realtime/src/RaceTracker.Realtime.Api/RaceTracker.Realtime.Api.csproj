@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <!-- Composition root / transport edge: DI wiring, middleware, health, SignalR hub (/A20/, /A30/). -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\RaceTracker.Realtime.Application\RaceTracker.Realtime.Application.csproj" />
+    <ProjectReference Include="..\RaceTracker.Realtime.Infrastructure\RaceTracker.Realtime.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\building-blocks\src\RaceTracker.BuildingBlocks\RaceTracker.BuildingBlocks.csproj" />
+  </ItemGroup>
+
+</Project>

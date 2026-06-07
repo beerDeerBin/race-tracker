@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Shared kernel (Leitprinzip "einmalig festgezurrt"): Serilog setup, correlation-id
+    middleware and the split liveness/readiness health endpoints. Created in story 2.1
+    and reused by every service from M3 onward via <ProjectReference> — never re-extracted.
+    Needs the ASP.NET shared framework because it ships middleware + endpoint helpers.
+  -->
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Serilog.AspNetCore" />
+    <PackageReference Include="Serilog.Sinks.Console" />
+    <PackageReference Include="Serilog.Sinks.File" />
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" />
+    <PackageReference Include="OpenTelemetry.Exporter.Prometheus.AspNetCore" />
+  </ItemGroup>
+
+</Project>

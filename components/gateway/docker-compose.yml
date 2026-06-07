@@ -1,0 +1,19 @@
+services:
+  gateway:
+    build:
+      # Repo root so the Dockerfile can copy the hierarchical root build files
+      # (global.json, Directory.*.props, nuget.config) and the building-blocks project.
+      context: ../..
+      dockerfile: components/gateway/src/RaceTracker.Gateway.Api/Dockerfile
+    container_name: race-tracker-gateway
+    depends_on:
+      - mosquitto
+      - rabbitmq
+    ports:
+      - "8081:8080"   # health endpoints: http://localhost:8081/health/{live,ready}
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      # In-network broker hostnames (override the appsettings defaults if needed).
+      Gateway__Mqtt__Host: mosquitto
+      Gateway__RabbitMq__Host: rabbitmq
+    restart: unless-stopped

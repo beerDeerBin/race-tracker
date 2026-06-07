@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <!-- Composition root / transport edge: DI wiring, middleware, health (/A20/, /A30/). -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\RaceTracker.Management.Application\RaceTracker.Management.Application.csproj" />
+    <ProjectReference Include="..\RaceTracker.Management.Infrastructure\RaceTracker.Management.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\building-blocks\src\RaceTracker.BuildingBlocks\RaceTracker.BuildingBlocks.csproj" />
+    <!-- Shared RunIdCodec: validate a caller-supplied runId at the boundary the same way it is encoded (5.5). -->
+    <ProjectReference Include="..\..\..\building-blocks\src\RaceTracker.BuildingBlocks.Contracts\RaceTracker.BuildingBlocks.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Bearer-token validation for secure-by-default endpoints (story 5.2, /F11/, /F12/). -->
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,17 @@
+# Line-ending normalisation. The repo standard is LF (see .editorconfig: end_of_line = lf).
+# Git stores LF and checks out LF on every platform, so Windows checkouts don't drift to CRLF.
+* text=auto eol=lf
+
+# Tooling that expects CRLF on Windows — keep CRLF to avoid churn.
+*.sln text eol=crlf
+*.cmd text eol=crlf
+*.bat text eol=crlf
+
+# Binary: never normalise or diff as text.
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.pdf  binary
+*.zip  binary

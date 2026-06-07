@@ -7,6 +7,10 @@ services:
       - "9001:9001"   # WebSocket (MQTTX web client connects here)
     volumes:
       - ./config/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      # Name the image's declared VOLUMEs so they're reused, not regenerated as
+      # anonymous (hash-named) volumes on every `tilt up`.
+      - mosquitto-data:/mosquitto/data
+      - mosquitto-log:/mosquitto/log
     restart: unless-stopped
 
   race-tracker-tester:
@@ -40,4 +44,5 @@ services:
 
 volumes:
   mosquitto-data:
+  mosquitto-log:
   mqttx-web-data:

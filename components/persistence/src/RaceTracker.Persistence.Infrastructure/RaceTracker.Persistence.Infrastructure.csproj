@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Adapters implementing the Application ports (/A30/). Depends on Application. -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\RaceTracker.Persistence.Application\RaceTracker.Persistence.Application.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" />
+    <!-- TimescaleDB/PostgreSQL adapter (connectivity probe + schema migrator). -->
+    <PackageReference Include="Npgsql" />
+    <!-- /O80/: official low-level RabbitMQ client (decided in story 2.1). -->
+    <PackageReference Include="RabbitMQ.Client" />
+  </ItemGroup>
+
+  <!-- Schema is service-owned (story 3.1): the SQL migrations ship as embedded resources
+       so the same scripts back both the running service and the integration test. -->
+  <ItemGroup>
+    <EmbeddedResource Include="Migrations\Sql\*.sql" />
+  </ItemGroup>
+
+</Project>

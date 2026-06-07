@@ -1,0 +1,93 @@
+<Project>
+
+  <!--
+    Central Package Management (CPM): NuGet versions are declared ONCE here with
+    <PackageVersion>, and individual projects reference packages WITHOUT a Version
+    attribute (just <PackageReference Include="..." />). This keeps every service on
+    the same, single-sourced version. See doc/CONVENTIONS.md.
+
+    Versions are added per service from M2 onward. The .NET RabbitMQ client choice
+    (/O80/: RabbitMQ.Client vs. MassTransit) is decided in story 2.1 and pinned then
+    — intentionally NOT pre-pinned here.
+  -->
+
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
+  </PropertyGroup>
+
+  <ItemGroup Label="Observability (building-blocks)">
+    <PackageVersion Include="Serilog.AspNetCore" Version="9.0.0" />
+    <PackageVersion Include="Serilog.Sinks.Console" Version="6.1.1" />
+    <PackageVersion Include="Serilog.Sinks.File" Version="7.0.0" />
+    <!-- Scrape-friendly metrics (§8): Meter counters exported via Prometheus. The
+         AspNetCore Prometheus exporter ships only as a beta band — accepted for this
+         learning stack. Added in story 2.2 (first service to emit metrics). -->
+    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.15.3" />
+    <PackageVersion Include="OpenTelemetry.Exporter.Prometheus.AspNetCore" Version="1.15.3-beta.1" />
+  </ItemGroup>
+
+  <ItemGroup Label="Messaging / transport adapters">
+    <!-- /O80/ decided in story 2.1: official low-level RabbitMQ client (not MassTransit). -->
+    <PackageVersion Include="RabbitMQ.Client" Version="7.2.1" />
+    <PackageVersion Include="MQTTnet" Version="5.1.0.1559" />
+  </ItemGroup>
+
+  <ItemGroup Label="GraphQL (read API)">
+    <!-- /S30/, §10.2: GraphQL read API for TP-PERS. HotChocolate is the chosen library;
+         first introduced in story 4.1 (persistence read path). -->
+    <PackageVersion Include="HotChocolate.AspNetCore" Version="15.1.3" />
+  </ItemGroup>
+
+  <ItemGroup Label="Persistence adapters">
+    <!-- TimescaleDB/PostgreSQL access for TP-PERS (/O10/). Raw ADO.NET client, in line
+         with this stack's no-heavy-framework philosophy; added in story 3.1/3.2. -->
+    <PackageVersion Include="Npgsql" Version="9.0.3" />
+    <!-- Document-DB access for TP-MGMT (/O10/, §10.2): official MongoDB driver; added in
+         story 5.1 (management grundgerüst + Mongo connectivity probe). -->
+    <PackageVersion Include="MongoDB.Driver" Version="3.9.0" />
+  </ItemGroup>
+
+  <ItemGroup Label="Auth (TP-MGMT)">
+    <!-- /F11/, /F12/, §8 Sicherheit: single-user auth in story 5.2. JWT bearer
+         validation (Api) + token issuing (Infrastructure) and a strong adaptive
+         password hash. JwtBearer 9.0.16 transitively pins the Microsoft.IdentityModel
+         family to 8.0.1, so the issuer's JsonWebTokens reference is pinned to the same
+         8.0.1 to keep the IdentityModel assemblies a consistent set. -->
+    <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.16" />
+    <PackageVersion Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.0.1" />
+    <PackageVersion Include="BCrypt.Net-Next" Version="4.0.3" />
+  </ItemGroup>
+
+  <ItemGroup Label="Microsoft.Extensions (pinned to the net9.0 band)">
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.16" />
+    <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="9.0.16" />
+    <PackageVersion Include="Microsoft.Extensions.Diagnostics.HealthChecks" Version="9.0.16" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="9.0.16" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.16" />
+  </ItemGroup>
+
+  <ItemGroup Label="Test stack">
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.6.0" />
+    <PackageVersion Include="xunit" Version="2.9.3" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5" />
+    <PackageVersion Include="NSubstitute" Version="5.3.0" />
+    <PackageVersion Include="Shouldly" Version="4.3.0" />
+    <PackageVersion Include="coverlet.collector" Version="10.0.1" />
+    <!-- High-fidelity integration tests against real dependencies in throwaway
+         containers (CONVENTIONS §7); story 2.2 uses it for a real Mosquitto broker. -->
+    <PackageVersion Include="Testcontainers" Version="4.12.0" />
+    <!-- PostgreSQL module: robust wait strategy (retries a real query) for the
+         TimescaleDB migration test (story 3.1) — survives the init-time restart. -->
+    <PackageVersion Include="Testcontainers.PostgreSql" Version="4.12.0" />
+    <!-- MongoDB module: throwaway Mongo for the management connectivity-probe test (story 5.1). -->
+    <PackageVersion Include="Testcontainers.MongoDb" Version="4.12.0" />
+    <!-- In-memory TestServer (WebApplicationFactory) for the management auth pipeline
+         integration test (story 5.2): real login → 401/200 secure-by-default. -->
+    <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="9.0.16" />
+    <!-- Real SignalR client driving the realtime hub over the in-memory TestServer for the
+         live-relay integration test (stories 6.2/6.3). Server SignalR ships in the Web SDK. -->
+    <PackageVersion Include="Microsoft.AspNetCore.SignalR.Client" Version="9.0.16" />
+  </ItemGroup>
+
+</Project>

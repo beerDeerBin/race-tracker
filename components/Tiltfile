@@ -24,16 +24,88 @@ else:
         quiet=True,
     )
 
-docker_compose('./mqtt/docker-compose.yml')
+# Load the MQTT stack, the internal RabbitMQ broker and the backend services as one
+# merged Compose project, so they share a network and services can reach both brokers.
+docker_compose([
+    './mqtt/docker-compose.yml',
+    './rabbitmq/docker-compose.yml',
+    './gateway/docker-compose.yml',
+    './persistence/docker-compose.yml',
+    './management/docker-compose.yml',
+    './realtime/docker-compose.yml',
+])
 
-# ── broker ────────────────────────────────────────────────────────────────────
+# ── brokers ─────────────────────────────────────────────────────────────────
+# Mosquitto = device transport (MQTT); RabbitMQ = internal service broker (AMQP).
 dc_resource('mosquitto', labels=['broker'])
+
+dc_resource(
+    'rabbitmq',
+    labels=['broker'],
+    links=[link('http://localhost:15672', 'RabbitMQ Management')],
+)
 
 dc_resource(
     'mqttx-web',
     labels=['broker'],
     links=[link('http://localhost:8080', 'MQTT Client')],
     resource_deps=['mosquitto'],
+)
+
+# ── datastores ────────────────────────────────────────────────────────────────
+# TimescaleDB (PostgreSQL): time-series store for samples + run metadata (TP-PERS).
+dc_resource('timescaledb', labels=['datastore'])
+
+# MongoDB: document store for the management domain entities (User/Vehicle, TP-MGMT).
+dc_resource('mongodb', labels=['datastore'])
+
+# ── services ──────────────────────────────────────────────────────────────────
+# TP-GW: ingestion gateway. Readiness (/health/ready) gates on MQTT + RabbitMQ.
+dc_resource(
+    'gateway',
+    labels=['services'],
+    resource_deps=['mosquitto', 'rabbitmq'],
+    links=[
+        link('http://localhost:8081/health/ready', 'Gateway readiness'),
+        link('http://localhost:8081/metrics', 'Gateway metrics'),
+    ],
+)
+
+# TP-PERS: persistence service. Readiness (/health/ready) gates on RabbitMQ + Timescale;
+# the service applies its own schema migrations at startup.
+dc_resource(
+    'persistence',
+    labels=['services'],
+    resource_deps=['rabbitmq', 'timescaledb'],
+    links=[
+        link('http://localhost:8082/health/ready', 'Persistence readiness'),
+        link('http://localhost:8082/graphql', 'Persistence GraphQL'),
+    ],
+)
+
+# TP-MGMT: management service. Readiness (/health/ready) gates on MongoDB + RabbitMQ + MQTT; it
+# consumes status events from RabbitMQ for device discovery (story 5.4) and publishes commands to
+# devices over MQTT (story 5.5).
+dc_resource(
+    'management',
+    labels=['services'],
+    resource_deps=['mongodb', 'rabbitmq', 'mosquitto'],
+    links=[
+        link('http://localhost:8083/health/ready', 'Management readiness'),
+        link('http://localhost:8083/metrics', 'Management metrics'),
+    ],
+)
+
+# TP-RT: realtime/notification service. Readiness (/health/ready) gates on RabbitMQ; it consumes
+# status events and pushes them live to SignalR clients (group per vehicle, stories 6.1–6.3).
+dc_resource(
+    'realtime',
+    labels=['services'],
+    resource_deps=['rabbitmq'],
+    links=[
+        link('http://localhost:8084/health/ready', 'Realtime readiness'),
+        link('http://localhost:8084/metrics', 'Realtime metrics'),
+    ],
 )
 
 # ── simulator ─────────────────────────────────────────────────────────────────

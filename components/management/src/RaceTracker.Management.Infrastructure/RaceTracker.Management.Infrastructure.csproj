@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Adapters implementing the Application ports (/A30/). Depends on Application. -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\RaceTracker.Management.Application\RaceTracker.Management.Application.csproj" />
+    <!-- Shared /S50/ message contracts: the StatusEvent consumed for device discovery (story 5.4). -->
+    <ProjectReference Include="..\..\..\building-blocks\src\RaceTracker.BuildingBlocks.Contracts\RaceTracker.BuildingBlocks.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" />
+    <!-- Document-DB adapter (/O10/): connection + connectivity probe behind the port. -->
+    <PackageReference Include="MongoDB.Driver" />
+    <!-- Auth adapters (story 5.2): adaptive password hash + signed JWT issuing (/F11/, §8). -->
+    <PackageReference Include="BCrypt.Net-Next" />
+    <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />
+    <!-- /O80/: official low-level RabbitMQ client (decided in story 2.1) — status-event consumer (5.4). -->
+    <PackageReference Include="RabbitMQ.Client" />
+    <!-- Device-transport adapter (/O80/, same lib as the gateway): MQTT command publisher (5.5). -->
+    <PackageReference Include="MQTTnet" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,11 @@
+Die Idee
+Ein kleiner ferngesteuerter Spielzeug-LKW trägt einen Microcontroller mit Bewegungssensorik. Während er fährt, erfasst der MC laufend Lagedaten – Pitch, Yaw, Roll und einen Timestamp – und versieht jede Messung mit seiner festen GUID, sodass jeder Datensatz eindeutig dem Fahrzeug zugeordnet werden kann.
+Diese Sensordaten werden über MQTT in das System eingespeist und von dort über RabbitMQ als Message Queue an die einzelnen Microservices verteilt. Ein Persistence-Service schreibt die Daten weg, ein Management-Service kümmert sich um User und Vehicles und die Zuordnung der eingehenden Daten. Das Frontend initialisiert neue Fahrzeuge und zeigt die Daten an – inklusive Rückkanal für eine Live-Ansicht.
+Neben dem echten MC gibt es einen Simulator, der dieselben Datenpakete erzeugt – so lässt sich das System auch ohne fahrenden LKW testen und entwickeln.
+Der Kern ist also: echte Sensordaten von einem fahrenden Gerät, sauber über eine entkoppelte Microservice-Architektur durchgereicht, bis sie im Frontend sichtbar werden – ein Übungsprojekt, das die im Unterricht erarbeiteten Prinzipien (Messaging, Service-Trennung, Persistenz) an einem greifbaren Beispiel durchspielt.Das Diagramm-Tool spielt gerade nicht mit – ich beschreibe den Fluss kurz in Worten, das reicht fürs Konzept:
+Datenfluss:
+Spielzeug-LKW (MC + GUID) ──→ MQTT ──→ RabbitMQ ──→ Persistence (speichern)
+Simulator ──→ MQTT (alternative Datenquelle zum Testen)
+Frontend ──INIT-VEHICLE──→ Management ──→ RabbitMQ (User/Vehicle-Verwaltung & Zuordnung)
+RabbitMQ ──→ Frontend (Rückkanal für Live-Ansicht)
+Kurz gesagt: zwei Quellen (echt + simuliert) speisen über MQTT ein, RabbitMQ verteilt entkoppelt an die Services, und das Frontend ist gleichzeitig Steuerung (Fahrzeug anlegen) und Anzeige.

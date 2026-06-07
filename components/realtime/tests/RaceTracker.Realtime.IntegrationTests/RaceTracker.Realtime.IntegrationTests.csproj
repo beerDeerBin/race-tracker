@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <!-- Tests may relax the warnings-as-errors gate (doc/CONVENTIONS.md §7). -->
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <!-- Underscored Given_When_Then test names are the intended xUnit convention. -->
+    <NoWarn>$(NoWarn);CA1707</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Hosts the real pipeline (SignalR hub + relay consumer) via WebApplicationFactory<Program>. -->
+    <ProjectReference Include="..\..\src\RaceTracker.Realtime.Api\RaceTracker.Realtime.Api.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="Shouldly" />
+    <PackageReference Include="coverlet.collector" />
+    <!-- In-memory TestServer to host the real service. -->
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+    <!-- Real SignalR client connecting to the hub over the TestServer handler. -->
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" />
+    <!-- Drives a real RabbitMQ broker (declare/bind/publish) for the relay test. -->
+    <PackageReference Include="Testcontainers" />
+    <PackageReference Include="RabbitMQ.Client" />
+  </ItemGroup>
+
+</Project>

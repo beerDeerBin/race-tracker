@@ -29,7 +29,11 @@ Battery-powered IMU acquisition system. An ESP32 node wakes on a timer, streams 
 | `components/race-tracker-mcu/` | ESP32 firmware — IMU sampling, MQTT, deep sleep |
 | `components/simulator/` | Software-only fake device — runs multiple simulated nodes over MQTT |
 | `components/mqtt/` | Mosquitto broker + MQTTX web UI + Flask data-viewer |
+| `components/rabbitmq/` | RabbitMQ — internal service-to-service broker (AMQP) |
 | `components/Tiltfile` | Orchestrates everything with [Tilt](https://tilt.dev) |
+
+The .NET backend services (added from M2 onward) follow the repo/solution/layer
+conventions in [`doc/CONVENTIONS.md`](./doc/CONVENTIONS.md).
 
 ---
 
