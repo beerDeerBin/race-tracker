@@ -131,7 +131,19 @@
     "loadFailed": "Could not load the samples.",
     "empty": "This run has no samples.",
     "accelTitle": "Acceleration ax / ay / az",
-    "gyroTitle": "Angular velocity gx / gy / gz"
+    "gyroTitle": "Angular velocity gx / gy / gz",
+    "viewTrajectory": "View trajectory"
+  },
+  "trajectory": {
+    "title": "Trajectory",
+    "backToRun": "Run detail",
+    "loading": "Loading trajectory…",
+    "loadFailed": "Could not load the trajectory.",
+    "empty": "This run has no trajectory.",
+    "mapLabel": "Driven track map",
+    "play": "Play",
+    "pause": "Pause",
+    "timeSlider": "Playback position"
   },
   "theme": {
     "light": "Light",

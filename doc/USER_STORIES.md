@@ -384,7 +384,7 @@ damit die Oberfläche verständlich ist.*
 **AK:** errorCode-Bitmaske → benannte Klartexte (PROTOCOL §5.1); alle Strings
 externalisiert (i18n).
 
-### 7.9 — Streckenkarte + Fahrt-Simulation (Playback) · **M**
+### 7.9 — Streckenkarte + Fahrt-Simulation (Playback) · **M** · ✅ Erledigt
 *Als Benutzer möchte ich die gefahrene Strecke eines Laufs als **Karte** sehen und
 die Fahrt als **Animation abspielen**, damit ich visuell nachvollziehe, wie sich
 das Fahrzeug bewegt hat.*

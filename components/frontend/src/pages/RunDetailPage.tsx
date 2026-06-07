@@ -123,12 +123,20 @@ export function RunDetailPage() {
 
     return (
         <PageShell title={t('runDetail.title')}>
-            <Link
-                to={`/vehicles/${encodeGuid(deviceGuid)}`}
-                className="mb-2 inline-block text-sm text-sky-600 hover:underline dark:text-sky-400"
-            >
-                ← {t('runDetail.backToRuns')}
-            </Link>
+            <div className="mb-2 flex items-center justify-between">
+                <Link
+                    to={`/vehicles/${encodeGuid(deviceGuid)}`}
+                    className="inline-block text-sm text-sky-600 hover:underline dark:text-sky-400"
+                >
+                    ← {t('runDetail.backToRuns')}
+                </Link>
+                <Link
+                    to={`/vehicles/${encodeGuid(deviceGuid)}/runs/${encodeURIComponent(runId)}/trajectory`}
+                    className="rounded bg-sky-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-sky-500"
+                >
+                    {t('runDetail.viewTrajectory')}
+                </Link>
+            </div>
             <p className="mb-4 font-mono text-xs text-slate-400 dark:text-slate-500">
                 {runId} · {t('runDetail.meta', { count: samples?.length ?? 0, odr: odrHz })}
             </p>

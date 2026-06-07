@@ -36,6 +36,20 @@ export interface AxisRollup {
     avg: number;
 }
 
+/** One dead-reckoned 2D trajectory point (4.3), in local meters from (0,0). */
+export interface TrajectoryPoint {
+    /** Source sample index. */
+    index: number;
+    /** Time in seconds (ODR-derived server-side). */
+    t: number;
+    /** Local X position in meters (start at 0). */
+    x: number;
+    /** Local Y position in meters (start at 0). */
+    y: number;
+    /** Integrated heading in radians (CCW from +x). */
+    heading: number;
+}
+
 /** One 4.2 continuous-aggregate bucket (100 raw samples per bucket). */
 export interface SampleRollupBucket {
     /** First raw sample index folded into this bucket. */
