@@ -45,8 +45,8 @@ public sealed class RealtimeMetrics : IDisposable
         _notifications = _meter.CreateCounter<long>(
             "racetracker_realtime_notifications_total",
             unit: "notifications",
-            description: "Rule notifications, tagged by outcome (sent/suppressed) — TTL "
-                + "idempotency, story 8.2.");
+            description: "Rule notifications, tagged by outcome: suppressed (TTL-debounced, 8.2), "
+                + "enqueued (written to the outbox) and dispatched (pushed via SignalR, 8.3).");
     }
 
     /// <summary>
@@ -75,8 +75,9 @@ public sealed class RealtimeMetrics : IDisposable
         _ruleEvents.Add(1, new KeyValuePair<string, object?>("rule", rule.ToString()));
 
     /// <summary>
-    /// Records a notification (story 8.2) tagged by <paramref name="outcome"/> (<c>sent</c> when
-    /// it passed the TTL gate, <c>suppressed</c> when debounced).
+    /// Records a notification tagged by <paramref name="outcome"/>: <c>suppressed</c> when the TTL
+    /// gate debounced it (8.2), <c>enqueued</c> when it was written to the outbox, <c>dispatched</c>
+    /// when the dispatcher pushed it via SignalR (8.3).
     /// </summary>
     public void RecordNotification(string outcome) =>
         _notifications.Add(1, new KeyValuePair<string, object?>("outcome", outcome));

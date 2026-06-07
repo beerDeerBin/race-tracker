@@ -6,6 +6,7 @@ using RaceTracker.BuildingBlocks.Cors;
 using RaceTracker.BuildingBlocks.Health;
 using RaceTracker.BuildingBlocks.Logging;
 using RaceTracker.BuildingBlocks.Metrics;
+using RaceTracker.Realtime.Api;
 using RaceTracker.Realtime.Api.Realtime;
 using RaceTracker.Realtime.Application;
 using RaceTracker.Realtime.Application.Abstractions;
@@ -62,7 +63,8 @@ builder.Services.AddSingleton<IClientNotifier, SignalRClientNotifier>();
 // Readiness gates on real dependency reachability (anti-stub); liveness stays dependency-free.
 builder.Services.AddHealthChecks()
     .AddCheck<RabbitMqHealthCheck>("rabbitmq", tags: [HealthEndpoints.ReadyTag])
-    .AddCheck<RedisHealthCheck>("redis", tags: [HealthEndpoints.ReadyTag]);
+    .AddCheck<RedisHealthCheck>("redis", tags: [HealthEndpoints.ReadyTag])
+    .AddCheck<PostgresHealthCheck>("postgres", tags: [HealthEndpoints.ReadyTag]);
 
 // Scrape-friendly relay metrics (§8) exposed at /metrics via the shared building block.
 builder.Services.AddRaceTrackerMetrics(RealtimeMetrics.MeterName);
@@ -70,6 +72,9 @@ builder.Services.AddRaceTrackerMetrics(RealtimeMetrics.MeterName);
 builder.Services.AddProblemDetails();
 
 var app = builder.Build();
+
+// Apply the service-owned outbox schema (story 8.3) once at startup, with retry/backoff.
+await app.ApplyOutboxMigrationsAsync();
 
 // Pipeline order (§7): correlation-id → global exception handling → request logging → CORS →
 // authentication → authorization → endpoints.

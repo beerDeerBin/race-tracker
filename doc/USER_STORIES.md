@@ -424,7 +424,7 @@ wiederholt, damit die Warnung nützlich bleibt.*
 **AK:** Bedingung (Batterie < 3100 mV bzw. errorCode-Bit 42) → **genau eine**
 Benachrichtigung pro Zeitfenster (Cache-Key + TTL).
 
-### 8.3 — Transactional Outbox + Dispatch über SignalR · **K**
+### 8.3 — Transactional Outbox + Dispatch über SignalR · **K** · ✅ Erledigt
 *Als Benutzer möchte ich Benachrichtigungen zuverlässig erhalten, auch wenn der
 Push-Empfänger kurz weg war, damit nichts verloren geht.*
 **Verweise:** `/F73/`, `/A60/`

@@ -15,16 +15,17 @@ namespace RaceTracker.Realtime.UnitTests;
 /// <summary>
 /// Unit tests for the hosted offline sweep (story 8.4): one sweep notifies, through the shared
 /// <see cref="RuleNotifier"/> path, for each device the tracker reports as newly offline — and a
-/// sweep with nothing stale pushes nothing. Exercises the testable sweep method directly (no timer
-/// loop); the tracker + clock supply the offline condition.
+/// sweep with nothing stale notifies nothing. Since story 8.3 the notifier enqueues to the outbox
+/// (the dispatcher pushes), so the sweep is asserted via the outbox. Exercises the testable sweep
+/// method directly (no timer loop); the tracker + clock supply the offline condition.
 /// </summary>
 public sealed class DeviceOfflineMonitorTests : IDisposable
 {
     private const string Guid = "00000000-0000-0000-0000-0000000000aa";
     private static readonly DateTimeOffset _start = new(2026, 6, 7, 12, 0, 0, TimeSpan.Zero);
 
-    private readonly IClientNotifier _client = Substitute.For<IClientNotifier>();
     private readonly INotificationDeduplicator _dedup = Substitute.For<INotificationDeduplicator>();
+    private readonly INotificationOutbox _outbox = Substitute.For<INotificationOutbox>();
     private readonly RealtimeMetrics _metrics = new();
     private readonly MutableTimeProvider _clock = new(_start);
     private readonly DeviceActivityTracker _tracker;
@@ -40,7 +41,7 @@ public sealed class DeviceOfflineMonitorTests : IDisposable
         });
         _tracker = new DeviceActivityTracker(_clock, options);
         var ruleNotifier = new RuleNotifier(
-            _client, _dedup, options, _metrics, NullLogger<RuleNotifier>.Instance);
+            _dedup, _outbox, options, _metrics, NullLogger<RuleNotifier>.Instance);
         _monitor = new DeviceOfflineMonitor(
             _tracker, ruleNotifier, _metrics, _clock, options,
             NullLogger<DeviceOfflineMonitor>.Instance);
@@ -56,21 +57,20 @@ public sealed class DeviceOfflineMonitorTests : IDisposable
 
         await _monitor.SweepAsync(CancellationToken.None);
 
-        await _client.Received(1).PushNotificationAsync(
-            Guid,
-            Arg.Is<NotificationUpdate>(n => n.Type == RuleType.DeviceOffline && n.DeviceGuid == Guid),
+        await _outbox.Received(1).EnqueueAsync(
+            Arg.Is<RuleEvent>(e => e.Type == RuleType.DeviceOffline && e.DeviceGuid == Guid),
             Arg.Any<CancellationToken>());
     }
 
     [Fact]
-    public async Task A_sweep_with_nothing_stale_pushes_nothing()
+    public async Task A_sweep_with_nothing_stale_notifies_nothing()
     {
         _tracker.Observe(Status()); // just seen — not offline yet
 
         await _monitor.SweepAsync(CancellationToken.None);
 
-        await _client.DidNotReceive().PushNotificationAsync(
-            Arg.Any<string>(), Arg.Any<NotificationUpdate>(), Arg.Any<CancellationToken>());
+        await _outbox.DidNotReceive().EnqueueAsync(
+            Arg.Any<RuleEvent>(), Arg.Any<CancellationToken>());
     }
 
     private static StatusEvent Status() =>

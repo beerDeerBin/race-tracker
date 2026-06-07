@@ -20,6 +20,13 @@
     <PackageReference Include="RabbitMQ.Client" />
     <!-- Key-value cache for notification TTL idempotency (story 8.2, /O10/). -->
     <PackageReference Include="StackExchange.Redis" />
+    <!-- Relational store for the transactional notification outbox (story 8.3, /F73/). -->
+    <PackageReference Include="Npgsql" />
+  </ItemGroup>
+
+  <!-- Service-owned outbox schema migrations, run once at startup (story 8.3). -->
+  <ItemGroup>
+    <EmbeddedResource Include="Migrations\Sql\*.sql" />
   </ItemGroup>
 
 </Project>

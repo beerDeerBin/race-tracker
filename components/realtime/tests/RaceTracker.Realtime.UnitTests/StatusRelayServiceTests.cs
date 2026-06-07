@@ -26,6 +26,7 @@ public sealed class StatusRelayServiceTests : IDisposable
 
     private readonly IClientNotifier _notifier = Substitute.For<IClientNotifier>();
     private readonly INotificationDeduplicator _dedup = Substitute.For<INotificationDeduplicator>();
+    private readonly INotificationOutbox _outbox = Substitute.For<INotificationOutbox>();
     private readonly RealtimeMetrics _metrics = new();
     private readonly StatusRelayService _service;
 
@@ -35,8 +36,9 @@ public sealed class StatusRelayServiceTests : IDisposable
         _dedup.ShouldNotifyAsync(Arg.Any<string>(), Arg.Any<TimeSpan>(), Arg.Any<CancellationToken>())
             .Returns(true);
         IOptions<RealtimeOptions> options = Options.Create(new RealtimeOptions());
+        // 8.3: a fired rule is enqueued to the outbox (the dispatcher does the SignalR push).
         var ruleNotifier = new RuleNotifier(
-            _notifier, _dedup, options, _metrics, NullLogger<RuleNotifier>.Instance);
+            _dedup, _outbox, options, _metrics, NullLogger<RuleNotifier>.Instance);
         var tracker = new DeviceActivityTracker(TimeProvider.System, options);
         _service = new StatusRelayService(
             _notifier, new RuleEngine(TimeProvider.System, NullLogger<RuleEngine>.Instance),
@@ -146,30 +148,30 @@ public sealed class StatusRelayServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task Critical_battery_fires_one_notification_through_the_ttl_gate()
+    public async Task Critical_battery_enqueues_one_notification_through_the_ttl_gate()
     {
-        // 8.2: the fired rule is debounced through the dedup gate, then pushed once.
+        // 8.2/8.3: the fired rule is debounced through the dedup gate, then enqueued once to the
+        // outbox (the dispatcher does the SignalR push).
         await _service.RelayAsync(CriticalBatteryStatus(), CancellationToken.None);
 
         await _dedup.Received(1).ShouldNotifyAsync(
             $"notify:{RuleType.BatteryCritical}:{Guid}", Arg.Any<TimeSpan>(),
             Arg.Any<CancellationToken>());
-        await _notifier.Received(1).PushNotificationAsync(
-            Guid,
-            Arg.Is<NotificationUpdate>(n => n.Type == RuleType.BatteryCritical && n.DeviceGuid == Guid),
+        await _outbox.Received(1).EnqueueAsync(
+            Arg.Is<RuleEvent>(e => e.Type == RuleType.BatteryCritical && e.DeviceGuid == Guid),
             Arg.Any<CancellationToken>());
     }
 
     [Fact]
-    public async Task Suppressed_notification_is_not_pushed_when_the_gate_is_closed()
+    public async Task Suppressed_notification_is_not_enqueued_when_the_gate_is_closed()
     {
         _dedup.ShouldNotifyAsync(Arg.Any<string>(), Arg.Any<TimeSpan>(), Arg.Any<CancellationToken>())
             .Returns(false);
 
         await _service.RelayAsync(CriticalBatteryStatus(), CancellationToken.None);
 
-        await _notifier.DidNotReceive().PushNotificationAsync(
-            Arg.Any<string>(), Arg.Any<NotificationUpdate>(), Arg.Any<CancellationToken>());
+        await _outbox.DidNotReceive().EnqueueAsync(
+            Arg.Any<RuleEvent>(), Arg.Any<CancellationToken>());
         // The live status push still happened.
         await _notifier.Received(1).PushDeviceStatusAsync(
             Guid, Arg.Any<DeviceStatusUpdate>(), Arg.Any<CancellationToken>());
@@ -186,8 +188,8 @@ public sealed class StatusRelayServiceTests : IDisposable
 
         await _notifier.Received(1).PushDeviceStatusAsync(
             Guid, Arg.Any<DeviceStatusUpdate>(), Arg.Any<CancellationToken>());
-        await _notifier.DidNotReceive().PushNotificationAsync(
-            Arg.Any<string>(), Arg.Any<NotificationUpdate>(), Arg.Any<CancellationToken>());
+        await _outbox.DidNotReceive().EnqueueAsync(
+            Arg.Any<RuleEvent>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -202,10 +204,10 @@ public sealed class StatusRelayServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task Run_finished_transition_fires_one_notification()
+    public async Task Run_finished_transition_enqueues_one_notification()
     {
         // 8.4: ACQUIRING then idle/connected on the same device → a run-finished notification,
-        // pushed once through the shared notifier (the relay drives the tracker).
+        // enqueued once through the shared notifier (the relay drives the tracker).
         await _service.RelayAsync(
             StatusFor(DeviceState.Acquiring, sampledCount: 100, totalSamples: 100),
             CancellationToken.None);
@@ -216,9 +218,8 @@ public sealed class StatusRelayServiceTests : IDisposable
         await _dedup.Received(1).ShouldNotifyAsync(
             $"notify:{RuleType.RunFinished}:{Guid}", Arg.Any<TimeSpan>(),
             Arg.Any<CancellationToken>());
-        await _notifier.Received(1).PushNotificationAsync(
-            Guid,
-            Arg.Is<NotificationUpdate>(n => n.Type == RuleType.RunFinished && n.DeviceGuid == Guid),
+        await _outbox.Received(1).EnqueueAsync(
+            Arg.Is<RuleEvent>(e => e.Type == RuleType.RunFinished && e.DeviceGuid == Guid),
             Arg.Any<CancellationToken>());
     }
 
@@ -233,9 +234,8 @@ public sealed class StatusRelayServiceTests : IDisposable
             StatusFor(DeviceState.Connected, sampledCount: 0, totalSamples: 0),
             CancellationToken.None);
 
-        await _notifier.DidNotReceive().PushNotificationAsync(
-            Arg.Any<string>(),
-            Arg.Is<NotificationUpdate>(n => n.Type == RuleType.RunFinished),
+        await _outbox.DidNotReceive().EnqueueAsync(
+            Arg.Is<RuleEvent>(e => e.Type == RuleType.RunFinished),
             Arg.Any<CancellationToken>());
     }
 

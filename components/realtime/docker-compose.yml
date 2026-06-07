@@ -9,6 +9,7 @@ services:
     depends_on:
       - rabbitmq
       - redis
+      - postgres
     ports:
       - "8084:8080"   # health endpoints: http://localhost:8084/health/{live,ready}; hub: /hubs/telemetry
     environment:
@@ -16,4 +17,5 @@ services:
       # In-network dependency hostnames (override the appsettings defaults if needed).
       Realtime__RabbitMq__Host: rabbitmq
       Realtime__Redis__Host: redis
+      Realtime__Outbox__Host: postgres
     restart: unless-stopped

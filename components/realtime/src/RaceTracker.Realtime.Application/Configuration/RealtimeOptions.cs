@@ -19,6 +19,9 @@ public sealed class RealtimeOptions
 
     /// <summary>Tunables for the stateful story-8.4 rules (run-finished / offline thresholds).</summary>
     public RulesOptions Rules { get; init; } = new();
+
+    /// <summary>Relational store (PostgreSQL) for the transactional notification outbox (story 8.3).</summary>
+    public OutboxOptions Outbox { get; init; } = new();
 }
 
 public sealed class RabbitMqOptions
@@ -61,4 +64,19 @@ public sealed class RulesOptions
 
     /// <summary>How often (seconds) the offline monitor sweeps last-seen timestamps. Default 5 s.</summary>
     public int OfflineSweepSeconds { get; init; } = 5;
+}
+
+public sealed class OutboxOptions
+{
+    public string Host { get; init; } = "localhost";
+    public int Port { get; init; } = 5432;
+    public string Database { get; init; } = "racetracker";
+    public string Username { get; init; } = "race";
+    public string Password { get; init; } = "race";
+
+    /// <summary>How often (seconds) the dispatcher polls the outbox for pending rows. Default 2 s.</summary>
+    public int DispatchPollSeconds { get; init; } = 2;
+
+    /// <summary>Max pending rows claimed and pushed per dispatch sweep. Default 50.</summary>
+    public int DispatchBatchSize { get; init; } = 50;
 }

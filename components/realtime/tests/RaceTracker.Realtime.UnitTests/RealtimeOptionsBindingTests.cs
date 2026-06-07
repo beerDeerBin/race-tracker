@@ -29,6 +29,13 @@ public sealed class RealtimeOptionsBindingTests
                 ["Realtime:Redis:NotificationTtlSeconds"] = "300",
                 ["Realtime:Rules:OfflineThresholdSeconds"] = "15",
                 ["Realtime:Rules:OfflineSweepSeconds"] = "5",
+                ["Realtime:Outbox:Host"] = "postgres",
+                ["Realtime:Outbox:Port"] = "5432",
+                ["Realtime:Outbox:Database"] = "racetracker",
+                ["Realtime:Outbox:Username"] = "race",
+                ["Realtime:Outbox:Password"] = "race",
+                ["Realtime:Outbox:DispatchPollSeconds"] = "2",
+                ["Realtime:Outbox:DispatchBatchSize"] = "50",
             })
             .Build();
 
@@ -50,6 +57,13 @@ public sealed class RealtimeOptionsBindingTests
         options.Redis.NotificationTtlSeconds.ShouldBe(300);
         options.Rules.OfflineThresholdSeconds.ShouldBe(15);
         options.Rules.OfflineSweepSeconds.ShouldBe(5);
+        options.Outbox.Host.ShouldBe("postgres");
+        options.Outbox.Port.ShouldBe(5432);
+        options.Outbox.Database.ShouldBe("racetracker");
+        options.Outbox.Username.ShouldBe("race");
+        options.Outbox.Password.ShouldBe("race");
+        options.Outbox.DispatchPollSeconds.ShouldBe(2);
+        options.Outbox.DispatchBatchSize.ShouldBe(50);
     }
 
     // Story 7.2: the hub validates management-issued JWTs; the shared validation options bind

@@ -4,7 +4,10 @@ using RaceTracker.Realtime.Application.Abstractions;
 using RaceTracker.Realtime.Application.Configuration;
 using RaceTracker.Realtime.Infrastructure.Idempotency;
 using RaceTracker.Realtime.Infrastructure.Messaging;
+using RaceTracker.Realtime.Infrastructure.Migrations;
 using RaceTracker.Realtime.Infrastructure.Monitoring;
+using RaceTracker.Realtime.Infrastructure.Outbox;
+using RaceTracker.Realtime.Infrastructure.Persistence;
 using StackExchange.Redis;
 
 namespace RaceTracker.Realtime.Infrastructure;
@@ -13,8 +16,9 @@ public static class InfrastructureServiceCollectionExtensions
 {
     /// <summary>
     /// Registers the Infrastructure layer: the real RabbitMQ connectivity probe, the hosted
-    /// status-relay consumer, the hosted device-offline monitor (story 8.4), and the Redis
-    /// multiplexer + notification deduplicator / connectivity probe (anti-stub, story 8.2). One DI
+    /// status-relay consumer, the hosted device-offline monitor (story 8.4), the Redis multiplexer
+    /// + notification deduplicator / connectivity probe (anti-stub, story 8.2), and the PostgreSQL
+    /// outbox migrator + repository + connectivity probe + hosted dispatcher (story 8.3). One DI
     /// extension per layer (/A30/). The health-check registration + tagging and the SignalR client
     /// adapter (which satisfies the <c>IClientNotifier</c> port) live in the Api composition root.
     /// </summary>
@@ -39,6 +43,13 @@ public static class InfrastructureServiceCollectionExtensions
         });
         services.AddSingleton<INotificationDeduplicator, RedisNotificationDeduplicator>();
         services.AddSingleton<IRedisConnectivityCheck, RedisConnectivityCheck>();
+
+        // Transactional notification outbox (story 8.3): the schema migrator runs at startup, the
+        // repository persists/drains rows, and the hosted dispatcher pushes them via SignalR.
+        services.AddSingleton<IDatabaseMigrator, NpgsqlOutboxMigrator>();
+        services.AddSingleton<INotificationOutbox, NpgsqlNotificationOutbox>();
+        services.AddSingleton<IPostgresConnectivityCheck, PostgresConnectivityCheck>();
+        services.AddHostedService<OutboxDispatcher>();
 
         return services;
     }
