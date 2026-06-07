@@ -45,11 +45,12 @@ public sealed class OutboxDispatcherTests : IDisposable
 
         await _dispatcher.DispatchOnceAsync(CancellationToken.None);
 
+        // The durable row id is carried through as the client dedup key (exactly-once effect).
         await _notifier.Received(1).PushNotificationAsync(
-            Guid, Arg.Is<NotificationUpdate>(n => n.Type == RuleType.ErrorCode),
+            Guid, Arg.Is<NotificationUpdate>(n => n.Type == RuleType.ErrorCode && n.NotificationId == 1),
             Arg.Any<CancellationToken>());
         await _notifier.Received(1).PushNotificationAsync(
-            Guid, Arg.Is<NotificationUpdate>(n => n.Type == RuleType.DeviceOffline),
+            Guid, Arg.Is<NotificationUpdate>(n => n.Type == RuleType.DeviceOffline && n.NotificationId == 2),
             Arg.Any<CancellationToken>());
         await _outbox.Received(1).MarkDispatchedAsync(1, Arg.Any<CancellationToken>());
         await _outbox.Received(1).MarkDispatchedAsync(2, Arg.Any<CancellationToken>());

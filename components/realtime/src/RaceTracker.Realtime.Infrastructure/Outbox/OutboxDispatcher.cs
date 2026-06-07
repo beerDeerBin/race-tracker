@@ -14,9 +14,11 @@ namespace RaceTracker.Realtime.Infrastructure.Outbox;
 /// <c>DispatchPollSeconds</c> it drains the pending outbox rows and pushes each via the
 /// <see cref="IClientNotifier"/> SignalR adapter (the same <c>"Notification"</c> contract as 8.2),
 /// marking a row dispatched only <b>after</b> a successful push — so a crash mid-dispatch leaves the
-/// row pending and it is re-pushed after restart (at-least-once → exactly-once-effect). A push that
-/// throws is logged and left pending for the next sweep; one bad row never blocks the rest. A
-/// <see cref="BackgroundService"/> like the relay consumer; the sweep is a separate testable method.
+/// row pending and it is re-pushed after restart (at-least-once delivery). The push carries the
+/// durable row id (<see cref="NotificationUpdate.NotificationId"/>) so a re-push is recognisable and
+/// a consumer can dedup on it → exactly-once <i>effect</i>. A push that throws is logged and left
+/// pending for the next sweep; one bad row never blocks the rest. A <see cref="BackgroundService"/>
+/// like the relay consumer; the sweep is a separate testable method.
 /// </summary>
 public sealed partial class OutboxDispatcher : BackgroundService
 {
@@ -105,7 +107,7 @@ public sealed partial class OutboxDispatcher : BackgroundService
         try
         {
             var notification = new NotificationUpdate(
-                message.DeviceGuid, message.Type, message.Message, message.FiredAtUtc);
+                message.Id, message.DeviceGuid, message.Type, message.Message, message.FiredAtUtc);
             await _notifier.PushNotificationAsync(message.DeviceGuid, notification, cancellationToken);
             // Mark only after a successful push: a crash before this leaves the row pending → re-pushed.
             await _outbox.MarkDispatchedAsync(message.Id, cancellationToken);
