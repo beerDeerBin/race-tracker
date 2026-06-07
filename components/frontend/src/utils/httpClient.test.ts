@@ -3,6 +3,7 @@ import { AxiosError, AxiosHeaders } from 'axios';
 import type { InternalAxiosRequestConfig } from 'axios';
 import { httpClient, registerUnauthorizedHandler } from './httpClient';
 import { tokenStore } from './tokenStore';
+import { logger } from './logger';
 
 function okAdapter(captured: { config?: InternalAxiosRequestConfig }) {
     return async (requestConfig: InternalAxiosRequestConfig) => {
@@ -41,6 +42,24 @@ describe('httpClient interceptors', () => {
         await httpClient.get('http://backend/protected');
 
         expect(AxiosHeaders.from(captured.config!.headers).Authorization).toBe('Bearer token-abc');
+    });
+
+    it('logs the request but masks the bearer token (never logs the secret)', async () => {
+        tokenStore.set({
+            accessToken: 'super-secret-token',
+            expiresAt: '2099-01-01T00:00:00Z',
+            username: 'admin',
+        });
+        const infoSpy = vi.spyOn(logger, 'info').mockImplementation(() => {});
+        const captured: { config?: InternalAxiosRequestConfig } = {};
+        httpClient.defaults.adapter = okAdapter(captured);
+
+        await httpClient.get('http://backend/protected');
+
+        const logged = JSON.stringify(infoSpy.mock.calls);
+        expect(logged).not.toContain('super-secret-token');
+        expect(logged).toContain('Bearer ***');
+        infoSpy.mockRestore();
     });
 
     it('sends no Authorization header without a session', async () => {
