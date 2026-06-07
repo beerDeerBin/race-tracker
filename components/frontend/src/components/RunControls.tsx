@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StartRunDialog } from './StartRunDialog';
 import { useCommands } from '../hooks/useCommands';
@@ -21,6 +21,17 @@ export function RunControls({
     const { t } = useTranslation();
     const commands = useCommands(deviceGuid);
     const [showStartDialog, setShowStartDialog] = useState(false);
+
+    // A dispatch error shouldn't outlive the device state it happened in — once the state
+    // moves on, the failed command may not even be retryable anymore (sticky otherwise).
+    const { reset: resetConnect } = commands.connect;
+    const { reset: resetDisconnect } = commands.disconnect;
+    const { reset: resetReset } = commands.reset;
+    useEffect(() => {
+        resetConnect();
+        resetDisconnect();
+        resetReset();
+    }, [state, resetConnect, resetDisconnect, resetReset]);
 
     const anyFailed =
         commands.connect.isError || commands.disconnect.isError || commands.reset.isError;
@@ -57,7 +68,11 @@ export function RunControls({
             {button(
                 'startRun',
                 'commands.startRun',
-                () => setShowStartDialog(true),
+                () => {
+                    // A previous attempt's error must not greet the freshly opened dialog.
+                    commands.startRun.reset();
+                    setShowStartDialog(true);
+                },
                 commands.startRun.isPending,
             )}
             {button(

@@ -13,10 +13,10 @@ export function RunProgressBar({ deviceGuid }: { deviceGuid: string }) {
         return null;
     }
 
-    const percent = Math.min(
-        100,
-        Math.round((progress.sampledCount / progress.totalSamples) * 100),
-    );
+    // Clamp the count and floor the percent: an overflowing batch never shows ">total",
+    // and 100 % appears only at actual completion.
+    const sampled = Math.min(progress.sampledCount, progress.totalSamples);
+    const percent = Math.floor((sampled / progress.totalSamples) * 100);
 
     return (
         <div className="mt-1.5 w-36">
@@ -32,7 +32,7 @@ export function RunProgressBar({ deviceGuid }: { deviceGuid: string }) {
             </div>
             <div className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
                 {t('commands.progress', {
-                    sampled: progress.sampledCount,
+                    sampled,
                     total: progress.totalSamples,
                     percent,
                 })}

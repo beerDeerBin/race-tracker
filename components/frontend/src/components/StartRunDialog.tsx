@@ -10,6 +10,9 @@ import type {
     StartRunResponse,
 } from '../models/api';
 
+/** Backend NumSamples is a uint — values above this are rejected with a 400. */
+const MAX_NUM_SAMPLES = 4_294_967_295;
+
 const ODR_VALUES: ImuOdr[] = ['hz12_5', 'hz26', 'hz52', 'hz104', 'hz208', 'hz417', 'hz833'];
 const ACCEL_VALUES: AccelRange[] = ['g2', 'g4', 'g8', 'g16'];
 const GYRO_VALUES: GyroRange[] = ['dps125', 'dps250', 'dps500', 'dps1000', 'dps2000'];
@@ -60,7 +63,7 @@ export function StartRunDialog({
     const handleSubmit = (event: FormEvent) => {
         event.preventDefault();
         const samples = Number(numSamples);
-        if (!Number.isInteger(samples) || samples < 1) {
+        if (!Number.isInteger(samples) || samples < 1 || samples > MAX_NUM_SAMPLES) {
             return;
         }
         startRun.mutate(
@@ -107,6 +110,7 @@ export function StartRunDialog({
                     <input
                         type="number"
                         min={1}
+                        max={MAX_NUM_SAMPLES}
                         step={1}
                         value={numSamples}
                         onChange={(event) => setNumSamples(event.target.value)}
