@@ -9,6 +9,7 @@ import type { AxisVisibility, ChartView } from '../components/ChartToolbar';
 import { useRuns } from '../hooks/useRuns';
 import { useSamples } from '../hooks/useSamples';
 import { useRunRollup } from '../hooks/useRunRollup';
+import { useLiveRun } from '../hooks/useLiveRun';
 import { effectiveOdrHz } from '../utils/odr';
 import { encodeGuid } from '../utils/encodeGuid';
 import {
@@ -73,6 +74,9 @@ export function RunDetailPage() {
     const run = runs?.find((r) => r.runId === runId) ?? null;
     const { data: samples, isPending, isError } = useSamples(runId);
     const rollup = useRunRollup(runId, view === 'aggregate');
+
+    // Live append (/F64/): new batches grow the chart without a reload while the run runs.
+    useLiveRun(deviceGuid, runId);
 
     const odrHz = effectiveOdrHz(run);
 

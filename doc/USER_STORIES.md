@@ -371,7 +371,7 @@ Aggregatansicht wählen, damit große Läufe übersichtlich bleiben.*
 **Verweise:** `/F82/`, `/F53/`
 **AK:** Filter wirken auf das Diagramm; Umschalten Roh/Aggregat (nutzt 4.2).
 
-### 7.7 — Live-Mess-Ansicht · **S**
+### 7.7 — Live-Mess-Ansicht · **S** · ✅ Erledigt
 *Als Benutzer möchte ich neu eintreffende Mess-Batches ohne Reload sehen, damit ich
 den Lauf live mitverfolge.*
 **Verweise:** `/F64/`

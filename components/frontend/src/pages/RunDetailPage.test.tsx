@@ -14,6 +14,8 @@ import type { Sample } from '../models/graphql';
 vi.mock('../hooks/useRuns', () => ({ useRuns: vi.fn() }));
 vi.mock('../hooks/useSamples', () => ({ useSamples: vi.fn() }));
 vi.mock('../hooks/useRunRollup', () => ({ useRunRollup: vi.fn() }));
+// Live append is exercised in useLiveRun.test; here it must not touch the network.
+vi.mock('../hooks/useLiveRun', () => ({ useLiveRun: vi.fn() }));
 // The chart itself is uPlot/canvas territory — replace it with a recording marker.
 const chartProps = vi.hoisted(() => [] as Array<Record<string, unknown>>);
 vi.mock('../components/AxisChart', () => ({

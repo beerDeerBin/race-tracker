@@ -17,7 +17,7 @@ const SAMPLES_QUERY = `
 `;
 
 /** The server clamps page sizes to this maximum. */
-const PAGE_SIZE = 50_000;
+export const PAGE_SIZE = 50_000;
 
 /** Hard in-memory cap; beyond it the chart should use the 7.6 roll-up view anyway. */
 const MAX_POINTS = 200_000;
