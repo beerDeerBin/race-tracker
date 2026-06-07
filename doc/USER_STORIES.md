@@ -409,7 +409,7 @@ das Fahrzeug bewegt hat.*
 M6-Services**. **Voraussetzung:** M6 (Service + SignalR), M2 (Status-Strom).
 *Letztes Epic / Zusatz (`/O30/`).*
 
-### 8.1 — Regel-Engine als Daten · **S**
+### 8.1 — Regel-Engine als Daten · **S** · ✅ Erledigt
 *Als System möchte ich Regeln als deklarative `(Typ, Prädikat, Meldung)`-Tabelle
 gegen eingehende Status/Messwerte auswerten, damit neue Regeln eine Datenänderung
 sind.*

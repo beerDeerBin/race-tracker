@@ -1,9 +1,11 @@
+using System.Diagnostics.Metrics;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using RaceTracker.BuildingBlocks.Contracts.Telemetry;
 using RaceTracker.Realtime.Application.Abstractions;
 using RaceTracker.Realtime.Application.Observability;
 using RaceTracker.Realtime.Application.Realtime;
+using RaceTracker.Realtime.Application.Rules;
 using Xunit;
 
 namespace RaceTracker.Realtime.UnitTests;
@@ -23,7 +25,8 @@ public sealed class StatusRelayServiceTests : IDisposable
 
     public StatusRelayServiceTests() =>
         _service = new StatusRelayService(
-            _notifier, _metrics, NullLogger<StatusRelayService>.Instance);
+            _notifier, new RuleEngine(TimeProvider.System, NullLogger<RuleEngine>.Instance),
+            _metrics, NullLogger<StatusRelayService>.Instance);
 
     public void Dispose() => _metrics.Dispose();
 
@@ -93,6 +96,58 @@ public sealed class StatusRelayServiceTests : IDisposable
                 && s.ErrorCode == 0x2A
                 && s.ObservedAtUtc == observedAt),
             Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Critical_battery_status_pushes_device_status_and_counts_a_rule_event()
+    {
+        // 8.1: a rule-triggering status must still push live status AND surface the rule
+        // event to the metric. Capture the counter via a MeterListener.
+        long ruleEvents = 0;
+        using var listener = new MeterListener();
+        listener.InstrumentPublished = (instrument, l) =>
+        {
+            if (instrument.Meter.Name == RealtimeMetrics.MeterName
+                && instrument.Name == "racetracker_realtime_rule_events_total")
+            {
+                l.EnableMeasurementEvents(instrument);
+            }
+        };
+        listener.SetMeasurementEventCallback<long>((_, measurement, _, _) => ruleEvents += measurement);
+        listener.Start();
+
+        var statusEvent = new StatusEvent(
+            Guid, UptimeMs: 1000, BatteryMv: 2900, BatteryPct: 5, State: DeviceState.Connected,
+            SampledCount: 0, TotalSamples: 0, ErrorCode: 0, ObservedAtUtc: DateTimeOffset.UnixEpoch);
+
+        await _service.RelayAsync(statusEvent, CancellationToken.None);
+
+        await _notifier.Received(1).PushDeviceStatusAsync(
+            Guid, Arg.Any<DeviceStatusUpdate>(), Arg.Any<CancellationToken>());
+        Assert.Equal(1, ruleEvents);
+    }
+
+    [Fact]
+    public async Task Healthy_status_fires_no_rule_event()
+    {
+        long ruleEvents = 0;
+        using var listener = new MeterListener();
+        listener.InstrumentPublished = (instrument, l) =>
+        {
+            if (instrument.Meter.Name == RealtimeMetrics.MeterName
+                && instrument.Name == "racetracker_realtime_rule_events_total")
+            {
+                l.EnableMeasurementEvents(instrument);
+            }
+        };
+        listener.SetMeasurementEventCallback<long>((_, measurement, _, _) => ruleEvents += measurement);
+        listener.Start();
+
+        await _service.RelayAsync(
+            StatusFor(DeviceState.Connected, sampledCount: 0, totalSamples: 0),
+            CancellationToken.None);
+
+        Assert.Equal(0, ruleEvents);
     }
 
     private static StatusEvent StatusFor(DeviceState state, uint sampledCount, uint totalSamples) =>
