@@ -74,6 +74,29 @@
     "dispatchFailed": "Command failed.",
     "progress": "{{sampled}} / {{total}} samples ({{percent}} %)"
   },
+  "runs": {
+    "title": "Runs — {{vehicle}}",
+    "backToDashboard": "Dashboard",
+    "loading": "Loading runs…",
+    "loadFailed": "Could not load the run list.",
+    "empty": "No runs recorded yet — start one from the dashboard.",
+    "startedAt": "Started",
+    "samples": "Samples",
+    "odr": "Sample rate",
+    "odrAssumed": "{{odr}} Hz (assumed)",
+    "runId": "Run ID",
+    "open": "Open"
+  },
+  "runDetail": {
+    "title": "Run detail",
+    "backToRuns": "Run list",
+    "meta": "{{count}} samples · {{odr}} Hz",
+    "loading": "Loading samples…",
+    "loadFailed": "Could not load the samples.",
+    "empty": "This run has no samples.",
+    "accelTitle": "Acceleration ax / ay / az",
+    "gyroTitle": "Angular velocity gx / gy / gz"
+  },
   "theme": {
     "light": "Light",
     "dark": "Dark",

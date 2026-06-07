@@ -355,7 +355,7 @@ damit ich Messungen steuere.*
 Aktionen sind deaktiviert/erklärt (`/F34/`); ein aus der UI gestarteter Lauf zeigt
 **Live-Fortschritt** (nutzt 6.3).
 
-### 7.5 — Lauf-Liste + Lauf-Detail-Diagramme · **M**
+### 7.5 — Lauf-Liste + Lauf-Detail-Diagramme · **M** · ✅ Erledigt
 *Als Benutzer möchte ich je Fahrzeug die Läufe sehen und einen Lauf als Diagramm
 der sechs Achsen, damit ich die Messung auswerte.*
 **Verweise:** `/F80/`, `/F81/`, `/F52/`, `/D50/`

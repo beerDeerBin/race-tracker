@@ -74,6 +74,29 @@
     "dispatchFailed": "Kommando fehlgeschlagen.",
     "progress": "{{sampled}} / {{total}} Samples ({{percent}} %)"
   },
+  "runs": {
+    "title": "Läufe — {{vehicle}}",
+    "backToDashboard": "Dashboard",
+    "loading": "Läufe werden geladen…",
+    "loadFailed": "Die Laufliste konnte nicht geladen werden.",
+    "empty": "Noch keine Läufe aufgezeichnet — starte einen über das Dashboard.",
+    "startedAt": "Gestartet",
+    "samples": "Samples",
+    "odr": "Abtastrate",
+    "odrAssumed": "{{odr}} Hz (angenommen)",
+    "runId": "Lauf-ID",
+    "open": "Öffnen"
+  },
+  "runDetail": {
+    "title": "Lauf-Detail",
+    "backToRuns": "Laufliste",
+    "meta": "{{count}} Samples · {{odr}} Hz",
+    "loading": "Samples werden geladen…",
+    "loadFailed": "Die Samples konnten nicht geladen werden.",
+    "empty": "Dieser Lauf enthält keine Samples.",
+    "accelTitle": "Beschleunigung ax / ay / az",
+    "gyroTitle": "Drehrate gx / gy / gz"
+  },
   "theme": {
     "light": "Hell",
     "dark": "Dunkel",

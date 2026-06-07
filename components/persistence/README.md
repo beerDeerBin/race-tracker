@@ -89,3 +89,11 @@ falls back to **104 Hz** (PROTOCOL default) until 5.x plumbs the real value.
 
 Consumer → validate → idempotent upsert and the `Run`/`Sample` domain + repository → **3.3**.
 GraphQL read path → **4.1**. Roll-ups → **4.2**. Trajectory → **4.3** (above).
+
+## GraphQL auth (since story 7.5)
+
+`/graphql` validates the management-issued JWT (secure-by-default, /F12/). The Banana
+Cake Pop IDE therefore also needs a token: `POST /login` on the management service and
+set the `Authorization: Bearer <accessToken>` header in the IDE's connection settings.
+The signing key/issuer/audience come from the shared `Auth:Jwt` section (building-blocks
+`JwtValidationOptions`); override `Auth__Jwt__SigningKey` in real deployments.

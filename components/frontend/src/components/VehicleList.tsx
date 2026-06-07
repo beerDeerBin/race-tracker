@@ -1,10 +1,12 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { StatusBadge } from './StatusBadge';
 import { ClaimDialog } from './ClaimDialog';
 import { RunControls } from './RunControls';
 import { RunProgressBar } from './RunProgressBar';
 import { useDeviceStatus } from '../hooks/useDeviceStatus';
+import { encodeGuid } from '../utils/encodeGuid';
 import { formatBattery, formatUptime, secondsSince } from '../utils/format';
 import type { VehicleResponse } from '../models/api';
 
@@ -54,7 +56,12 @@ function VehicleRow({ vehicle, onClaim }: { vehicle: VehicleResponse; onClaim: (
     return (
         <tr className="border-b border-slate-100 last:border-0 dark:border-slate-800">
             <td className="px-4 py-3">
-                <div className="font-medium">{vehicle.name}</div>
+                <Link
+                    to={`/vehicles/${encodeGuid(vehicle.deviceGuid)}`}
+                    className="font-medium text-sky-700 hover:underline dark:text-sky-400"
+                >
+                    {vehicle.name}
+                </Link>
                 <div className="font-mono text-xs text-slate-400 dark:text-slate-500">
                     {vehicle.deviceGuid}
                 </div>

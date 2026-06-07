@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { render as rtlRender, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { PropsWithChildren, ReactElement } from 'react';
 import { VehicleList } from './VehicleList';
@@ -19,10 +20,14 @@ vi.mock('../hooks/useRunProgress', () => ({
 const useDeviceStatusMock = vi.mocked(useDeviceStatus);
 const useRunProgressMock = vi.mocked(useRunProgress);
 
-// RunControls' command mutations need a query client.
+// RunControls' command mutations need a query client; the vehicle-name Link a router.
 function Providers({ children }: PropsWithChildren) {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
+    return (
+        <MemoryRouter>
+            <QueryClientProvider client={client}>{children}</QueryClientProvider>
+        </MemoryRouter>
+    );
 }
 
 function render(ui: ReactElement) {

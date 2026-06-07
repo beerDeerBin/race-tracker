@@ -28,8 +28,9 @@ Battery-powered IMU acquisition system. An ESP32 node wakes on a timer, streams 
 |---|---|
 | `components/race-tracker-mcu/` | ESP32 firmware — IMU sampling, MQTT, deep sleep |
 | `components/simulator/` | Software-only fake device — runs multiple simulated nodes over MQTT |
-| `components/mqtt/` | Mosquitto broker + MQTTX web UI + Flask data-viewer |
+| `components/mqtt/` | Mosquitto broker + MQTTX web UI + Flask data-viewer (legacy debug aid — superseded by the web frontend since story 7.5, `/O40/`) |
 | `components/rabbitmq/` | RabbitMQ — internal service-to-service broker (AMQP) |
+| `components/frontend/` | Web SPA (React + TypeScript) — login, live dashboard, run control, run charts · :5173 |
 | `components/Tiltfile` | Orchestrates everything with [Tilt](https://tilt.dev) |
 
 The .NET backend services (added from M2 onward) follow the repo/solution/layer
@@ -44,7 +45,8 @@ cd components/
 tilt up
 ```
 
-Brings up the broker (`:1883`), MQTTX web (`:8080`), and the data viewer (`:5000`).  
+Brings up the broker (`:1883`), MQTTX web (`:8080`), the backend services, and the
+**web frontend** (`:5173`, login with the management seed user).  
 The simulator starts automatically with the devices configured in `components/simulator/config.yaml`.
 
 Tilt UI at http://localhost:10350 has buttons on the `race-tracker-simulator` resource to manage devices and overall config without editing YAML by hand.
