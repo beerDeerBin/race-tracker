@@ -33,7 +33,7 @@ export function VehicleDetailPage() {
                 (runs.length === 0 ? (
                     <p className="text-slate-500 dark:text-slate-400">{t('runs.empty')}</p>
                 ) : (
-                    <RunList runs={runs} />
+                    <RunList deviceGuid={deviceGuid} runs={runs} />
                 ))}
         </PageShell>
     );

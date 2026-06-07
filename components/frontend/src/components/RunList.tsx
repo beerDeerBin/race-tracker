@@ -4,8 +4,16 @@ import { encodeGuid } from '../utils/encodeGuid';
 import { effectiveOdrHz } from '../utils/odr';
 import type { Run } from '../models/graphql';
 
-/** A vehicle's runs (/F80/), newest first; each row links to the six-axis detail. */
-export function RunList({ runs }: { runs: Run[] }) {
+/**
+ * A vehicle's runs (/F80/), newest first; each row links to the six-axis detail.
+ *
+ * Links are built from the verbatim `deviceGuid` the page was reached with (the
+ * case-sensitive cross-service key, CONVENTIONS §8) — **not** from `run.deviceGuid`, which
+ * comes from the persistence GraphQL `uuid` column and is lower-cased. Routing the verbatim
+ * casing through keeps the run-detail SignalR group/filter (7.7 live tail) matching the
+ * realtime service's verbatim group.
+ */
+export function RunList({ deviceGuid, runs }: { deviceGuid: string; runs: Run[] }) {
     const { t } = useTranslation();
 
     return (
@@ -44,7 +52,7 @@ export function RunList({ runs }: { runs: Run[] }) {
                             </td>
                             <td className="px-4 py-3">
                                 <Link
-                                    to={`/vehicles/${encodeGuid(run.deviceGuid)}/runs/${encodeURIComponent(run.runId)}`}
+                                    to={`/vehicles/${encodeGuid(deviceGuid)}/runs/${encodeURIComponent(run.runId)}`}
                                     className="rounded bg-sky-600 px-3 py-1 text-xs font-medium text-white hover:bg-sky-500"
                                 >
                                     {t('runs.open')}

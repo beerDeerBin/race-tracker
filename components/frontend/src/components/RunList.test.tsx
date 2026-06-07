@@ -20,10 +20,13 @@ function run(overrides: Partial<Run>): Run {
 }
 
 describe('RunList', () => {
-    it('links each run to its detail page with the encoded verbatim guid', () => {
+    it('links each run with the verbatim route guid, not the lower-cased GraphQL run.deviceGuid', () => {
+        // Persistence returns the guid lower-cased (PostgreSQL uuid column); the realtime
+        // SignalR group is the verbatim upper-case key. The link must carry the verbatim guid
+        // so the run-detail live tail (7.7) subscribes to the group realtime actually pushes to.
         render(
             <MemoryRouter>
-                <RunList runs={[run({})]} />
+                <RunList deviceGuid="GUID-Aa" runs={[run({ deviceGuid: 'guid-aa' })]} />
             </MemoryRouter>,
         );
 
@@ -36,7 +39,7 @@ describe('RunList', () => {
     it('marks the assumed sample rate when run metadata carries none', () => {
         render(
             <MemoryRouter>
-                <RunList runs={[run({ odrHz: null })]} />
+                <RunList deviceGuid="GUID-Aa" runs={[run({ odrHz: null })]} />
             </MemoryRouter>,
         );
 
@@ -46,7 +49,7 @@ describe('RunList', () => {
     it('shows the real sample rate and requested count when present', () => {
         render(
             <MemoryRouter>
-                <RunList runs={[run({ odrHz: 208, numSamples: 1000 })]} />
+                <RunList deviceGuid="GUID-Aa" runs={[run({ odrHz: 208, numSamples: 1000 })]} />
             </MemoryRouter>,
         );
 
