@@ -70,6 +70,48 @@ public sealed class TelemetryRepositoryIntegrationTests : IAsyncLifetime
             $"SELECT received_samples FROM runs WHERE run_id = '{RunId}';", cts.Token)).ShouldBe(3);
     }
 
+    [Fact]
+    public async Task Run_metadata_and_samples_merge_without_clobbering_in_either_order()
+    {
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(120));
+
+        IOptions<PersistenceOptions> options = BuildOptions();
+        await new NpgsqlDatabaseMigrator(options, NullLogger<NpgsqlDatabaseMigrator>.Instance)
+            .MigrateAsync(cts.Token);
+
+        var repository = new NpgsqlTelemetryRepository(options);
+        SampleBatch batch = SampleBatch.Create(
+            DeviceGuid, RunId, startOffset: 0, declaredCount: 3,
+            [.. Enumerable.Range(0, 3).Select(i => new ImuReading(i, i, 9.81f, 0, 0, 0))],
+            DateTimeOffset.UtcNow);
+        RunParameters run = RunParameters.Create(
+            DeviceGuid, RunId, numSamples: 8330, odrHz: 208, accelRange: 0x02, gyroRange: 0x02,
+            startedAtUtc: DateTimeOffset.UtcNow);
+
+        // Metadata arrives first (the real order: announced at START_RUN, before samples), then the
+        // samples; re-deliver both to prove idempotency and that neither upsert clobbers the other.
+        await repository.UpsertRunMetadataAsync(run, cts.Token);
+        await repository.UpsertSampleBatchAsync(batch, cts.Token);
+        await repository.UpsertRunMetadataAsync(run, cts.Token);
+        await repository.UpsertSampleBatchAsync(batch, cts.Token);
+
+        await using var connection = new NpgsqlConnection(
+            TimescaleConnectionString.From(options.Value.Timescale));
+        await connection.OpenAsync(cts.Token);
+
+        // One run row; the announced parameters AND the sample-derived count coexist.
+        (await ScalarAsync(connection,
+            $"SELECT count(*) FROM runs WHERE run_id = '{RunId}';", cts.Token)).ShouldBe(1L);
+        (await ScalarAsync(connection,
+            $"SELECT odr_hz FROM runs WHERE run_id = '{RunId}';", cts.Token)).ShouldBe(208);
+        (await ScalarAsync(connection,
+            $"SELECT num_samples FROM runs WHERE run_id = '{RunId}';", cts.Token)).ShouldBe(8330);
+        (await ScalarAsync(connection,
+            $"SELECT received_samples FROM runs WHERE run_id = '{RunId}';", cts.Token)).ShouldBe(3);
+        (await ScalarAsync(connection,
+            $"SELECT accel_range FROM runs WHERE run_id = '{RunId}';", cts.Token)).ShouldBe((short)0x02);
+    }
+
     private IOptions<PersistenceOptions> BuildOptions() => Options.Create(new PersistenceOptions
     {
         Timescale = new TimescaleOptions

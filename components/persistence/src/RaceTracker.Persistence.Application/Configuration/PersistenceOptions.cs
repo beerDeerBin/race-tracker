@@ -17,6 +17,18 @@ public sealed class PersistenceOptions
     /// <summary>Sample-batch consumer topology + flow control (story 3.3).</summary>
     public ConsumerOptions Consumer { get; init; } = new();
 
+    /// <summary>
+    /// Run-metadata consumer topology + flow control (/F54/): binds to the <c>rt.run</c> exchange and
+    /// fills the run's ODR/parameter columns. Low volume (one message per run), so a small prefetch.
+    /// </summary>
+    public ConsumerOptions RunConsumer { get; init; } = new()
+    {
+        Queue = "rt.persistence.runs",
+        DeadLetterExchange = "rt.persistence.runs.dlx",
+        DeadLetterQueue = "rt.persistence.runs.dlq",
+        Prefetch = 8,
+    };
+
     /// <summary>Derived dead-reckoning trajectory projection (story 4.3).</summary>
     public TrajectoryOptions Trajectory { get; init; } = new();
 }
@@ -52,7 +64,9 @@ public sealed class TrajectoryOptions
 {
     /// <summary>
     /// ODR (Hz) used to derive the time base and integration step when a run carries no
-    /// <c>odr_hz</c> yet (PROTOCOL default 104 Hz; replaced once 5.x plumbs the real ODR).
+    /// <c>odr_hz</c> (PROTOCOL default 104 Hz). Management now announces the real ODR at
+    /// <c>START_RUN</c> (/F54/, the <c>rt.run</c> consumer fills <c>odr_hz</c>); this stays the
+    /// graceful fallback for a run whose announcement was lost or that predates the announcement.
     /// </summary>
     public double DefaultOdrHz { get; init; } = 104;
 

@@ -22,6 +22,7 @@ public static class ApplicationServiceCollectionExtensions
         services.AddSingleton(TimeProvider.System);
         services.AddSingleton<PersistenceMetrics>();
         services.AddSingleton<SampleBatchIngestService>();
+        services.AddSingleton<RunMetadataIngestService>();
 
         services.AddSingleton<TrajectoryProjectionService>();
         services.AddHostedService<TrajectoryProjectionWorker>();

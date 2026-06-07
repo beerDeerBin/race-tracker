@@ -16,4 +16,12 @@ public interface ITelemetryRepository
     /// rows are skipped by <c>ON CONFLICT DO NOTHING</c>), so callers can count real writes.
     /// </summary>
     Task<int> UpsertSampleBatchAsync(SampleBatch batch, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Idempotently upserts a run's announced parameters (ODR/time base, ranges, requested count,
+    /// start time) into the run-metadata record, keyed by <c>device_guid</c> + <c>run_id</c>. Touches
+    /// only those columns, so it merges cleanly with the sample-driven upsert regardless of arrival
+    /// order — neither clobbers the other. Re-delivering the same announcement is harmless.
+    /// </summary>
+    Task UpsertRunMetadataAsync(RunParameters run, CancellationToken cancellationToken);
 }

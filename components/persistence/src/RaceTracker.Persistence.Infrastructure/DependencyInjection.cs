@@ -26,6 +26,7 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddSingleton<ITrajectoryCalculator, DeadReckoningTrajectoryCalculator>();
         services.AddSingleton<ITrajectoryRepository, NpgsqlTrajectoryRepository>();
         services.AddHostedService<RabbitMqTelemetryConsumer>();
+        services.AddHostedService<RabbitMqRunMetadataConsumer>();
         return services;
     }
 }

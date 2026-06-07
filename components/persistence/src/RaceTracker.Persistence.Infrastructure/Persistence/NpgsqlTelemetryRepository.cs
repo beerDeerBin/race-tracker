@@ -14,8 +14,11 @@ namespace RaceTracker.Persistence.Infrastructure.Persistence;
 /// <c>ON CONFLICT (...) DO NOTHING</c> (idempotent — re-delivering the same
 /// <c>guid/runId/index</c> writes nothing, /A60/), then a run-metadata upsert whose
 /// <c>received_samples</c> is <b>recomputed</b> from the actual stored rows in the same
-/// transaction, so the count is correct regardless of redelivery. Fields not carried by the M2
-/// contract (<c>odr_hz</c>, accel/gyro range, requested <c>num_samples</c>) stay NULL.
+/// transaction, so the count is correct regardless of redelivery. The sample-driven upsert touches
+/// only <c>received_samples</c>/<c>started_at</c>/<c>ended_at</c>; the parameter columns
+/// (<c>odr_hz</c>, accel/gyro range, requested <c>num_samples</c>) are filled by
+/// <see cref="UpsertRunMetadataAsync"/> from management's run announcement (the device never echoes
+/// the ODR back). The two upserts touch disjoint columns, so they merge in any order.
 /// </summary>
 public sealed class NpgsqlTelemetryRepository : ITelemetryRepository
 {
@@ -30,6 +33,22 @@ public sealed class NpgsqlTelemetryRepository : ITelemetryRepository
             started_at = LEAST(runs.started_at, EXCLUDED.started_at),
             ended_at   = GREATEST(runs.ended_at, EXCLUDED.ended_at),
             updated_at = now();
+        """;
+
+    // Fills the parameter columns from management's announcement, keyed by (device_guid, run_id).
+    // Deliberately leaves received_samples / ended_at alone (the sample path owns them); started_at
+    // takes the earliest of the announced start and any sample-derived start (LEAST ignores NULLs).
+    private const string RunMetadataUpsertSql = """
+        INSERT INTO runs (device_guid, run_id, num_samples, odr_hz, accel_range, gyro_range,
+                          started_at, updated_at)
+        VALUES (@g, @r, @num, @odr, @accel, @gyro, @started, now())
+        ON CONFLICT (device_guid, run_id) DO UPDATE SET
+            num_samples = EXCLUDED.num_samples,
+            odr_hz      = EXCLUDED.odr_hz,
+            accel_range = EXCLUDED.accel_range,
+            gyro_range  = EXCLUDED.gyro_range,
+            started_at  = LEAST(runs.started_at, EXCLUDED.started_at),
+            updated_at  = now();
         """;
 
     private readonly string _connectionString;
@@ -49,6 +68,23 @@ public sealed class NpgsqlTelemetryRepository : ITelemetryRepository
 
         await transaction.CommitAsync(cancellationToken);
         return inserted;
+    }
+
+    public async Task UpsertRunMetadataAsync(RunParameters run, CancellationToken cancellationToken)
+    {
+        await using var connection = new NpgsqlConnection(_connectionString);
+        await connection.OpenAsync(cancellationToken);
+
+        await using var command = new NpgsqlCommand(RunMetadataUpsertSql, connection);
+        command.Parameters.AddWithValue("g", run.DeviceGuid);
+        command.Parameters.AddWithValue("r", run.RunId);
+        command.Parameters.AddWithValue("num", run.NumSamples);
+        command.Parameters.AddWithValue("odr", run.OdrHz);
+        command.Parameters.AddWithValue("accel", run.AccelRange);
+        command.Parameters.AddWithValue("gyro", run.GyroRange);
+        command.Parameters.AddWithValue("started", run.StartedAtUtc);
+
+        await command.ExecuteNonQueryAsync(cancellationToken);
     }
 
     private static async Task<int> InsertSamplesAsync(

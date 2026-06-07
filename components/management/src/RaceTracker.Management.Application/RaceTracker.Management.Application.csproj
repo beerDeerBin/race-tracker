@@ -4,6 +4,9 @@
 
   <ItemGroup>
     <ProjectReference Include="..\RaceTracker.Management.Domain\RaceTracker.Management.Domain.csproj" />
+    <!-- Shared /S50/ message contracts (framework-free): the run-metadata announcement (the ODR
+         source for persistence) is published from the command-dispatch use case. -->
+    <ProjectReference Include="..\..\..\building-blocks\src\RaceTracker.BuildingBlocks.Contracts\RaceTracker.BuildingBlocks.Contracts.csproj" />
   </ItemGroup>
 
   <ItemGroup>
