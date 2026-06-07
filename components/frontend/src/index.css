@@ -1,0 +1,5 @@
+@import 'tailwindcss';
+
+/* Class-based dark mode: the ThemeProvider toggles `.dark` on <html>, so the scheme is
+   user-controlled (light / dark / system) instead of hard-bound to the OS preference. */
+@custom-variant dark (&:where(.dark, .dark *));

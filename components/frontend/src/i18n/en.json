@@ -1,0 +1,88 @@
+{
+  "app": {
+    "title": "Race Tracker"
+  },
+  "login": {
+    "title": "Sign in to manage your vehicles and runs",
+    "username": "Username",
+    "password": "Password",
+    "submit": "Sign in",
+    "submitting": "Signing in…",
+    "invalidCredentials": "Invalid username or password.",
+    "failed": "Login failed. Please try again."
+  },
+  "dashboard": {
+    "title": "Devices",
+    "loading": "Loading vehicles…",
+    "loadFailed": "Could not load the vehicle list.",
+    "empty": "No devices yet — start the simulator or a real device and it will appear here.",
+    "loggedInAs": "Signed in as {{user}}",
+    "logout": "Sign out"
+  },
+  "vehicles": {
+    "name": "Vehicle",
+    "owner": "Owner",
+    "registration": "Registration",
+    "state": "State",
+    "battery": "Battery",
+    "uptime": "Uptime",
+    "lastSeen": "Last seen",
+    "pending": "pending",
+    "registered": "registered",
+    "hasErrors": "Device reports error codes",
+    "secondsAgo": "{{seconds}}s ago",
+    "actions": "Actions"
+  },
+  "claim": {
+    "button": "Claim",
+    "title": "Claim device",
+    "name": "Vehicle name",
+    "owner": "Owner",
+    "ownerPlaceholder": "{{user}} (default)",
+    "submit": "Claim",
+    "claiming": "Claiming…",
+    "cancel": "Cancel",
+    "notFound": "This device is no longer known.",
+    "failed": "Claiming failed. Please try again."
+  },
+  "status": {
+    "idle": "Idle",
+    "connected": "Connected",
+    "acquiring": "Acquiring",
+    "unknown": "No signal"
+  },
+  "commands": {
+    "connect": "Connect",
+    "startRun": "Start run",
+    "disconnect": "Disconnect",
+    "reset": "Reset",
+    "reason": {
+      "noSignal": "No live status yet — the device must be online first.",
+      "acquiring": "A run is in progress — no commands are accepted while acquiring.",
+      "needsIdle": "Only available while the device is idle.",
+      "needsConnected": "Only available while the device is connected."
+    },
+    "startRunTitle": "Start run",
+    "numSamples": "Number of samples",
+    "odr": "Sample rate (ODR)",
+    "accelRange": "Accelerometer range",
+    "gyroRange": "Gyroscope range",
+    "start": "Start",
+    "starting": "Starting…",
+    "cancel": "Cancel",
+    "startFailed": "Starting the run failed. Please try again.",
+    "dispatchFailed": "Command failed.",
+    "progress": "{{sampled}} / {{total}} samples ({{percent}} %)"
+  },
+  "theme": {
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System",
+    "switchTo": "Switch theme: {{mode}}"
+  },
+  "error": {
+    "title": "Something went wrong",
+    "description": "An unexpected error occurred while rendering this view.",
+    "reload": "Reload"
+  }
+}

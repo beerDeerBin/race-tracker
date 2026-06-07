@@ -5,6 +5,11 @@
 #     simulator, tester, or mqttx client on/off without editing anything.
 #   • Open "Config Editor" under tooling to edit simulator/config.yaml in the browser.
 
+# This stack is pure docker-compose — no Kubernetes. Tilt still guards command
+# execution against unrecognized kube contexts; allow the local dev context so a
+# machine whose current context is named "local" can run the stack.
+allow_k8s_contexts('local')
+
 # ── platform detection ────────────────────────────────────────────────────────
 # os.environ['OS'] == 'Windows_NT' on Windows; unset or different on Linux/Mac.
 _is_windows = os.environ.get('OS', '').lower() == 'windows_nt'
@@ -106,6 +111,22 @@ dc_resource(
         link('http://localhost:8084/health/ready', 'Realtime readiness'),
         link('http://localhost:8084/metrics', 'Realtime metrics'),
     ],
+)
+
+# ── frontend ──────────────────────────────────────────────────────────────────
+# TP-FE: the React SPA (story 7.1+), served by the Vite dev server on the host (not
+# containerized in dev — mirrors the config-editor local_resource pattern). `cmd` keeps
+# node_modules in sync with package.json before the server starts.
+local_resource(
+    'frontend',
+    cmd='npm install --no-fund --no-audit',
+    serve_cmd='npm run dev',
+    dir='frontend',
+    serve_dir='frontend',
+    labels=['frontend'],
+    links=[link('http://localhost:5173', 'Web SPA')],
+    deps=['frontend/package.json'],
+    resource_deps=['management', 'persistence', 'realtime'],
 )
 
 # ── simulator ─────────────────────────────────────────────────────────────────

@@ -325,7 +325,7 @@ mitbekomme.*
 M6). **Voraussetzung:** M4, M5, M6. *(Bewusst spät — nie gegen Mock-Backends.)*
 Der Flask-Tester gilt ab Abschluss von 7.5 als abgelöst (`/O40/`).
 
-### 7.1 — App-Grundgerüst + Auth · **M**
+### 7.1 — App-Grundgerüst + Auth · **M** · ✅ Erledigt
 *Als Benutzer möchte ich mich einloggen und nur dann geschützte Bereiche sehen,
 damit der Zugang gesichert ist.*
 **Verweise:** `/U10/`, `/U50/`, `/F11/`, §8 Frontend
@@ -333,21 +333,21 @@ damit der Zugang gesichert ist.*
 Instanz mit Interceptoren (Token-Injektion, zentrales `401`→Logout); Auth-Context +
 Route-Guards; Login gegen echtes Management.
 
-### 7.2 — Geräte-Dashboard + Live-Status · **M**
+### 7.2 — Geräte-Dashboard + Live-Status · **M** · ✅ Erledigt
 *Als Benutzer möchte ich alle Geräte mit aktuellem (Live-)Status auf einen Blick
 sehen, damit ich den Überblick habe.*
 **Verweise:** `/F83/`, `/F60/`, `/F62/`, `/F63/`
 **AK:** Fahrzeugliste (REST) inkl. `pending`-Geräte; Live-Status über SignalR;
 WebSocket **reconnectet automatisch** und ab-/bestellt Gruppen beim Navigieren.
 
-### 7.3 — Gerät claimen · **M**
+### 7.3 — Gerät claimen · **M** · ✅ Erledigt
 *Als Benutzer möchte ich ein entdecktes `pending`-Gerät benennen und übernehmen,
 damit seine Daten mir zugeordnet sind.*
 **Verweise:** `/F20/`, `/F25/`
 **AK:** Claim aus der UI; Status wechselt `pending → registered`, Name + Besitzer
 gesetzt.
 
-### 7.4 — Laufsteuerung · **M**
+### 7.4 — Laufsteuerung · **M** · ✅ Erledigt
 *Als Benutzer möchte ich Läufe per UI verbinden/starten/trennen/zurücksetzen,
 damit ich Messungen steuere.*
 **Verweise:** `/F30/`, `/F31/`, `/F32/`, `/F34/`
