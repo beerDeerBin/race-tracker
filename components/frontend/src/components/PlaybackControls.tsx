@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { Pause, Play, RotateCcw } from 'lucide-react';
 import { PLAYBACK_SPEEDS } from '../hooks/usePlaybackClock';
 import type { PlaybackClock } from '../hooks/usePlaybackClock';
 
@@ -6,14 +7,21 @@ import type { PlaybackClock } from '../hooks/usePlaybackClock';
 export function PlaybackControls({ clock, duration }: { clock: PlaybackClock; duration: number }) {
     const { t } = useTranslation();
 
+    // At the end the run is paused at full; toggling restarts it (usePlaybackClock.play resets), so
+    // the button reads "Restart" with a rewind icon there instead of an inert "Play".
+    const atEnd = duration > 0 && clock.time >= duration;
+    const PlayPauseIcon = clock.playing ? Pause : atEnd ? RotateCcw : Play;
+    const playPauseLabel = clock.playing
+        ? t('trajectory.pause')
+        : atEnd
+          ? t('trajectory.restart')
+          : t('trajectory.play');
+
     return (
-        <div className="mt-4 flex flex-wrap items-center gap-4 rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900">
-            <button
-                type="button"
-                onClick={clock.toggle}
-                className="rounded bg-sky-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-sky-500"
-            >
-                {clock.playing ? t('trajectory.pause') : t('trajectory.play')}
+        <div className="card mt-4 flex flex-wrap items-center gap-4 p-3">
+            <button type="button" onClick={clock.toggle} className="btn-primary">
+                <PlayPauseIcon className="h-4 w-4" aria-hidden="true" />
+                {playPauseLabel}
             </button>
 
             <input
@@ -24,7 +32,7 @@ export function PlaybackControls({ clock, duration }: { clock: PlaybackClock; du
                 value={clock.time}
                 onChange={(event) => clock.seek(Number(event.target.value))}
                 aria-label={t('trajectory.timeSlider')}
-                className="min-w-40 flex-1"
+                className="min-w-40 flex-1 accent-f1-red"
             />
 
             <span className="font-mono text-xs text-slate-500 tabular-nums dark:text-slate-400">
@@ -38,10 +46,10 @@ export function PlaybackControls({ clock, duration }: { clock: PlaybackClock; du
                         type="button"
                         onClick={() => clock.setSpeed(speed)}
                         aria-pressed={clock.speed === speed}
-                        className={`rounded px-2 py-1 text-xs font-medium ${
+                        className={`rounded px-2 py-1 text-xs font-medium transition-colors ${
                             clock.speed === speed
-                                ? 'bg-sky-600 text-white'
-                                : 'border border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800'
+                                ? 'bg-f1-red text-white'
+                                : 'border border-slate-300 text-slate-700 hover:border-f1-red hover:text-f1-red dark:border-slate-700 dark:text-slate-300'
                         }`}
                     >
                         {speed}×

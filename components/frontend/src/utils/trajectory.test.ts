@@ -5,7 +5,9 @@ import {
     headingToSvgDegrees,
     pathD,
     pointAtTime,
+    tangentSvgDegrees,
     totalDuration,
+    trajectoryStats,
 } from './trajectory';
 import type { TrajectoryPoint } from '../models/graphql';
 
@@ -58,10 +60,47 @@ describe('headingToSvgDegrees', () => {
     });
 });
 
+describe('tangentSvgDegrees', () => {
+    it('is 0 for a degenerate span', () => {
+        expect(tangentSvgDegrees([], 0)).toBe(0);
+        expect(tangentSvgDegrees([pt(0, 0, 0, 0)], 0)).toBe(0);
+    });
+
+    it('points along +x for a rightward segment', () => {
+        expect(tangentSvgDegrees([pt(0, 0, 0, 0), pt(1, 1, 1, 0)], 0)).toBeCloseTo(0);
+    });
+
+    it('reflects the y-flip — upward travel (+y) points to -90° in SVG space', () => {
+        // (0,0) → (0,1): dx 0, dy (0-1) = -1 → atan2(-1, 0) = -90°
+        expect(tangentSvgDegrees([pt(0, 0, 0, 0), pt(1, 1, 0, 1)], 1)).toBeCloseTo(-90);
+    });
+});
+
 describe('totalDuration', () => {
     it('is the last point time, 0 when empty', () => {
         expect(totalDuration([pt(0, 0, 0, 0), pt(1, 4.8, 1, 1)])).toBe(4.8);
         expect(totalDuration([])).toBe(0);
+    });
+});
+
+describe('trajectoryStats', () => {
+    it('is all zero for a degenerate path', () => {
+        expect(trajectoryStats([])).toEqual({
+            distanceM: 0,
+            topSpeedMps: 0,
+            avgSpeedMps: 0,
+            peakAccelMps2: 0,
+            durationS: 0,
+        });
+    });
+
+    it('derives distance, top/avg speed and duration from the segments', () => {
+        // (0,0)→(3,0) in 1 s (3 m/s), then →(3,4) in 1 s (4 m/s): distance 7 m over 2 s.
+        const stats = trajectoryStats([pt(0, 0, 0, 0), pt(1, 1, 3, 0), pt(2, 2, 3, 4)]);
+        expect(stats.distanceM).toBeCloseTo(7);
+        expect(stats.topSpeedMps).toBeCloseTo(4);
+        expect(stats.avgSpeedMps).toBeCloseTo(3.5);
+        expect(stats.durationS).toBeCloseTo(2);
     });
 });
 

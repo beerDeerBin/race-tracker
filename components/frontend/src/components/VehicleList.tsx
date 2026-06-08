@@ -1,52 +1,114 @@
-import { useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { Hand } from 'lucide-react';
 import { StatusBadge } from './StatusBadge';
 import { ClaimDialog } from './ClaimDialog';
 import { RunControls } from './RunControls';
 import { RunProgressBar } from './RunProgressBar';
 import { ErrorCodeList } from './ErrorCodeList';
+import { TableToolbar } from './TableToolbar';
 import { useDeviceStatus } from '../hooks/useDeviceStatus';
 import { encodeGuid } from '../utils/encodeGuid';
 import { formatBattery, formatUptime, secondsSince } from '../utils/format';
 import type { VehicleResponse } from '../models/api';
 
+type RegistrationFilter = 'all' | 'pending' | 'registered';
+
 /**
  * The device dashboard table (/F83/): every vehicle (incl. pending) with its live status
  * (/F60/) — state, battery, uptime, error indicator, last-seen age. Pending rows offer
- * the claim action (/F25/, story 7.3).
+ * the claim action (/F25/, story 7.3). A search box + registration filter narrow the list
+ * client-side (default: show all).
  */
 export function VehicleList({ vehicles }: { vehicles: VehicleResponse[] }) {
     const { t } = useTranslation();
     const [claiming, setClaiming] = useState<VehicleResponse | null>(null);
+    const [query, setQuery] = useState('');
+    const [registration, setRegistration] = useState<RegistrationFilter>('all');
+
+    const filtered = useMemo(() => {
+        const q = query.trim().toLowerCase();
+        return vehicles.filter((vehicle) => {
+            if (registration !== 'all' && vehicle.registrationStatus !== registration) {
+                return false;
+            }
+            if (!q) {
+                return true;
+            }
+            return (
+                vehicle.name.toLowerCase().includes(q) ||
+                vehicle.owner.toLowerCase().includes(q) ||
+                vehicle.deviceGuid.toLowerCase().includes(q)
+            );
+        });
+    }, [vehicles, query, registration]);
+
+    const th = 'px-4 py-3 md:text-center';
 
     return (
-        <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
-            <table className="w-full text-left text-sm">
-                <thead className="border-b border-slate-200 text-xs text-slate-500 uppercase dark:border-slate-800 dark:text-slate-400">
-                    <tr>
-                        <th className="px-4 py-3">{t('vehicles.name')}</th>
-                        <th className="px-4 py-3">{t('vehicles.owner')}</th>
-                        <th className="px-4 py-3">{t('vehicles.registration')}</th>
-                        <th className="px-4 py-3">{t('vehicles.state')}</th>
-                        <th className="px-4 py-3">{t('vehicles.battery')}</th>
-                        <th className="px-4 py-3">{t('vehicles.uptime')}</th>
-                        <th className="px-4 py-3">{t('vehicles.lastSeen')}</th>
-                        <th className="px-4 py-3">{t('vehicles.actions')}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {vehicles.map((vehicle) => (
-                        <VehicleRow
-                            key={vehicle.deviceGuid}
-                            vehicle={vehicle}
-                            onClaim={() => setClaiming(vehicle)}
-                        />
-                    ))}
-                </tbody>
-            </table>
+        <div>
+            <TableToolbar
+                value={query}
+                onChange={setQuery}
+                placeholder={t('filters.searchVehicles')}
+            >
+                <select
+                    value={registration}
+                    onChange={(event) => setRegistration(event.target.value as RegistrationFilter)}
+                    aria-label={t('filters.registration')}
+                    className="field"
+                >
+                    <option value="all">{t('filters.registrationAll')}</option>
+                    <option value="pending">{t('filters.registrationPending')}</option>
+                    <option value="registered">{t('filters.registrationRegistered')}</option>
+                </select>
+            </TableToolbar>
+
+            <div className="md:overflow-x-auto md:rounded-lg md:border md:border-slate-200 md:bg-white md:shadow-sm md:dark:border-slate-800 md:dark:bg-slate-900">
+                {/* On md+ a normal table; below md each row stacks into a card with the column
+                    header shown inline as a per-cell label (the real <thead> is hidden). */}
+                <table className="block w-full text-left text-sm md:table">
+                    <thead className="hidden border-b border-slate-200 text-xs text-slate-500 uppercase md:table-header-group dark:border-slate-800 dark:text-slate-400">
+                        <tr>
+                            <th className={th}>{t('vehicles.name')}</th>
+                            <th className={th}>{t('vehicles.owner')}</th>
+                            <th className={th}>{t('vehicles.registration')}</th>
+                            <th className={th}>{t('vehicles.state')}</th>
+                            <th className={th}>{t('vehicles.battery')}</th>
+                            <th className={th}>{t('vehicles.uptime')}</th>
+                            <th className={th}>{t('vehicles.lastSeen')}</th>
+                            <th className={th}>{t('vehicles.actions')}</th>
+                        </tr>
+                    </thead>
+                    <tbody className="block md:table-row-group">
+                        {filtered.map((vehicle) => (
+                            <VehicleRow
+                                key={vehicle.deviceGuid}
+                                vehicle={vehicle}
+                                onClaim={() => setClaiming(vehicle)}
+                            />
+                        ))}
+                    </tbody>
+                </table>
+                {filtered.length === 0 && (
+                    <p className="px-4 py-6 text-center text-sm text-slate-500 dark:text-slate-400">
+                        {t('filters.noMatches')}
+                    </p>
+                )}
+            </div>
             {claiming && <ClaimDialog vehicle={claiming} onClose={() => setClaiming(null)} />}
         </div>
+    );
+}
+
+/** The column header repeated inline on each cell when the table is stacked below `md` (the real
+ *  <thead> is hidden there); collapses away on `md+` where the header row provides the labels. */
+function MobileLabel({ children }: { children: ReactNode }) {
+    return (
+        <span className="mr-2 inline-block font-medium text-slate-500 uppercase md:hidden dark:text-slate-400">
+            {children}
+        </span>
     );
 }
 
@@ -54,21 +116,28 @@ function VehicleRow({ vehicle, onClaim }: { vehicle: VehicleResponse; onClaim: (
     const { t } = useTranslation();
     const status = useDeviceStatus(vehicle.deviceGuid);
 
+    const td = 'block py-1 md:table-cell md:px-4 md:py-3 md:text-center';
+
     return (
-        <tr className="border-b border-slate-100 last:border-0 dark:border-slate-800">
-            <td className="px-4 py-3">
+        <tr className="mb-3 block rounded-lg border border-slate-200 bg-white p-3 transition-colors last:mb-0 md:mb-0 md:table-row md:rounded-none md:border-0 md:border-b md:border-slate-100 md:bg-transparent md:p-0 md:last:border-0 md:hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 md:dark:bg-transparent md:dark:hover:bg-slate-800/40">
+            <td className={td}>
+                <MobileLabel>{t('vehicles.name')}</MobileLabel>
                 <Link
                     to={`/vehicles/${encodeGuid(vehicle.deviceGuid)}`}
-                    className="font-medium text-sky-700 hover:underline dark:text-sky-400"
+                    className="font-medium text-f1-red transition-colors hover:text-f1-red-hi hover:underline"
                 >
                     {vehicle.name}
                 </Link>
-                <div className="font-mono text-xs text-slate-400 dark:text-slate-500">
+                <div className="font-mono text-xs break-all text-slate-400 md:whitespace-nowrap dark:text-slate-500">
                     {vehicle.deviceGuid}
                 </div>
             </td>
-            <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{vehicle.owner}</td>
-            <td className="px-4 py-3">
+            <td className={`${td} text-slate-600 dark:text-slate-300`}>
+                <MobileLabel>{t('vehicles.owner')}</MobileLabel>
+                {vehicle.owner || '—'}
+            </td>
+            <td className={td}>
+                <MobileLabel>{t('vehicles.registration')}</MobileLabel>
                 {vehicle.registrationStatus === 'pending' ? (
                     <span className="inline-block rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900 dark:text-amber-300">
                         {t('vehicles.pending')}
@@ -79,32 +148,38 @@ function VehicleRow({ vehicle, onClaim }: { vehicle: VehicleResponse; onClaim: (
                     </span>
                 )}
             </td>
-            <td className="px-4 py-3">
+            <td className={td}>
+                <MobileLabel>{t('vehicles.state')}</MobileLabel>
                 <StatusBadge state={status?.state ?? null} />
                 {status && <ErrorCodeList errorCode={status.errorCode} />}
                 {status?.state === 'Acquiring' && (
                     <RunProgressBar deviceGuid={vehicle.deviceGuid} />
                 )}
             </td>
-            <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
+            <td className={`${td} text-slate-600 dark:text-slate-300`}>
+                <MobileLabel>{t('vehicles.battery')}</MobileLabel>
                 {status ? formatBattery(status.batteryMv, status.batteryPct) : '—'}
             </td>
-            <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
+            <td className={`${td} text-slate-600 dark:text-slate-300`}>
+                <MobileLabel>{t('vehicles.uptime')}</MobileLabel>
                 {status ? formatUptime(status.uptimeMs) : '—'}
             </td>
-            <td className="px-4 py-3 text-slate-500 dark:text-slate-400">
+            <td className={`${td} text-slate-500 dark:text-slate-400`}>
+                <MobileLabel>{t('vehicles.lastSeen')}</MobileLabel>
                 {status
                     ? t('vehicles.secondsAgo', { seconds: secondsSince(status.observedAtUtc) })
                     : '—'}
             </td>
-            <td className="px-4 py-3">
-                <div className="flex flex-wrap items-center gap-1.5">
+            <td className={td}>
+                <MobileLabel>{t('vehicles.actions')}</MobileLabel>
+                <div className="flex flex-wrap items-center gap-1.5 md:flex-nowrap md:justify-center">
                     {vehicle.registrationStatus === 'pending' && (
                         <button
                             type="button"
                             onClick={onClaim}
-                            className="rounded bg-sky-600 px-3 py-1 text-xs font-medium text-white hover:bg-sky-500"
+                            className="inline-flex items-center gap-1 rounded bg-f1-red px-3 py-1 text-xs font-medium whitespace-nowrap text-white transition-colors hover:bg-f1-red-hi"
                         >
+                            <Hand className="h-3.5 w-3.5" aria-hidden="true" />
                             {t('claim.button')}
                         </button>
                     )}

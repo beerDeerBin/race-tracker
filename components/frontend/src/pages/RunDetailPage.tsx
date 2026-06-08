@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { ChevronLeft, MapPinned } from 'lucide-react';
 import { PageShell } from '../components/PageShell';
 import { AxisChart } from '../components/AxisChart';
 import type { AxisChartBand, AxisChartSeries } from '../components/AxisChart';
@@ -126,14 +127,16 @@ export function RunDetailPage() {
             <div className="mb-2 flex items-center justify-between">
                 <Link
                     to={`/vehicles/${encodeGuid(deviceGuid)}`}
-                    className="inline-block text-sm text-sky-600 hover:underline dark:text-sky-400"
+                    className="inline-flex items-center gap-1 text-sm font-medium text-f1-red transition-colors hover:text-f1-red-hi hover:underline"
                 >
-                    ← {t('runDetail.backToRuns')}
+                    <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+                    {t('runDetail.backToRuns')}
                 </Link>
                 <Link
                     to={`/vehicles/${encodeGuid(deviceGuid)}/runs/${encodeURIComponent(runId)}/trajectory`}
-                    className="rounded bg-sky-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-sky-500"
+                    className="btn-primary"
                 >
+                    <MapPinned className="h-4 w-4" aria-hidden="true" />
                     {t('runDetail.viewTrajectory')}
                 </Link>
             </div>

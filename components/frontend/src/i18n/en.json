@@ -143,7 +143,38 @@
     "mapLabel": "Driven track map",
     "play": "Play",
     "pause": "Pause",
-    "timeSlider": "Playback position"
+    "timeSlider": "Playback position",
+    "restart": "Restart",
+    "start": "Start",
+    "finish": "Finish",
+    "car": "Vehicle",
+    "stats": "Run stats",
+    "topSpeed": "Top speed",
+    "avgSpeed": "Avg speed",
+    "peakAccel": "Peak accel",
+    "distance": "Distance",
+    "duration": "Duration",
+    "across": "Across",
+    "straightHint": "This run drove in a straight line — open a cornering run (a circle or track device) to see turns."
+  },
+  "filters": {
+    "searchVehicles": "Search vehicles…",
+    "registration": "Registration filter",
+    "registrationAll": "All statuses",
+    "registrationPending": "Pending only",
+    "registrationRegistered": "Registered only",
+    "searchRuns": "Search runs by ID…",
+    "sortBy": "Sort by {{column}}",
+    "noMatches": "No matches."
+  },
+  "footer": {
+    "tagline": "Live telemetry & race analytics for IMU track devices.",
+    "courseHeading": "Course",
+    "institution": "FH JOANNEUM",
+    "course": "Advanced Software Engineering (ADSWE)",
+    "term": "Summer term 2026",
+    "teamHeading": "Team",
+    "builtWith": "Built with"
   },
   "theme": {
     "light": "Light",

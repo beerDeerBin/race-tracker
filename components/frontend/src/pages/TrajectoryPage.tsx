@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { ChevronLeft } from 'lucide-react';
 import { PageShell } from '../components/PageShell';
 import { TrajectoryMap } from '../components/TrajectoryMap';
 import { PlaybackControls } from '../components/PlaybackControls';
@@ -26,9 +27,10 @@ export function TrajectoryPage() {
         <PageShell title={t('trajectory.title')}>
             <Link
                 to={`/vehicles/${encodeGuid(deviceGuid)}/runs/${encodeURIComponent(runId)}`}
-                className="mb-2 inline-block text-sm text-sky-600 hover:underline dark:text-sky-400"
+                className="mb-2 inline-flex items-center gap-1 text-sm font-medium text-f1-red transition-colors hover:text-f1-red-hi hover:underline"
             >
-                ← {t('trajectory.backToRun')}
+                <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+                {t('trajectory.backToRun')}
             </Link>
             <p className="mb-4 font-mono text-xs text-slate-400 dark:text-slate-500">{runId}</p>
 

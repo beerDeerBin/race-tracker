@@ -64,9 +64,73 @@ export function headingToSvgDegrees(headingRad: number): number {
     return (-headingRad * 180) / Math.PI;
 }
 
+/**
+ * SVG-degrees orientation of the path **tangent** at `index` — the direction of travel along the
+ * drawn track (central difference of the neighbouring points, in the y-flipped render space). The
+ * vehicle marker uses this so it follows the track, rather than the raw device <c>heading</c>
+ * (integrated yaw), which drifts away from the drawn path under IMU dead-reckoning. Returns 0 for a
+ * degenerate span (&lt; 2 points, or coincident neighbours).
+ */
+export function tangentSvgDegrees(points: readonly TrajectoryPoint[], index: number): number {
+    if (points.length < 2) {
+        return 0;
+    }
+    const i = Math.min(Math.max(index, 0), points.length - 1);
+    const a = points[Math.max(0, i - 1)]!;
+    const b = points[Math.min(points.length - 1, i + 1)]!;
+    const dx = b.x - a.x;
+    const dy = a.y - b.y; // y-flipped render space: svgY = -y
+    if (dx === 0 && dy === 0) {
+        return 0;
+    }
+    return (Math.atan2(dy, dx) * 180) / Math.PI;
+}
+
 /** Total run time in seconds (the last point's t), 0 for an empty path. */
 export function totalDuration(points: readonly TrajectoryPoint[]): number {
     return points.length > 0 ? points[points.length - 1]!.t : 0;
+}
+
+export interface TrajectoryStats {
+    distanceM: number;
+    topSpeedMps: number;
+    avgSpeedMps: number;
+    peakAccelMps2: number;
+    durationS: number;
+}
+
+/**
+ * Summary telemetry derived from the path (display-only "fun stats"): total distance, top/avg speed,
+ * peak acceleration and duration. Per-segment speed is displacement over Δt; peak accel is the
+ * largest change in those speeds over Δt. Approximate — the path is dead-reckoned (it drifts), so
+ * these are indicative, not lab-grade.
+ */
+export function trajectoryStats(points: readonly TrajectoryPoint[]): TrajectoryStats {
+    const durationS = totalDuration(points);
+    if (points.length < 2) {
+        return { distanceM: 0, topSpeedMps: 0, avgSpeedMps: 0, peakAccelMps2: 0, durationS };
+    }
+
+    let distanceM = 0;
+    let topSpeedMps = 0;
+    let peakAccelMps2 = 0;
+    let prevSpeed = 0;
+    for (let i = 1; i < points.length; i++) {
+        const a = points[i - 1]!;
+        const b = points[i]!;
+        const seg = Math.hypot(b.x - a.x, b.y - a.y);
+        distanceM += seg;
+        const dt = b.t - a.t;
+        if (dt > 0) {
+            const speed = seg / dt;
+            topSpeedMps = Math.max(topSpeedMps, speed);
+            peakAccelMps2 = Math.max(peakAccelMps2, Math.abs(speed - prevSpeed) / dt);
+            prevSpeed = speed;
+        }
+    }
+
+    const avgSpeedMps = durationS > 0 ? distanceM / durationS : 0;
+    return { distanceM, topSpeedMps, avgSpeedMps, peakAccelMps2, durationS };
 }
 
 /**

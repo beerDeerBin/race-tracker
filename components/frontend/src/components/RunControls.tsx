@@ -1,10 +1,19 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Play, Power, RotateCcw, Unplug } from 'lucide-react';
+import type { ComponentType } from 'react';
 import { StartRunDialog } from './StartRunDialog';
 import { useCommands } from '../hooks/useCommands';
 import { commandDisabledReasonKey, isCommandAllowed } from '../utils/commandValidity';
 import type { DeviceCommand } from '../utils/commandValidity';
 import type { DeviceState } from '../models/realtime';
+
+const ICONS: Record<DeviceCommand, ComponentType<{ className?: string }>> = {
+    connect: Power,
+    startRun: Play,
+    disconnect: Unplug,
+    reset: RotateCcw,
+};
 
 /**
  * Per-vehicle run control (/F30/–/F33/): the four commands as compact buttons, with
@@ -44,21 +53,23 @@ export function RunControls({
     ) => {
         const allowed = isCommandAllowed(command, state);
         const reasonKey = commandDisabledReasonKey(command, state);
+        const Icon = ICONS[command];
         return (
             <button
                 type="button"
                 onClick={onClick}
                 disabled={!allowed || busy}
                 title={reasonKey ? t(reasonKey) : undefined}
-                className="rounded border border-slate-300 px-2 py-1 text-xs text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                className="inline-flex items-center gap-1 rounded border border-slate-300 px-2 py-1 text-xs whitespace-nowrap text-slate-700 transition-colors hover:border-f1-red hover:text-f1-red disabled:cursor-not-allowed disabled:border-slate-300 disabled:text-slate-400 disabled:opacity-50 dark:border-slate-700 dark:text-slate-300 dark:hover:border-f1-red dark:hover:text-f1-red"
             >
+                <Icon className="h-3.5 w-3.5" aria-hidden="true" />
                 {t(labelKey)}
             </button>
         );
     };
 
     return (
-        <div className="flex flex-wrap items-center gap-1.5">
+        <div className="flex flex-wrap items-center gap-1.5 md:flex-nowrap">
             {button(
                 'connect',
                 'commands.connect',

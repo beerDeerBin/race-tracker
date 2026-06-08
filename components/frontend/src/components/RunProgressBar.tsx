@@ -26,7 +26,7 @@ export function RunProgressBar({ deviceGuid }: { deviceGuid: string }) {
                     aria-valuenow={percent}
                     aria-valuemin={0}
                     aria-valuemax={100}
-                    className="h-full rounded-full bg-emerald-500 transition-[width] duration-300"
+                    className="h-full rounded-full bg-purple-500 transition-[width] duration-300"
                     style={{ width: `${percent}%` }}
                 />
             </div>

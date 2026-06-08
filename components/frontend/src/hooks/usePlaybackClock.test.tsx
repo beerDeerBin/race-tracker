@@ -88,6 +88,21 @@ describe('usePlaybackClock', () => {
         expect(result.current.time).toBe(frozen);
     });
 
+    it('toggle restarts from the end, and pauses while playing', () => {
+        const clock = fakeDeps();
+        const { result } = renderHook(() => usePlaybackClock(2, clock.deps));
+
+        // At the end → toggle restarts (rewind to 0 + play).
+        act(() => result.current.seek(2));
+        act(() => result.current.toggle());
+        expect(result.current.time).toBe(0);
+        expect(result.current.playing).toBe(true);
+
+        // While playing → toggle pauses.
+        act(() => result.current.toggle());
+        expect(result.current.playing).toBe(false);
+    });
+
     it('replaying from the end restarts at 0', () => {
         const clock = fakeDeps();
         const { result } = renderHook(() => usePlaybackClock(2, clock.deps));
