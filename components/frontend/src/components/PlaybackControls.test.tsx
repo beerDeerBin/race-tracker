@@ -33,6 +33,15 @@ describe('PlaybackControls', () => {
         expect(screen.getByRole('button', { name: 'Pause' })).toBeInTheDocument();
     });
 
+    it('shows Restart once playback has reached the end', async () => {
+        const clock = makeClock({ time: 10 });
+        render(<PlaybackControls clock={clock} duration={10} />);
+
+        const restart = screen.getByRole('button', { name: 'Restart' });
+        await userEvent.click(restart);
+        expect(clock.toggle).toHaveBeenCalled();
+    });
+
     it('seeks from the slider', () => {
         const clock = makeClock();
         render(<PlaybackControls clock={clock} duration={10} />);

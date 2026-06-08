@@ -67,7 +67,9 @@ export function usePlaybackClock(
         setPlaying(true);
     }, [apply]);
     const pause = useCallback(() => setPlaying(false), []);
-    const toggle = useCallback(() => setPlaying((p) => !p), []);
+    // Delegates to play/pause so toggling at the very end restarts (play() resets from the end)
+    // instead of no-opping (the rAF tick would immediately re-pause at time === duration).
+    const toggle = useCallback(() => (playing ? pause() : play()), [playing, pause, play]);
     const seek = useCallback((next: number) => apply(next), [apply]);
     const setSpeed = useCallback((next: PlaybackSpeed) => {
         speedRef.current = next;
