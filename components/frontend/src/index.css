@@ -3,3 +3,78 @@
 /* Class-based dark mode: the ThemeProvider toggles `.dark` on <html>, so the scheme is
    user-controlled (light / dark / system) instead of hard-bound to the OS preference. */
 @custom-variant dark (&:where(.dark, .dark *));
+
+/* ── F1 / racing theme ──────────────────────────────────────────────────────────────────
+   The accent is the iconic Formula 1 red on a carbon-navy dark canvas. We re-tint the deep
+   end of the default `slate` scale toward F1 carbon, which recolors every existing dark
+   surface (bg/border) for free — components only need their *accent* swapped from sky → f1. */
+@theme {
+    --color-f1-red: #e10600;
+    --color-f1-red-hi: #ff1801;
+    --color-f1-red-dim: #b30500;
+    --color-speed: #c7c7d1;
+
+    --color-slate-700: #2d2d3a;
+    --color-slate-800: #1f1f2b;
+    --color-slate-900: #15151e;
+    --color-slate-950: #0a0a0f;
+
+    /* Page-enter transition (fade + slight rise), replayed on each route change. */
+    --animate-page-in: page-in 280ms ease-out;
+}
+
+@keyframes page-in {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+/* Base canvas + default text. Page roots are kept transparent so the fixed RacingBackground
+   (-z-10) shows through; only panels (.card, header, footer, dialogs) paint an opaque surface.
+   `accent-color` turns every native control (checkbox, range slider, …) F1 red. */
+body {
+    @apply bg-slate-100 text-slate-900 dark:bg-slate-950 dark:text-slate-100;
+    accent-color: var(--color-f1-red);
+}
+
+/* Keyboard focus ring in F1 red instead of the browser's default blue. */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+[role='button']:focus-visible {
+    outline: 2px solid var(--color-f1-red);
+    outline-offset: 2px;
+}
+
+@layer components {
+    /* Primary call-to-action — F1 red, lifts slightly on hover. */
+    .btn-primary {
+        @apply inline-flex items-center justify-center gap-1.5 rounded bg-f1-red px-3 py-1.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-f1-red-hi active:bg-f1-red-dim disabled:cursor-not-allowed disabled:opacity-40;
+    }
+
+    /* Secondary / neutral action — outline that picks up the red accent on hover. */
+    .btn-secondary {
+        @apply inline-flex items-center justify-center gap-1.5 rounded border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 transition-colors hover:border-f1-red hover:text-f1-red disabled:cursor-not-allowed disabled:border-slate-300 disabled:text-slate-400 disabled:opacity-60 dark:border-slate-700 dark:text-slate-300 dark:hover:border-f1-red dark:hover:text-f1-red dark:disabled:border-slate-700 dark:disabled:text-slate-600;
+    }
+
+    /* Opaque panel that reads cleanly over the bold racing background. */
+    .card {
+        @apply rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900;
+    }
+
+    /* Text input / search field with an F1-red focus ring. */
+    .field {
+        @apply rounded border border-slate-300 bg-white px-2.5 py-1.5 text-sm text-slate-900 transition-colors outline-none placeholder:text-slate-400 focus:border-f1-red focus:ring-1 focus:ring-f1-red dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100;
+    }
+
+    /* Inline text link that turns F1 red on hover. */
+    .link {
+        @apply font-medium text-f1-red transition-colors hover:text-f1-red-hi hover:underline;
+    }
+}

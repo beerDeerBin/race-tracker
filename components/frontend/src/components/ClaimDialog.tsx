@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Hand } from 'lucide-react';
 import { useClaim } from '../hooks/useClaim';
 import { useAuth } from '../hooks/useAuth';
 import { DeviceNotFoundError } from '../services/vehicleService';
@@ -50,7 +51,7 @@ export function ClaimDialog({
         (claim.error instanceof DeviceNotFoundError ? 'claim.notFound' : 'claim.failed');
 
     const inputClasses =
-        'w-full rounded border border-slate-300 bg-white px-3 py-2 text-slate-900 focus:border-sky-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100';
+        'w-full rounded border border-slate-300 bg-white px-3 py-2 text-slate-900 transition-colors outline-none focus:border-f1-red focus:ring-1 focus:ring-f1-red dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100';
 
     return (
         <div
@@ -115,18 +116,11 @@ export function ClaimDialog({
                 )}
 
                 <div className="flex justify-end gap-2">
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        className="rounded border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
-                    >
+                    <button type="button" onClick={onClose} className="btn-secondary">
                         {t('claim.cancel')}
                     </button>
-                    <button
-                        type="submit"
-                        disabled={claim.isPending}
-                        className="rounded bg-sky-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-sky-500 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
+                    <button type="submit" disabled={claim.isPending} className="btn-primary">
+                        <Hand className="h-4 w-4" aria-hidden="true" />
                         {claim.isPending ? t('claim.claiming') : t('claim.submit')}
                     </button>
                 </div>

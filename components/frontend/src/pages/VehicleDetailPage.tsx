@@ -1,5 +1,6 @@
 import { Link, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { ChevronLeft } from 'lucide-react';
 import { PageShell } from '../components/PageShell';
 import { RunList } from '../components/RunList';
 import { useRuns } from '../hooks/useRuns';
@@ -19,9 +20,10 @@ export function VehicleDetailPage() {
         <PageShell title={t('runs.title', { vehicle: vehicleName })}>
             <Link
                 to="/"
-                className="mb-4 inline-block text-sm text-sky-600 hover:underline dark:text-sky-400"
+                className="mb-4 inline-flex items-center gap-1 text-sm font-medium text-f1-red transition-colors hover:text-f1-red-hi hover:underline"
             >
-                ← {t('runs.backToDashboard')}
+                <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+                {t('runs.backToDashboard')}
             </Link>
             {isPending && <p className="text-slate-500">{t('runs.loading')}</p>}
             {isError && (

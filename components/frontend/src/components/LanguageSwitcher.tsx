@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { Languages } from 'lucide-react';
 import { langStore, LANGUAGES } from '../utils/langStore';
 import type { Language } from '../utils/langStore';
 
@@ -21,8 +22,9 @@ export function LanguageSwitcher() {
             onClick={switchTo}
             title={t('language.switchTo', { lang: t(`language.${next}`) })}
             aria-label={t('language.switchTo', { lang: t(`language.${next}`) })}
-            className="rounded border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-200 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+            className="inline-flex items-center gap-1.5 rounded border border-slate-300 px-3 py-1.5 text-sm text-slate-700 transition-colors hover:border-f1-red hover:text-f1-red dark:border-slate-700 dark:text-slate-300"
         >
+            <Languages className="h-4 w-4" aria-hidden="true" />
             {current.toUpperCase()}
         </button>
     );

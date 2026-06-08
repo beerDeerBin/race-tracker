@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Play } from 'lucide-react';
 import type { UseMutationResult } from '@tanstack/react-query';
 import type {
     AccelRange,
@@ -73,7 +74,7 @@ export function StartRunDialog({
     };
 
     const inputClasses =
-        'w-full rounded border border-slate-300 bg-white px-3 py-2 text-slate-900 focus:border-sky-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100';
+        'w-full rounded border border-slate-300 bg-white px-3 py-2 text-slate-900 transition-colors outline-none focus:border-f1-red focus:ring-1 focus:ring-f1-red dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100';
     const labelClasses = 'mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300';
 
     return (
@@ -172,18 +173,15 @@ export function StartRunDialog({
                 )}
 
                 <div className="flex justify-end gap-2">
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        className="rounded border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
-                    >
+                    <button type="button" onClick={onClose} className="btn-secondary">
                         {t('commands.cancel')}
                     </button>
                     <button
                         type="submit"
                         disabled={startRun.isPending}
-                        className="rounded bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="inline-flex items-center justify-center gap-1.5 rounded bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-50"
                     >
+                        <Play className="h-4 w-4" aria-hidden="true" />
                         {startRun.isPending ? t('commands.starting') : t('commands.start')}
                     </button>
                 </div>

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { Flag, LogIn } from 'lucide-react';
 import { InvalidCredentialsError } from '../services/authService';
 import { useAuth } from '../hooks/useAuth';
 import { ThemeToggle } from '../components/ThemeToggle';
@@ -45,18 +46,19 @@ export function LoginPage() {
     };
 
     const inputClasses =
-        'w-full rounded border border-slate-300 bg-white px-3 py-2 text-slate-900 focus:border-sky-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100';
+        'w-full rounded border border-slate-300 bg-white px-3 py-2 text-slate-900 transition-colors outline-none focus:border-f1-red focus:ring-1 focus:ring-f1-red dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100';
 
     return (
-        <div className="relative flex min-h-screen items-center justify-center bg-slate-100 p-4 dark:bg-slate-950">
+        <div className="relative flex flex-1 items-center justify-center p-4">
             <div className="absolute top-4 right-4">
                 <ThemeToggle />
             </div>
             <form
                 onSubmit={handleSubmit}
-                className="w-full max-w-sm space-y-4 rounded-lg bg-white p-8 shadow-xl dark:bg-slate-900"
+                className="w-full max-w-sm animate-page-in space-y-4 rounded-lg border-t-4 border-f1-red bg-white p-8 shadow-xl motion-reduce:animate-none dark:bg-slate-900"
             >
-                <h1 className="text-center text-2xl font-semibold text-slate-900 dark:text-slate-100">
+                <h1 className="flex items-center justify-center gap-2 text-center text-2xl font-semibold text-slate-900 dark:text-slate-100">
+                    <Flag className="h-6 w-6 text-f1-red" aria-hidden="true" />
                     {t('app.title')}
                 </h1>
                 <p className="text-center text-sm text-slate-500 dark:text-slate-400">
@@ -97,11 +99,8 @@ export function LoginPage() {
                     </p>
                 )}
 
-                <button
-                    type="submit"
-                    disabled={submitting}
-                    className="w-full rounded bg-sky-600 px-4 py-2 font-medium text-white hover:bg-sky-500 disabled:cursor-not-allowed disabled:opacity-50"
-                >
+                <button type="submit" disabled={submitting} className="btn-primary w-full py-2">
+                    <LogIn className="h-4 w-4" aria-hidden="true" />
                     {submitting ? t('login.submitting') : t('login.submit')}
                 </button>
             </form>

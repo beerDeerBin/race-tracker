@@ -143,7 +143,38 @@
     "mapLabel": "Karte der gefahrenen Strecke",
     "play": "Abspielen",
     "pause": "Pause",
-    "timeSlider": "Wiedergabeposition"
+    "timeSlider": "Wiedergabeposition",
+    "restart": "Neu starten",
+    "start": "Start",
+    "finish": "Ziel",
+    "car": "Fahrzeug",
+    "stats": "Lauf-Statistik",
+    "topSpeed": "Topspeed",
+    "avgSpeed": "Ø Geschw.",
+    "peakAccel": "Max. Beschl.",
+    "distance": "Distanz",
+    "duration": "Dauer",
+    "across": "Ausdehnung",
+    "straightHint": "Dieser Lauf war eine Gerade — öffne einen Kurvenlauf (Kreis- oder Strecken-Gerät), um Kurven zu sehen."
+  },
+  "filters": {
+    "searchVehicles": "Fahrzeuge suchen…",
+    "registration": "Registrierungsfilter",
+    "registrationAll": "Alle Status",
+    "registrationPending": "Nur ausstehende",
+    "registrationRegistered": "Nur registrierte",
+    "searchRuns": "Läufe nach ID suchen…",
+    "sortBy": "Sortieren nach {{column}}",
+    "noMatches": "Keine Treffer."
+  },
+  "footer": {
+    "tagline": "Live-Telemetrie & Rennanalyse für IMU-Streckengeräte.",
+    "courseHeading": "Lehrveranstaltung",
+    "institution": "FH JOANNEUM",
+    "course": "Advanced Software Engineering (ADSWE)",
+    "term": "Sommersemester 2026",
+    "teamHeading": "Team",
+    "builtWith": "Umgesetzt mit"
   },
   "theme": {
     "light": "Hell",
