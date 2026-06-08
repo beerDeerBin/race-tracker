@@ -1,4 +1,6 @@
 import { useTranslation } from 'react-i18next';
+import { Activity, CircleSlash, Pause, Plug } from 'lucide-react';
+import type { ComponentType } from 'react';
 import type { DeviceState } from '../models/realtime';
 
 const STYLES: Record<DeviceState, string> = {
@@ -13,24 +15,33 @@ const KEYS: Record<DeviceState, string> = {
     Acquiring: 'status.acquiring',
 };
 
+const ICONS: Record<DeviceState, ComponentType<{ className?: string }>> = {
+    Idle: Pause,
+    Connected: Plug,
+    Acquiring: Activity,
+};
+
 /** Live device-state pill (/F60/); `state === null` renders the "no signal yet" variant. */
 export function StatusBadge({ state }: { state: DeviceState | null }) {
     const { t } = useTranslation();
 
     if (state === null) {
         return (
-            <span className="inline-block rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-400 dark:bg-slate-800 dark:text-slate-500">
+            <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-400 dark:bg-slate-800 dark:text-slate-500">
+                <CircleSlash className="h-3 w-3" aria-hidden="true" />
                 {t('status.unknown')}
             </span>
         );
     }
 
+    const Icon = ICONS[state];
     return (
         <span
-            className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${STYLES[state]} ${
+            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${STYLES[state]} ${
                 state === 'Acquiring' ? 'animate-pulse' : ''
             }`}
         >
+            <Icon className="h-3 w-3" aria-hidden="true" />
             {t(KEYS[state])}
         </span>
     );
