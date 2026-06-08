@@ -1,5 +1,7 @@
 using System.Collections.Concurrent;
 using System.Globalization;
+using System.Security.Claims;
+using System.Text;
 using System.Text.Json;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
@@ -9,10 +11,16 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.JsonWebTokens;
+using Microsoft.IdentityModel.Tokens;
 using RabbitMQ.Client;
+using RaceTracker.BuildingBlocks.Auth;
+using RaceTracker.BuildingBlocks.Contracts.Auth;
 using RaceTracker.BuildingBlocks.Contracts.Telemetry;
 using RaceTracker.Realtime.Application.Realtime;
 using Shouldly;
+using Testcontainers.PostgreSql;
 using Xunit;
 
 namespace RaceTracker.Realtime.IntegrationTests;
@@ -30,6 +38,7 @@ public sealed class StatusRelayIntegrationTests : IAsyncLifetime
     private const string User = "race";
     private const string Pass = "race";
     private const string Vhost = "race-tracker";
+    private const string Database = "racetracker";
 
     private const string DeviceGuid = "00000000-0000-0000-0000-0000000000aa";
     private const string OtherGuid = "00000000-0000-0000-0000-0000000000bb";
@@ -43,11 +52,22 @@ public sealed class StatusRelayIntegrationTests : IAsyncLifetime
         .WithWaitStrategy(Wait.ForUnixContainer().UntilMessageIsLogged("Server startup complete"))
         .Build();
 
+    // The host boots the full Program, which applies the outbox migration at startup (story 8.3),
+    // so it needs a reachable Postgres even though the relay/auth assertions never touch the outbox.
+    // Without this the migrator resolves the default compose host ("postgres"), which is unresolvable
+    // off the Docker network → startup throws and EnsureServer fails.
+    private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder("postgres:16-alpine")
+        .WithDatabase(Database)
+        .WithUsername(User)
+        .WithPassword(Pass)
+        .Build();
+
     private WebApplicationFactory<Program> _factory = null!;
 
     public async Task InitializeAsync()
     {
         await _rabbit.StartAsync();
+        await _postgres.StartAsync();
         _factory = new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
         {
             builder.UseEnvironment("Development");
@@ -60,6 +80,12 @@ public sealed class StatusRelayIntegrationTests : IAsyncLifetime
                     ["Realtime:RabbitMq:VirtualHost"] = Vhost,
                     ["Realtime:RabbitMq:Username"] = User,
                     ["Realtime:RabbitMq:Password"] = Pass,
+                    ["Realtime:Outbox:Host"] = _postgres.Hostname,
+                    ["Realtime:Outbox:Port"] =
+                        _postgres.GetMappedPublicPort(5432).ToString(CultureInfo.InvariantCulture),
+                    ["Realtime:Outbox:Database"] = Database,
+                    ["Realtime:Outbox:Username"] = User,
+                    ["Realtime:Outbox:Password"] = Pass,
                 }));
         });
     }
@@ -68,6 +94,7 @@ public sealed class StatusRelayIntegrationTests : IAsyncLifetime
     {
         await _factory.DisposeAsync();
         await _rabbit.DisposeAsync();
+        await _postgres.DisposeAsync();
     }
 
     [Fact]
@@ -78,17 +105,18 @@ public sealed class StatusRelayIntegrationTests : IAsyncLifetime
         // Touching Server builds + starts the host, so the relay consumer connects and binds its
         // exclusive queue to rt.status before we publish.
         TestServer server = _factory.Server;
+        string accessToken = IssueToken(_factory.Services.GetRequiredService<IConfiguration>());
 
         var deviceStatuses = new ConcurrentQueue<DeviceStatusUpdate>();
         var progress = new ConcurrentQueue<RunProgressUpdate>();
         var otherStatuses = new ConcurrentQueue<DeviceStatusUpdate>();
         var otherProgress = new ConcurrentQueue<RunProgressUpdate>();
 
-        await using HubConnection client = BuildConnection(server);
+        await using HubConnection client = BuildConnection(server, accessToken);
         client.On<DeviceStatusUpdate>("DeviceStatus", deviceStatuses.Enqueue);
         client.On<RunProgressUpdate>("RunProgress", progress.Enqueue);
 
-        await using HubConnection other = BuildConnection(server);
+        await using HubConnection other = BuildConnection(server, accessToken);
         other.On<DeviceStatusUpdate>("DeviceStatus", otherStatuses.Enqueue);
         other.On<RunProgressUpdate>("RunProgress", otherProgress.Enqueue);
 
@@ -140,11 +168,48 @@ public sealed class StatusRelayIntegrationTests : IAsyncLifetime
         otherProgress.ShouldBeEmpty();
     }
 
-    private static HubConnection BuildConnection(TestServer server) =>
+    // The hub requires a valid bearer token since story 7.2 (/F12/): connections without one
+    // are rejected at negotiate.
+    [Fact]
+    public async Task Hub_rejects_unauthenticated_connections()
+    {
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+        TestServer server = _factory.Server;
+
+        await using HubConnection anonymous = BuildConnection(server, accessToken: null);
+
+        await Should.ThrowAsync<HttpRequestException>(() => anonymous.StartAsync(cts.Token));
+    }
+
+    private static HubConnection BuildConnection(TestServer server, string? accessToken) =>
         new HubConnectionBuilder()
             .WithUrl(new Uri(server.BaseAddress, "hubs/telemetry"), HttpTransportType.LongPolling,
-                options => options.HttpMessageHandlerFactory = _ => server.CreateHandler())
+                options =>
+                {
+                    options.HttpMessageHandlerFactory = _ => server.CreateHandler();
+                    options.AccessTokenProvider = () => Task.FromResult(accessToken);
+                })
             .Build();
+
+    /// <summary>Signs a token with the host's configured validation parameters (dev key).</summary>
+    private static string IssueToken(IConfiguration configuration)
+    {
+        JwtValidationOptions options = configuration.GetSection(JwtValidationOptions.Section)
+            .Get<JwtValidationOptions>() ?? new JwtValidationOptions();
+
+        var descriptor = new SecurityTokenDescriptor
+        {
+            Issuer = options.Issuer,
+            Audience = options.Audience,
+            Expires = DateTime.UtcNow.AddMinutes(10),
+            SigningCredentials = new SigningCredentials(
+                new SymmetricSecurityKey(Encoding.UTF8.GetBytes(options.SigningKey)),
+                SecurityAlgorithms.HmacSha256),
+            Subject = new ClaimsIdentity([new Claim(JwtClaimNames.Name, "integration-test")]),
+        };
+
+        return new JsonWebTokenHandler().CreateToken(descriptor);
+    }
 
     private static async Task PublishStatusAsync(
         IChannel channel, string deviceGuid, DeviceState state, uint sampledCount,

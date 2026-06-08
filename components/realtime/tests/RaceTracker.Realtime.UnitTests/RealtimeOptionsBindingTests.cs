@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using RaceTracker.BuildingBlocks.Auth;
 using RaceTracker.Realtime.Application;
 using RaceTracker.Realtime.Application.Configuration;
 using Shouldly;
@@ -23,6 +24,18 @@ public sealed class RealtimeOptionsBindingTests
                 ["Realtime:RabbitMq:Password"] = "race",
                 ["Realtime:Relay:BindingKey"] = "#",
                 ["Realtime:Relay:Prefetch"] = "64",
+                ["Realtime:Redis:Host"] = "redis",
+                ["Realtime:Redis:Port"] = "6379",
+                ["Realtime:Redis:NotificationTtlSeconds"] = "300",
+                ["Realtime:Rules:OfflineThresholdSeconds"] = "15",
+                ["Realtime:Rules:OfflineSweepSeconds"] = "5",
+                ["Realtime:Outbox:Host"] = "postgres",
+                ["Realtime:Outbox:Port"] = "5432",
+                ["Realtime:Outbox:Database"] = "racetracker",
+                ["Realtime:Outbox:Username"] = "race",
+                ["Realtime:Outbox:Password"] = "race",
+                ["Realtime:Outbox:DispatchPollSeconds"] = "2",
+                ["Realtime:Outbox:DispatchBatchSize"] = "50",
             })
             .Build();
 
@@ -39,5 +52,39 @@ public sealed class RealtimeOptionsBindingTests
         options.RabbitMq.Password.ShouldBe("race");
         options.Relay.BindingKey.ShouldBe("#");
         options.Relay.Prefetch.ShouldBe((ushort)64);
+        options.Redis.Host.ShouldBe("redis");
+        options.Redis.Port.ShouldBe(6379);
+        options.Redis.NotificationTtlSeconds.ShouldBe(300);
+        options.Rules.OfflineThresholdSeconds.ShouldBe(15);
+        options.Rules.OfflineSweepSeconds.ShouldBe(5);
+        options.Outbox.Host.ShouldBe("postgres");
+        options.Outbox.Port.ShouldBe(5432);
+        options.Outbox.Database.ShouldBe("racetracker");
+        options.Outbox.Username.ShouldBe("race");
+        options.Outbox.Password.ShouldBe("race");
+        options.Outbox.DispatchPollSeconds.ShouldBe(2);
+        options.Outbox.DispatchBatchSize.ShouldBe(50);
+    }
+
+    // Story 7.2: the hub validates management-issued JWTs; the shared validation options bind
+    // from the same "Auth:Jwt" section shape the issuer uses.
+    [Fact]
+    public void Binds_the_shared_jwt_validation_section_from_configuration()
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Auth:Jwt:SigningKey"] = "test-signing-key-with-at-least-32-characters!",
+                ["Auth:Jwt:Issuer"] = "race-tracker-management",
+                ["Auth:Jwt:Audience"] = "race-tracker",
+            })
+            .Build();
+
+        JwtValidationOptions options = configuration.GetSection(JwtValidationOptions.Section)
+            .Get<JwtValidationOptions>() ?? new JwtValidationOptions();
+
+        options.SigningKey.ShouldBe("test-signing-key-with-at-least-32-characters!");
+        options.Issuer.ShouldBe("race-tracker-management");
+        options.Audience.ShouldBe("race-tracker");
     }
 }

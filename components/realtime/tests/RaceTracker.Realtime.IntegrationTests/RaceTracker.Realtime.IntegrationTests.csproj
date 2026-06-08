@@ -27,6 +27,13 @@
     <!-- Drives a real RabbitMQ broker (declare/bind/publish) for the relay test. -->
     <PackageReference Include="Testcontainers" />
     <PackageReference Include="RabbitMQ.Client" />
+    <!-- Real Redis for the notification-dedup SET-NX/TTL test (story 8.2) — generic
+         container builder (matches the RabbitMQ relay test) + the Redis client. -->
+    <PackageReference Include="StackExchange.Redis" />
+    <!-- Real PostgreSQL for the transactional-outbox test (story 8.3): durable enqueue,
+         dedup, and restart survival against a throwaway container. -->
+    <PackageReference Include="Testcontainers.PostgreSql" />
+    <PackageReference Include="Npgsql" />
   </ItemGroup>
 
 </Project>

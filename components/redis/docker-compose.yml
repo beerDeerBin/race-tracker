@@ -1,0 +1,13 @@
+services:
+  redis:
+    image: redis:7-alpine   # key-value cache for TP-EVT: notification idempotency keys (TTL)
+    container_name: race-tracker-redis
+    # No host port: Redis is an internal-only cache reached over the compose network
+    # (realtime → redis:6379). Inspect with `docker exec race-tracker-redis redis-cli`.
+    # No volume: the idempotency keys are ephemeral by design (TTL-debounce window only).
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped

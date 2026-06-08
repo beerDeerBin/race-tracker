@@ -19,6 +19,9 @@ public sealed class PersistenceMetrics : IDisposable
     private readonly Counter<long> _batchesRequeued;
     private readonly Counter<long> _trajectoriesBuilt;
     private readonly Counter<long> _trajectoryPointsWritten;
+    private readonly Counter<long> _runMetadataAcked;
+    private readonly Counter<long> _runMetadataDeadLettered;
+    private readonly Counter<long> _runMetadataRequeued;
 
     public PersistenceMetrics()
     {
@@ -41,6 +44,15 @@ public sealed class PersistenceMetrics : IDisposable
         _trajectoryPointsWritten = _meter.CreateCounter<long>(
             "persistence.trajectory.points.written", unit: "{point}",
             description: "Trajectory points written across all run rebuilds (story 4.3).");
+        _runMetadataAcked = _meter.CreateCounter<long>(
+            "persistence.runmetadata.acked", unit: "{run}",
+            description: "Run-metadata announcements persisted and acknowledged (/F54/).");
+        _runMetadataDeadLettered = _meter.CreateCounter<long>(
+            "persistence.runmetadata.deadlettered", unit: "{run}",
+            description: "Run-metadata announcements rejected without requeue (parse/validation).");
+        _runMetadataRequeued = _meter.CreateCounter<long>(
+            "persistence.runmetadata.requeued", unit: "{run}",
+            description: "Run-metadata announcements rejected with requeue after a transient failure.");
     }
 
     /// <summary>Counts <paramref name="count"/> newly inserted samples for an acked batch.</summary>
@@ -60,6 +72,15 @@ public sealed class PersistenceMetrics : IDisposable
 
     /// <summary>Counts <paramref name="count"/> trajectory points written for a rebuilt run.</summary>
     public void TrajectoryPointsWritten(long count) => _trajectoryPointsWritten.Add(count);
+
+    /// <summary>Counts a run-metadata announcement persisted + acked.</summary>
+    public void RunMetadataAcked() => _runMetadataAcked.Add(1);
+
+    /// <summary>Counts a poison run-metadata announcement dead-lettered (rejected without requeue).</summary>
+    public void RunMetadataDeadLettered() => _runMetadataDeadLettered.Add(1);
+
+    /// <summary>Counts a run-metadata announcement requeued after a transient failure.</summary>
+    public void RunMetadataRequeued() => _runMetadataRequeued.Add(1);
 
     public void Dispose() => _meter.Dispose();
 }

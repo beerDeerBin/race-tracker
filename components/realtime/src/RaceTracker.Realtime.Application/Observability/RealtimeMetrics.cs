@@ -5,8 +5,9 @@ namespace RaceTracker.Realtime.Application.Observability;
 /// <summary>
 /// Owns the realtime <see cref="Meter"/> so the scrape-friendly <c>/metrics</c> endpoint is wired
 /// from the grundgerüst on (§8, <c>/A80/</c>). Carries the consumed-status counter (stories
-/// 6.2/6.3), the SignalR push counter and the group subscription counter (story 6.1). The Api
-/// registers <see cref="MeterName"/> with the shared Prometheus exporter.
+/// 6.2/6.3), the SignalR push counter, the group subscription counter (story 6.1), the
+/// rule-event counter (story 8.1) and the notification counter (story 8.2). The Api registers
+/// <see cref="MeterName"/> with the shared Prometheus exporter.
 /// </summary>
 public sealed class RealtimeMetrics : IDisposable
 {
@@ -17,6 +18,8 @@ public sealed class RealtimeMetrics : IDisposable
     private readonly Counter<long> _statusEvents;
     private readonly Counter<long> _pushes;
     private readonly Counter<long> _subscriptions;
+    private readonly Counter<long> _ruleEvents;
+    private readonly Counter<long> _notifications;
 
     public RealtimeMetrics()
     {
@@ -35,6 +38,15 @@ public sealed class RealtimeMetrics : IDisposable
             "racetracker_realtime_subscriptions_total",
             unit: "operations",
             description: "Hub group membership changes, tagged by action (subscribe/unsubscribe).");
+        _ruleEvents = _meter.CreateCounter<long>(
+            "racetracker_realtime_rule_events_total",
+            unit: "events",
+            description: "Rule events produced by the rule engine, tagged by rule (story 8.1).");
+        _notifications = _meter.CreateCounter<long>(
+            "racetracker_realtime_notifications_total",
+            unit: "notifications",
+            description: "Rule notifications, tagged by outcome: suppressed (TTL-debounced, 8.2), "
+                + "enqueued (written to the outbox) and dispatched (pushed via SignalR, 8.3).");
     }
 
     /// <summary>
@@ -57,6 +69,18 @@ public sealed class RealtimeMetrics : IDisposable
     /// </summary>
     public void RecordSubscription(string action) =>
         _subscriptions.Add(1, new KeyValuePair<string, object?>("action", action));
+
+    /// <summary>Records a fired rule event (story 8.1) tagged by the <paramref name="rule"/>.</summary>
+    public void RecordRuleEvent(Rules.RuleType rule) =>
+        _ruleEvents.Add(1, new KeyValuePair<string, object?>("rule", rule.ToString()));
+
+    /// <summary>
+    /// Records a notification tagged by <paramref name="outcome"/>: <c>suppressed</c> when the TTL
+    /// gate debounced it (8.2), <c>enqueued</c> when it was written to the outbox, <c>dispatched</c>
+    /// when the dispatcher pushed it via SignalR (8.3).
+    /// </summary>
+    public void RecordNotification(string outcome) =>
+        _notifications.Add(1, new KeyValuePair<string, object?>("outcome", outcome));
 
     public void Dispose() => _meter.Dispose();
 }

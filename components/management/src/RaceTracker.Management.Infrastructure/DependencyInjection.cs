@@ -74,6 +74,10 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddSingleton<ICommandEncoder, BinaryCommandEncoder>();
         services.AddSingleton<ICommandPublisher, MqttCommandPublisher>();
 
+        // Run-metadata announcement (/F54/): the real RabbitMQ publisher that tells persistence a
+        // run's ODR/time base at START_RUN. Singleton so its confirm-enabled channel is reused.
+        services.AddSingleton<IRunMetadataPublisher, RabbitMqRunMetadataPublisher>();
+
         return services;
     }
 }

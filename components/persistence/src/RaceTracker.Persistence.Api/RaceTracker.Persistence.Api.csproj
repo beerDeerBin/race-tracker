@@ -11,6 +11,8 @@
   <ItemGroup>
     <!-- GraphQL read API (/S30/, /F52/): query type + Banana Cake Pop, story 4.1. -->
     <PackageReference Include="HotChocolate.AspNetCore" />
+    <!-- GraphQL JWT (story 7.5, /F12/): validates the management-issued bearer tokens. -->
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
   </ItemGroup>
 
 </Project>

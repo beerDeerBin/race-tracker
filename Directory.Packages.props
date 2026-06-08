@@ -46,6 +46,9 @@
     <!-- Document-DB access for TP-MGMT (/O10/, §10.2): official MongoDB driver; added in
          story 5.1 (management grundgerüst + Mongo connectivity probe). -->
     <PackageVersion Include="MongoDB.Driver" Version="3.9.0" />
+    <!-- Key-value cache for TP-EVT (/O10/, §10.2): notification TTL idempotency keys;
+         added in story 8.2 (realtime rule notifications). -->
+    <PackageVersion Include="StackExchange.Redis" Version="2.8.16" />
   </ItemGroup>
 
   <ItemGroup Label="Auth (TP-MGMT)">

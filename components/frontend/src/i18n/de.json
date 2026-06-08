@@ -1,0 +1,159 @@
+{
+  "app": {
+    "title": "Race Tracker"
+  },
+  "login": {
+    "title": "Melde dich an, um Fahrzeuge und Läufe zu verwalten",
+    "username": "Benutzername",
+    "password": "Passwort",
+    "submit": "Anmelden",
+    "submitting": "Anmeldung läuft…",
+    "invalidCredentials": "Benutzername oder Passwort ist falsch.",
+    "failed": "Anmeldung fehlgeschlagen. Bitte erneut versuchen."
+  },
+  "dashboard": {
+    "title": "Geräte",
+    "loading": "Fahrzeuge werden geladen…",
+    "loadFailed": "Die Fahrzeugliste konnte nicht geladen werden.",
+    "empty": "Noch keine Geräte — starte den Simulator oder ein echtes Gerät, dann erscheint es hier.",
+    "loggedInAs": "Angemeldet als {{user}}",
+    "logout": "Abmelden"
+  },
+  "vehicles": {
+    "name": "Fahrzeug",
+    "owner": "Besitzer",
+    "registration": "Registrierung",
+    "state": "Zustand",
+    "battery": "Batterie",
+    "uptime": "Laufzeit",
+    "lastSeen": "Zuletzt gesehen",
+    "pending": "ausstehend",
+    "registered": "registriert",
+    "secondsAgo": "vor {{seconds}}s",
+    "actions": "Aktionen"
+  },
+  "errors": {
+    "eepromParameter": "EEPROM-Parameterfehler",
+    "eepromInit": "EEPROM-Initialisierungsfehler",
+    "eepromWrite": "EEPROM-Schreibfehler",
+    "wifiInit": "WLAN-Initialisierungsfehler",
+    "wifiConnect": "WLAN-Verbindungsfehler",
+    "wifiShutdown": "WLAN-Abschaltfehler",
+    "wifiWakeup": "WLAN-Aufweckfehler",
+    "wifiSleep": "WLAN-Schlaffehler",
+    "damgrInit": "Datenmanager-Initialisierungsfehler",
+    "damgrAlloc": "Datenmanager-Speicherfehler",
+    "damgrOverflow": "Datenmanager-Überlauf",
+    "mqttConnect": "MQTT-Verbindungsfehler",
+    "mqttPublish": "MQTT-Veröffentlichungsfehler",
+    "mqttSubscribe": "MQTT-Abonnementfehler",
+    "imuInit": "IMU-Initialisierungsfehler",
+    "imuConfig": "IMU-Konfigurationsfehler",
+    "imuRead": "IMU-Lesefehler",
+    "imuFifo": "IMU-FIFO-Fehler",
+    "pwrInit": "Stromversorgungs-Initialisierungsfehler",
+    "pwrAdc": "Stromversorgungs-ADC-Fehler",
+    "pwrBatteryCritical": "Batterie kritisch"
+  },
+  "language": {
+    "en": "Englisch",
+    "de": "Deutsch",
+    "switchTo": "Sprache wechseln: {{lang}}"
+  },
+  "claim": {
+    "button": "Übernehmen",
+    "title": "Gerät übernehmen",
+    "name": "Fahrzeugname",
+    "owner": "Besitzer",
+    "ownerPlaceholder": "{{user}} (Standard)",
+    "submit": "Übernehmen",
+    "claiming": "Wird übernommen…",
+    "cancel": "Abbrechen",
+    "notFound": "Dieses Gerät ist nicht mehr bekannt.",
+    "failed": "Übernahme fehlgeschlagen. Bitte erneut versuchen."
+  },
+  "status": {
+    "idle": "Bereit",
+    "connected": "Verbunden",
+    "acquiring": "Messung läuft",
+    "unknown": "Kein Signal"
+  },
+  "commands": {
+    "connect": "Verbinden",
+    "startRun": "Lauf starten",
+    "disconnect": "Trennen",
+    "reset": "Zurücksetzen",
+    "reason": {
+      "noSignal": "Noch kein Live-Status — das Gerät muss zuerst online sein.",
+      "acquiring": "Ein Lauf ist aktiv — während der Messung sind keine Kommandos möglich.",
+      "needsIdle": "Nur verfügbar, wenn das Gerät bereit (Idle) ist.",
+      "needsConnected": "Nur verfügbar, wenn das Gerät verbunden ist."
+    },
+    "startRunTitle": "Lauf starten",
+    "numSamples": "Anzahl Samples",
+    "odr": "Abtastrate (ODR)",
+    "accelRange": "Beschleunigungs-Messbereich",
+    "gyroRange": "Gyroskop-Messbereich",
+    "start": "Starten",
+    "starting": "Wird gestartet…",
+    "cancel": "Abbrechen",
+    "startFailed": "Der Lauf konnte nicht gestartet werden. Bitte erneut versuchen.",
+    "dispatchFailed": "Kommando fehlgeschlagen.",
+    "progress": "{{sampled}} / {{total}} Samples ({{percent}} %)"
+  },
+  "runs": {
+    "title": "Läufe — {{vehicle}}",
+    "backToDashboard": "Dashboard",
+    "loading": "Läufe werden geladen…",
+    "loadFailed": "Die Laufliste konnte nicht geladen werden.",
+    "empty": "Noch keine Läufe aufgezeichnet — starte einen über das Dashboard.",
+    "startedAt": "Gestartet",
+    "samples": "Samples",
+    "odr": "Abtastrate",
+    "odrAssumed": "{{odr}} Hz (angenommen)",
+    "runId": "Lauf-ID",
+    "open": "Öffnen"
+  },
+  "chartToolbar": {
+    "view": "Ansicht",
+    "raw": "Rohdaten",
+    "aggregate": "Aggregat",
+    "from": "Von [s]",
+    "to": "Bis [s]",
+    "reset": "Zurücksetzen",
+    "axes": "Achsen"
+  },
+  "runDetail": {
+    "title": "Lauf-Detail",
+    "backToRuns": "Laufliste",
+    "meta": "{{count}} Samples · {{odr}} Hz",
+    "loading": "Samples werden geladen…",
+    "loadFailed": "Die Samples konnten nicht geladen werden.",
+    "empty": "Dieser Lauf enthält keine Samples.",
+    "accelTitle": "Beschleunigung ax / ay / az",
+    "gyroTitle": "Drehrate gx / gy / gz",
+    "viewTrajectory": "Strecke anzeigen"
+  },
+  "trajectory": {
+    "title": "Strecke",
+    "backToRun": "Lauf-Detail",
+    "loading": "Strecke wird geladen…",
+    "loadFailed": "Die Strecke konnte nicht geladen werden.",
+    "empty": "Dieser Lauf hat keine Strecke.",
+    "mapLabel": "Karte der gefahrenen Strecke",
+    "play": "Abspielen",
+    "pause": "Pause",
+    "timeSlider": "Wiedergabeposition"
+  },
+  "theme": {
+    "light": "Hell",
+    "dark": "Dunkel",
+    "system": "System",
+    "switchTo": "Design wechseln: {{mode}}"
+  },
+  "error": {
+    "title": "Etwas ist schiefgelaufen",
+    "description": "Beim Darstellen dieser Ansicht ist ein unerwarteter Fehler aufgetreten.",
+    "reload": "Neu laden"
+  }
+}

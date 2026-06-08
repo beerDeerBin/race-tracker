@@ -1,4 +1,8 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using RaceTracker.BuildingBlocks.Auth;
 using RaceTracker.BuildingBlocks.Correlation;
+using RaceTracker.BuildingBlocks.Cors;
 using RaceTracker.BuildingBlocks.Health;
 using RaceTracker.BuildingBlocks.Logging;
 using RaceTracker.BuildingBlocks.Metrics;
@@ -16,6 +20,25 @@ builder.UseRaceTrackerSerilog("Persistence");
 
 builder.Services.AddApplication(builder.Configuration);
 builder.Services.AddInfrastructure();
+
+// CORS (story 7.1, /U50/): the SPA queries /graphql cross-origin from the Vite dev server;
+// allowed origins come from the shared building block's "Cors" section.
+builder.Services.AddRaceTrackerCors(builder.Configuration);
+
+// GraphQL auth (story 7.5, /F12/): validate the management-issued bearer tokens with the
+// shared parameters, secure-by-default via a fallback policy (probes/metrics stay
+// AllowAnonymous). The Banana Cake Pop IDE consequently also requires a token.
+var jwtOptions = builder.Configuration.GetSection(JwtValidationOptions.Section)
+    .Get<JwtValidationOptions>() ?? new JwtValidationOptions();
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.MapInboundClaims = false;
+        options.TokenValidationParameters = JwtTokenValidation.Build(jwtOptions);
+    });
+builder.Services.AddAuthorizationBuilder()
+    .SetFallbackPolicy(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build());
 
 // Readiness gates on real dependency reachability (anti-stub); liveness stays dependency-free.
 builder.Services.AddHealthChecks()
@@ -35,10 +58,14 @@ builder.Services.AddProblemDetails();
 
 var app = builder.Build();
 
-// Pipeline order (§7): correlation-id → global exception handling → request logging → endpoints.
+// Pipeline order (§7): correlation-id → global exception handling → request logging → CORS →
+// authentication → authorization → endpoints.
 app.UseCorrelationId();
 app.UseExceptionHandler();
 app.UseSerilogRequestLogging();
+app.UseRaceTrackerCors();
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapRaceTrackerHealthChecks();
 app.MapRaceTrackerMetrics();

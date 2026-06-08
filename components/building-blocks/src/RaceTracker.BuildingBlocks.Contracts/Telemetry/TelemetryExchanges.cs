@@ -14,4 +14,11 @@ public static class TelemetryExchanges
 
     /// <summary>Topic exchange carrying <see cref="SampleBatchEvent"/> messages.</summary>
     public const string Data = "rt.data";
+
+    /// <summary>
+    /// Topic exchange carrying <see cref="RunMetadataEvent"/> messages — run parameters announced by
+    /// the management service at <c>START_RUN</c> (the ODR / time-base source). Routing key is the
+    /// device <c>guid</c>, like the other two, so a consumer binds to one device or all (<c>#</c>).
+    /// </summary>
+    public const string Run = "rt.run";
 }

@@ -1,0 +1,23 @@
+services:
+  postgres:
+    image: postgres:16-alpine   # relational store for TP-EVT: the transactional notification outbox (story 8.3)
+    container_name: race-tracker-postgres
+    # No host port: the outbox is an internal-only store reached over the compose network
+    # (realtime → postgres:5432); keeps it off the host (TimescaleDB already owns 5432).
+    # Inspect with `docker exec race-tracker-postgres psql -U race -d racetracker`.
+    environment:
+      POSTGRES_USER: race
+      POSTGRES_PASSWORD: race
+      POSTGRES_DB: racetracker
+    volumes:
+      # Durable: outbox rows must survive a service/container restart (story 8.3 AK).
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U race -d racetracker"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  postgres-data:

@@ -325,7 +325,7 @@ mitbekomme.*
 M6). **Voraussetzung:** M4, M5, M6. *(Bewusst spät — nie gegen Mock-Backends.)*
 Der Flask-Tester gilt ab Abschluss von 7.5 als abgelöst (`/O40/`).
 
-### 7.1 — App-Grundgerüst + Auth · **M**
+### 7.1 — App-Grundgerüst + Auth · **M** · ✅ Erledigt
 *Als Benutzer möchte ich mich einloggen und nur dann geschützte Bereiche sehen,
 damit der Zugang gesichert ist.*
 **Verweise:** `/U10/`, `/U50/`, `/F11/`, §8 Frontend
@@ -333,21 +333,21 @@ damit der Zugang gesichert ist.*
 Instanz mit Interceptoren (Token-Injektion, zentrales `401`→Logout); Auth-Context +
 Route-Guards; Login gegen echtes Management.
 
-### 7.2 — Geräte-Dashboard + Live-Status · **M**
+### 7.2 — Geräte-Dashboard + Live-Status · **M** · ✅ Erledigt
 *Als Benutzer möchte ich alle Geräte mit aktuellem (Live-)Status auf einen Blick
 sehen, damit ich den Überblick habe.*
 **Verweise:** `/F83/`, `/F60/`, `/F62/`, `/F63/`
 **AK:** Fahrzeugliste (REST) inkl. `pending`-Geräte; Live-Status über SignalR;
 WebSocket **reconnectet automatisch** und ab-/bestellt Gruppen beim Navigieren.
 
-### 7.3 — Gerät claimen · **M**
+### 7.3 — Gerät claimen · **M** · ✅ Erledigt
 *Als Benutzer möchte ich ein entdecktes `pending`-Gerät benennen und übernehmen,
 damit seine Daten mir zugeordnet sind.*
 **Verweise:** `/F20/`, `/F25/`
 **AK:** Claim aus der UI; Status wechselt `pending → registered`, Name + Besitzer
 gesetzt.
 
-### 7.4 — Laufsteuerung · **M**
+### 7.4 — Laufsteuerung · **M** · ✅ Erledigt
 *Als Benutzer möchte ich Läufe per UI verbinden/starten/trennen/zurücksetzen,
 damit ich Messungen steuere.*
 **Verweise:** `/F30/`, `/F31/`, `/F32/`, `/F34/`
@@ -355,7 +355,7 @@ damit ich Messungen steuere.*
 Aktionen sind deaktiviert/erklärt (`/F34/`); ein aus der UI gestarteter Lauf zeigt
 **Live-Fortschritt** (nutzt 6.3).
 
-### 7.5 — Lauf-Liste + Lauf-Detail-Diagramme · **M**
+### 7.5 — Lauf-Liste + Lauf-Detail-Diagramme · **M** · ✅ Erledigt
 *Als Benutzer möchte ich je Fahrzeug die Läufe sehen und einen Lauf als Diagramm
 der sechs Achsen, damit ich die Messung auswerte.*
 **Verweise:** `/F80/`, `/F81/`, `/F52/`, `/D50/`
@@ -365,26 +365,26 @@ der sechs Achsen, damit ich die Messung auswerte.*
 > ✅ Nach 7.5 ist der Happy-Path im Frontend vollständig → **Flask-Tester
 > abgelöst** (`/O40/`), bleibt nur noch Debug-Hilfe.
 
-### 7.6 — Filter + Aggregatansicht · **S**
+### 7.6 — Filter + Aggregatansicht · **S** · ✅ Erledigt
 *Als Benutzer möchte ich Zeitraum/Achsen filtern und zwischen Roh- und
 Aggregatansicht wählen, damit große Läufe übersichtlich bleiben.*
 **Verweise:** `/F82/`, `/F53/`
 **AK:** Filter wirken auf das Diagramm; Umschalten Roh/Aggregat (nutzt 4.2).
 
-### 7.7 — Live-Mess-Ansicht · **S**
+### 7.7 — Live-Mess-Ansicht · **S** · ✅ Erledigt
 *Als Benutzer möchte ich neu eintreffende Mess-Batches ohne Reload sehen, damit ich
 den Lauf live mitverfolge.*
 **Verweise:** `/F64/`
 **AK:** Während/nach einem Lauf erscheinen neue Batches ohne Seiten-Reload.
 
-### 7.8 — Fehlercode-Klartext + i18n · **S**
+### 7.8 — Fehlercode-Klartext + i18n · **S** · ✅ Erledigt
 *Als Benutzer möchte ich Fehlercodes im Klartext und Texte in meiner Sprache,
 damit die Oberfläche verständlich ist.*
 **Verweise:** `/U30/`, `/U40/`
 **AK:** errorCode-Bitmaske → benannte Klartexte (PROTOCOL §5.1); alle Strings
 externalisiert (i18n).
 
-### 7.9 — Streckenkarte + Fahrt-Simulation (Playback) · **M**
+### 7.9 — Streckenkarte + Fahrt-Simulation (Playback) · **M** · ✅ Erledigt
 *Als Benutzer möchte ich die gefahrene Strecke eines Laufs als **Karte** sehen und
 die Fahrt als **Animation abspielen**, damit ich visuell nachvollziehe, wie sich
 das Fahrzeug bewegt hat.*
@@ -409,7 +409,7 @@ das Fahrzeug bewegt hat.*
 M6-Services**. **Voraussetzung:** M6 (Service + SignalR), M2 (Status-Strom).
 *Letztes Epic / Zusatz (`/O30/`).*
 
-### 8.1 — Regel-Engine als Daten · **S**
+### 8.1 — Regel-Engine als Daten · **S** · ✅ Erledigt
 *Als System möchte ich Regeln als deklarative `(Typ, Prädikat, Meldung)`-Tabelle
 gegen eingehende Status/Messwerte auswerten, damit neue Regeln eine Datenänderung
 sind.*
@@ -417,14 +417,14 @@ sind.*
 **AK:** Regelsatz als Daten; Auswerteschleife erzeugt Ereignisse (zunächst in Log/
 Metrik sichtbar); Hinzufügen einer Regel ändert nur die Datentabelle.
 
-### 8.2 — Regel „kritische Batterie" + TTL-Idempotenz · **S**
+### 8.2 — Regel „kritische Batterie" + TTL-Idempotenz · **S** · ✅ Erledigt
 *Als Benutzer möchte ich bei kritischer Batterie benachrichtigt werden, aber nicht
 wiederholt, damit die Warnung nützlich bleibt.*
 **Verweise:** `/F71/`, `/F72/`, `/D60/`
 **AK:** Bedingung (Batterie < 3100 mV bzw. errorCode-Bit 42) → **genau eine**
 Benachrichtigung pro Zeitfenster (Cache-Key + TTL).
 
-### 8.3 — Transactional Outbox + Dispatch über SignalR · **K**
+### 8.3 — Transactional Outbox + Dispatch über SignalR · **K** · ✅ Erledigt
 *Als Benutzer möchte ich Benachrichtigungen zuverlässig erhalten, auch wenn der
 Push-Empfänger kurz weg war, damit nichts verloren geht.*
 **Verweise:** `/F73/`, `/A60/`
@@ -432,7 +432,7 @@ Push-Empfänger kurz weg war, damit nichts verloren geht.*
 (PostgreSQL) geschrieben; Background-Dispatcher pusht per SignalR; Zustellung
 übersteht einen Service-Neustart (genau-einmal-Wirkung).
 
-### 8.4 — Weitere Regeln (Lauf fertig / offline / Fehlercode) · **S**
+### 8.4 — Weitere Regeln (Lauf fertig / offline / Fehlercode) · **S** · ✅ Erledigt
 *Als Benutzer möchte ich auch über „Lauf abgeschlossen", „Gerät offline" und
 „Fehlercode gesetzt" informiert werden, damit ich den Betrieb im Blick habe.*
 **Verweise:** `/F74/`
