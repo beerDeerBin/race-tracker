@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.Features;
 using RaceTracker.BuildingBlocks.Auth;
 using RaceTracker.BuildingBlocks.Correlation;
 using RaceTracker.BuildingBlocks.Cors;
@@ -10,6 +11,7 @@ using RaceTracker.BuildingBlocks.Logging;
 using RaceTracker.BuildingBlocks.Metrics;
 using RaceTracker.Management.Api.Auth;
 using RaceTracker.Management.Application;
+using RaceTracker.Management.Application.Configuration;
 using RaceTracker.Management.Application.Observability;
 using RaceTracker.Management.Infrastructure;
 using RaceTracker.Management.Infrastructure.Health;
@@ -61,6 +63,13 @@ builder.Services.AddControllers().AddJsonOptions(options =>
         new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)));
 
 builder.Services.AddProblemDetails();
+
+// Cap multipart bodies at the configured image size so an oversize upload is rejected at the
+// transport layer too (the use case is still the authoritative check that maps to 413).
+var imageOptions = builder.Configuration.GetSection(ManagementOptions.Section)
+    .Get<ManagementOptions>()?.Images ?? new ImageOptions();
+builder.Services.Configure<FormOptions>(options =>
+    options.MultipartBodyLengthLimit = imageOptions.MaxBytes);
 
 var app = builder.Build();
 

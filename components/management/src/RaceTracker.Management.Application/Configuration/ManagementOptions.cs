@@ -19,6 +19,23 @@ public sealed class ManagementOptions
 
     /// <summary>Status-event consumer topology + flow control for device discovery (5.4).</summary>
     public DiscoveryOptions Discovery { get; init; } = new();
+
+    /// <summary>Vehicle gallery image constraints (allowed types + size cap).</summary>
+    public ImageOptions Images { get; init; } = new();
+}
+
+/// <summary>
+/// Constraints for vehicle gallery image uploads. Bound under <c>Management:Images</c> (Options
+/// pattern, <c>/A40/</c>) and enforced once in the upload use case so the rule lives in one place.
+/// </summary>
+public sealed class ImageOptions
+{
+    /// <summary>Maximum accepted size of a single image in bytes (default 5 MiB).</summary>
+    public long MaxBytes { get; init; } = 5L * 1024 * 1024;
+
+    /// <summary>Accepted image MIME types; an upload with any other content type is rejected.</summary>
+    public string[] AllowedContentTypes { get; init; } =
+        ["image/png", "image/jpeg", "image/webp", "image/gif"];
 }
 
 /// <summary>

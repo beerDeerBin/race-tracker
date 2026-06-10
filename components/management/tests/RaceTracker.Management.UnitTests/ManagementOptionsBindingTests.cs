@@ -111,6 +111,44 @@ public sealed class ManagementOptionsBindingTests
     }
 
     [Fact]
+    public void Binds_the_image_size_cap_from_configuration()
+    {
+        // Only the scalar cap is meant to be overridden in config; the allowed-types array stays the
+        // code default (the configuration binder *appends* to a non-empty array default rather than
+        // replacing it, so it is intentionally not surfaced in appsettings).
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Management:Images:MaxBytes"] = "1048576",
+            })
+            .Build();
+
+        var services = new ServiceCollection();
+        services.AddApplication(configuration);
+        using var provider = services.BuildServiceProvider();
+
+        ImageOptions images = provider.GetRequiredService<IOptions<ManagementOptions>>().Value.Images;
+
+        images.MaxBytes.ShouldBe(1_048_576);
+        images.AllowedContentTypes.ShouldBe(["image/png", "image/jpeg", "image/webp", "image/gif"]);
+    }
+
+    [Fact]
+    public void Image_defaults_are_applied_when_unset()
+    {
+        var configuration = new ConfigurationBuilder().Build();
+
+        var services = new ServiceCollection();
+        services.AddApplication(configuration);
+        using var provider = services.BuildServiceProvider();
+
+        ImageOptions images = provider.GetRequiredService<IOptions<ManagementOptions>>().Value.Images;
+
+        images.MaxBytes.ShouldBe(5L * 1024 * 1024);
+        images.AllowedContentTypes.ShouldBe(["image/png", "image/jpeg", "image/webp", "image/gif"]);
+    }
+
+    [Fact]
     public void Discovery_defaults_are_applied_when_unset()
     {
         var configuration = new ConfigurationBuilder().Build();

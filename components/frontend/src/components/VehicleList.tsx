@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Hand } from 'lucide-react';
 import { StatusBadge } from './StatusBadge';
+import { VehicleAvatar } from './VehicleAvatar';
 import { ClaimDialog } from './ClaimDialog';
 import { RunControls } from './RunControls';
 import { RunProgressBar } from './RunProgressBar';
@@ -71,7 +72,10 @@ export function VehicleList({ vehicles }: { vehicles: VehicleResponse[] }) {
                 <table className="block w-full text-left text-sm md:table">
                     <thead className="hidden border-b border-slate-200 text-xs text-slate-500 uppercase md:table-header-group dark:border-slate-800 dark:text-slate-400">
                         <tr>
-                            <th className={th}>{t('vehicles.name')}</th>
+                            <th className={th}>
+                                <span className="sr-only">{t('vehicles.image')}</span>
+                            </th>
+                            <th className={`${th} md:text-left`}>{t('vehicles.name')}</th>
                             <th className={th}>{t('vehicles.owner')}</th>
                             <th className={th}>{t('vehicles.registration')}</th>
                             <th className={th}>{t('vehicles.state')}</th>
@@ -120,7 +124,13 @@ function VehicleRow({ vehicle, onClaim }: { vehicle: VehicleResponse; onClaim: (
 
     return (
         <tr className="mb-3 block rounded-lg border border-slate-200 bg-white p-3 transition-colors last:mb-0 md:mb-0 md:table-row md:rounded-none md:border-0 md:border-b md:border-slate-100 md:bg-transparent md:p-0 md:last:border-0 md:hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 md:dark:bg-transparent md:dark:hover:bg-slate-800/40">
-            <td className={td}>
+            <td className={`${td} md:w-20`}>
+                <MobileLabel>{t('vehicles.image')}</MobileLabel>
+                <div className="flex md:justify-center">
+                    <VehicleAvatar vehicle={vehicle} className="h-11 w-11" />
+                </div>
+            </td>
+            <td className={`${td} md:px-6 md:text-left`}>
                 <MobileLabel>{t('vehicles.name')}</MobileLabel>
                 <Link
                     to={`/vehicles/${encodeGuid(vehicle.deviceGuid)}`}

@@ -1,0 +1,11 @@
+services:
+  frontend:
+    build:
+      # Build contexts resolve against the merged project directory (components/mqtt, the first
+      # compose file), like the other services — so reach the frontend dir via ../frontend.
+      context: ../frontend
+      dockerfile: Dockerfile
+    container_name: race-tracker-frontend
+    ports:
+      - "5173:80" # Web SPA: http://localhost:5173
+    restart: unless-stopped

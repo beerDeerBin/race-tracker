@@ -55,6 +55,14 @@ export interface ClaimVehicleRequest {
     owner?: string;
 }
 
+export interface UpdateVehicleRequest {
+    name: string;
+    /** Optional — unchanged when omitted. */
+    owner?: string;
+    /** Optional — unchanged when omitted. */
+    status?: RegistrationStatus;
+}
+
 export interface VehicleResponse {
     /** Opaque, case-sensitive cross-service correlation key — never re-case or re-parse. */
     deviceGuid: string;
@@ -64,4 +72,17 @@ export interface VehicleResponse {
     /** ISO 8601 timestamp. */
     createdAt: string;
     metadata: Record<string, string>;
+    /** Id of the gallery image shown as the vehicle's title/avatar, or null/undefined when none. */
+    titleImageId?: string | null;
+}
+
+/** One gallery image's metadata (the binary is fetched separately from `/images/{id}`). */
+export interface VehicleImageResponse {
+    id: string;
+    fileName: string;
+    contentType: string;
+    /** Size in bytes. */
+    length: number;
+    /** ISO 8601 timestamp. */
+    uploadedAt: string;
 }

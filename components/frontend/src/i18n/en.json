@@ -30,7 +30,56 @@
     "pending": "pending",
     "registered": "registered",
     "secondsAgo": "{{seconds}}s ago",
-    "actions": "Actions"
+    "actions": "Actions",
+    "image": "Image",
+    "avatarAlt": "Title image of {{name}}",
+    "openImage": "Open image of {{name}}"
+  },
+  "vehicleDetail": {
+    "runsTab": "Runs",
+    "galleryTab": "Gallery",
+    "settingsTab": "Car settings"
+  },
+  "gallery": {
+    "upload": "Upload image",
+    "dropzone": "Drop images here or click to upload",
+    "uploading": "Uploading…",
+    "uploadHint": "PNG, JPEG, WebP or GIF, up to 5 MB. You can add several at once.",
+    "loading": "Loading images…",
+    "loadFailed": "Could not load the gallery.",
+    "empty": "No images yet — upload one to set the vehicle's picture.",
+    "openImage": "Open {{name}} in full screen",
+    "titleBadge": "Title",
+    "setTitle": "Set {{name}} as title image",
+    "delete": "Delete {{name}}",
+    "deleteTitle": "Delete image",
+    "deleteConfirm": "Delete \"{{name}}\"? This can't be undone.",
+    "deleteConfirmButton": "Delete",
+    "uploadFailed": "Upload failed. Please try again.",
+    "tooLarge": "That image is too large (max 5 MB).",
+    "badType": "Unsupported file type — use PNG, JPEG, WebP or GIF."
+  },
+  "imagePreview": {
+    "title": "Image preview",
+    "close": "Close preview",
+    "loadFailed": "Image could not be loaded"
+  },
+  "confirm": {
+    "cancel": "Cancel"
+  },
+  "settings": {
+    "renameTitle": "Rename vehicle",
+    "name": "Vehicle name",
+    "save": "Save",
+    "saving": "Saving…",
+    "saved": "Saved.",
+    "saveFailed": "Could not save. Please try again.",
+    "dangerZone": "Danger zone",
+    "unclaimHint": "Release this vehicle to remove your ownership. It returns to the pending list and can be claimed again.",
+    "unclaim": "Release vehicle",
+    "unclaimTitle": "Release vehicle",
+    "unclaimConfirm": "Release \"{{name}}\"? It will return to the pending list with its name and owner cleared.",
+    "unclaimFailed": "Could not release the vehicle. Please try again."
   },
   "errors": {
     "eepromParameter": "EEPROM parameter error",
@@ -70,7 +119,12 @@
     "claiming": "Claiming…",
     "cancel": "Cancel",
     "notFound": "This device is no longer known.",
-    "failed": "Claiming failed. Please try again."
+    "failed": "Claiming failed. Please try again.",
+    "image": "Image (optional)",
+    "imageAdd": "Add image",
+    "imageChange": "Change image",
+    "imagePreviewAlt": "Selected image preview",
+    "uploadFailed": "Claimed, but the image upload failed — you can add it from the gallery."
   },
   "status": {
     "idle": "Idle",

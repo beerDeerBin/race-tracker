@@ -12,6 +12,10 @@ class ResizeObserverStub {
 }
 globalThis.ResizeObserver ??= ResizeObserverStub as typeof ResizeObserver;
 
+// jsdom has no object-URL support — the image components create/revoke them. Minimal stubs.
+URL.createObjectURL ??= () => 'blob:stub';
+URL.revokeObjectURL ??= () => {};
+
 // Every test starts signed out with clean storage and no leaked 401 handler (the store
 // and the handler are module-level singletons shared across test files).
 beforeEach(() => {

@@ -2,7 +2,7 @@ import axios from 'axios';
 import { httpClient } from '../utils/httpClient';
 import { config } from '../utils/config';
 import { encodeGuid } from '../utils/encodeGuid';
-import type { ClaimVehicleRequest, VehicleResponse } from '../models/api';
+import type { ClaimVehicleRequest, UpdateVehicleRequest, VehicleResponse } from '../models/api';
 
 /** Thrown when the targeted device guid is unknown (404) — keeps transport out of the UI. */
 export class DeviceNotFoundError extends Error {
@@ -38,5 +38,22 @@ export const vehicleService = {
             }
             throw error;
         }
+    },
+
+    /** Updates a vehicle (e.g. rename); unchanged fields may be omitted. */
+    async update(deviceGuid: string, request: UpdateVehicleRequest): Promise<VehicleResponse> {
+        const { data } = await httpClient.put<VehicleResponse>(
+            `${config.managementUrl}/vehicles/${encodeGuid(deviceGuid)}`,
+            request,
+        );
+        return data;
+    },
+
+    /** Releases a claimed vehicle: clears owner, resets the name to the guid, status → "pending". */
+    async unclaim(deviceGuid: string): Promise<VehicleResponse> {
+        const { data } = await httpClient.post<VehicleResponse>(
+            `${config.managementUrl}/vehicles/${encodeGuid(deviceGuid)}/unclaim`,
+        );
+        return data;
     },
 };

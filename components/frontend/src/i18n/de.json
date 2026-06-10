@@ -30,7 +30,56 @@
     "pending": "ausstehend",
     "registered": "registriert",
     "secondsAgo": "vor {{seconds}}s",
-    "actions": "Aktionen"
+    "actions": "Aktionen",
+    "image": "Bild",
+    "avatarAlt": "Titelbild von {{name}}",
+    "openImage": "Bild von {{name}} öffnen"
+  },
+  "vehicleDetail": {
+    "runsTab": "Läufe",
+    "galleryTab": "Galerie",
+    "settingsTab": "Fahrzeug-Einstellungen"
+  },
+  "gallery": {
+    "upload": "Bild hochladen",
+    "dropzone": "Bilder hierher ziehen oder zum Hochladen klicken",
+    "uploading": "Wird hochgeladen…",
+    "uploadHint": "PNG, JPEG, WebP oder GIF, bis zu 5 MB. Mehrere auf einmal möglich.",
+    "loading": "Bilder werden geladen…",
+    "loadFailed": "Die Galerie konnte nicht geladen werden.",
+    "empty": "Noch keine Bilder — lade eines hoch, um das Fahrzeugbild festzulegen.",
+    "openImage": "{{name}} im Vollbild öffnen",
+    "titleBadge": "Titel",
+    "setTitle": "{{name}} als Titelbild festlegen",
+    "delete": "{{name}} löschen",
+    "deleteTitle": "Bild löschen",
+    "deleteConfirm": "„{{name}}“ löschen? Das kann nicht rückgängig gemacht werden.",
+    "deleteConfirmButton": "Löschen",
+    "uploadFailed": "Hochladen fehlgeschlagen. Bitte erneut versuchen.",
+    "tooLarge": "Das Bild ist zu groß (max. 5 MB).",
+    "badType": "Nicht unterstützter Dateityp — verwende PNG, JPEG, WebP oder GIF."
+  },
+  "imagePreview": {
+    "title": "Bildvorschau",
+    "close": "Vorschau schließen",
+    "loadFailed": "Bild konnte nicht geladen werden"
+  },
+  "confirm": {
+    "cancel": "Abbrechen"
+  },
+  "settings": {
+    "renameTitle": "Fahrzeug umbenennen",
+    "name": "Fahrzeugname",
+    "save": "Speichern",
+    "saving": "Wird gespeichert…",
+    "saved": "Gespeichert.",
+    "saveFailed": "Konnte nicht gespeichert werden. Bitte erneut versuchen.",
+    "dangerZone": "Gefahrenzone",
+    "unclaimHint": "Gib dieses Fahrzeug frei, um deinen Besitz zu entfernen. Es kehrt in die Ausstehend-Liste zurück und kann erneut übernommen werden.",
+    "unclaim": "Fahrzeug freigeben",
+    "unclaimTitle": "Fahrzeug freigeben",
+    "unclaimConfirm": "„{{name}}“ freigeben? Es kehrt mit geleertem Namen und Besitzer in die Ausstehend-Liste zurück.",
+    "unclaimFailed": "Das Fahrzeug konnte nicht freigegeben werden. Bitte erneut versuchen."
   },
   "errors": {
     "eepromParameter": "EEPROM-Parameterfehler",
@@ -70,7 +119,12 @@
     "claiming": "Wird übernommen…",
     "cancel": "Abbrechen",
     "notFound": "Dieses Gerät ist nicht mehr bekannt.",
-    "failed": "Übernahme fehlgeschlagen. Bitte erneut versuchen."
+    "failed": "Übernahme fehlgeschlagen. Bitte erneut versuchen.",
+    "image": "Bild (optional)",
+    "imageAdd": "Bild hinzufügen",
+    "imageChange": "Bild ändern",
+    "imagePreviewAlt": "Vorschau des gewählten Bildes",
+    "uploadFailed": "Übernommen, aber der Bild-Upload ist fehlgeschlagen — du kannst es in der Galerie hinzufügen."
   },
   "status": {
     "idle": "Bereit",

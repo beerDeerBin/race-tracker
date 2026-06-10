@@ -1,15 +1,19 @@
-import { useState } from 'react';
-import type { FormEvent } from 'react';
+import { useEffect, useState } from 'react';
+import type { ChangeEvent, FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Hand } from 'lucide-react';
+import { Hand, ImagePlus } from 'lucide-react';
 import { useClaim } from '../hooks/useClaim';
+import { useUploadImage } from '../hooks/useImageMutations';
 import { useAuth } from '../hooks/useAuth';
 import { DeviceNotFoundError } from '../services/vehicleService';
+import { ALLOWED_IMAGE_TYPES, MAX_IMAGE_BYTES } from '../services/imageService';
 import type { VehicleResponse } from '../models/api';
 
 /**
- * Claim dialog (/F25/): names a pending device and takes it over. Owner is optional —
- * the backend defaults it to the authenticated user.
+ * Claim dialog (/F25/): names a pending device and takes it over. Owner is optional — the backend
+ * defaults it to the authenticated user. An image can optionally be attached; on a successful claim
+ * it is uploaded (becoming the title image automatically). An upload failure is non-blocking — the
+ * claim still counts — and is surfaced as a warning so the user can retry from the gallery.
  */
 export function ClaimDialog({
     vehicle,
@@ -21,16 +25,53 @@ export function ClaimDialog({
     const { t } = useTranslation();
     const { user } = useAuth();
     const claim = useClaim();
+    const upload = useUploadImage(vehicle.deviceGuid);
 
     const [name, setName] = useState('');
     const [owner, setOwner] = useState('');
+    const [file, setFile] = useState<File | null>(null);
+    const [imageError, setImageError] = useState<string | null>(null);
+
+    // Build (and clean up) a local object URL so the chosen file can be previewed before upload.
+    // Created in the effect (not useMemo) so each mount holds a live URL under StrictMode.
+    const [preview, setPreview] = useState<string | null>(null);
+    /* eslint-disable react-hooks/set-state-in-effect */
+    useEffect(() => {
+        if (!file) {
+            setPreview(null);
+            return;
+        }
+        const url = URL.createObjectURL(file);
+        setPreview(url);
+        return () => URL.revokeObjectURL(url);
+    }, [file]);
+    /* eslint-enable react-hooks/set-state-in-effect */
+
+    const onFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+        const chosen = event.target.files?.[0];
+        event.target.value = '';
+        if (!chosen) {
+            return;
+        }
+        if (!ALLOWED_IMAGE_TYPES.includes(chosen.type as (typeof ALLOWED_IMAGE_TYPES)[number])) {
+            setImageError('gallery.badType');
+            setFile(null);
+            return;
+        }
+        if (chosen.size > MAX_IMAGE_BYTES) {
+            setImageError('gallery.tooLarge');
+            setFile(null);
+            return;
+        }
+        setImageError(null);
+        setFile(chosen);
+    };
 
     const handleSubmit = (event: FormEvent) => {
         event.preventDefault();
         const trimmedName = name.trim();
         if (!trimmedName) {
-            // HTML `required` lets whitespace-only values through — never claim a
-            // device with an empty name.
+            // HTML `required` lets whitespace-only values through — never claim with an empty name.
             return;
         }
         const trimmedOwner = owner.trim();
@@ -42,13 +83,25 @@ export function ClaimDialog({
                     ...(trimmedOwner ? { owner: trimmedOwner } : {}),
                 },
             },
-            { onSuccess: onClose },
+            {
+                onSuccess: () => {
+                    if (file) {
+                        // Upload the title image after the claim; close on success, warn on failure.
+                        upload.mutate([file], { onSuccess: onClose });
+                    } else {
+                        onClose();
+                    }
+                },
+            },
         );
     };
 
-    const errorKey =
+    const claimErrorKey =
         claim.isError &&
         (claim.error instanceof DeviceNotFoundError ? 'claim.notFound' : 'claim.failed');
+    const errorKey =
+        imageError ?? (claimErrorKey || (upload.isError ? 'claim.uploadFailed' : null));
+    const busy = claim.isPending || upload.isPending;
 
     const inputClasses =
         'w-full rounded border border-slate-300 bg-white px-3 py-2 text-slate-900 transition-colors outline-none focus:border-f1-red focus:ring-1 focus:ring-f1-red dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100';
@@ -109,6 +162,31 @@ export function ClaimDialog({
                     />
                 </label>
 
+                <div className="block">
+                    <span className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
+                        {t('claim.image')}
+                    </span>
+                    <div className="flex items-center gap-3">
+                        {preview && (
+                            <img
+                                src={preview}
+                                alt={t('claim.imagePreviewAlt')}
+                                className="h-12 w-12 shrink-0 rounded-full border border-slate-200 object-cover dark:border-slate-700"
+                            />
+                        )}
+                        <label className="btn-secondary cursor-pointer focus-within:ring-2 focus-within:ring-f1-red">
+                            <ImagePlus className="h-4 w-4" aria-hidden="true" />
+                            {file ? t('claim.imageChange') : t('claim.imageAdd')}
+                            <input
+                                type="file"
+                                accept={ALLOWED_IMAGE_TYPES.join(',')}
+                                onChange={onFileChange}
+                                className="sr-only"
+                            />
+                        </label>
+                    </div>
+                </div>
+
                 {errorKey && (
                     <p role="alert" className="text-sm text-red-600 dark:text-red-400">
                         {t(errorKey)}
@@ -119,9 +197,9 @@ export function ClaimDialog({
                     <button type="button" onClick={onClose} className="btn-secondary">
                         {t('claim.cancel')}
                     </button>
-                    <button type="submit" disabled={claim.isPending} className="btn-primary">
+                    <button type="submit" disabled={busy} className="btn-primary">
                         <Hand className="h-4 w-4" aria-hidden="true" />
-                        {claim.isPending ? t('claim.claiming') : t('claim.submit')}
+                        {busy ? t('claim.claiming') : t('claim.submit')}
                     </button>
                 </div>
             </form>

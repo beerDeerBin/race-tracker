@@ -6,6 +6,7 @@ import type { PropsWithChildren, ReactElement } from 'react';
 import { ClaimDialog } from './ClaimDialog';
 import { AuthContext } from '../context/AuthContext';
 import { DeviceNotFoundError, vehicleService } from '../services/vehicleService';
+import { imageService } from '../services/imageService';
 import type { VehicleResponse } from '../models/api';
 
 vi.mock('../services/vehicleService', async (importOriginal) => {
@@ -16,7 +17,22 @@ vi.mock('../services/vehicleService', async (importOriginal) => {
     };
 });
 
+vi.mock('../services/imageService', async (importOriginal) => {
+    const original = await importOriginal<typeof import('../services/imageService')>();
+    return {
+        ...original,
+        imageService: {
+            upload: vi.fn(),
+            list: vi.fn(),
+            remove: vi.fn(),
+            setTitle: vi.fn(),
+            getBlob: vi.fn(),
+        },
+    };
+});
+
 const claimMock = vi.mocked(vehicleService.claim);
+const uploadMock = vi.mocked(imageService.upload);
 
 const pending: VehicleResponse = {
     deviceGuid: 'GUID-PENDING',
@@ -47,7 +63,10 @@ function renderDialog(ui: ReactElement) {
 }
 
 describe('ClaimDialog', () => {
-    beforeEach(() => claimMock.mockReset());
+    beforeEach(() => {
+        claimMock.mockReset();
+        uploadMock.mockReset();
+    });
 
     it('submits the trimmed name (owner omitted when blank) and closes on success', async () => {
         claimMock.mockResolvedValueOnce({ ...pending, registrationStatus: 'registered' });
@@ -118,5 +137,38 @@ describe('ClaimDialog', () => {
 
         expect(onClose).toHaveBeenCalled();
         expect(claimMock).not.toHaveBeenCalled();
+    });
+
+    it('does not upload anything when no image was attached', async () => {
+        claimMock.mockResolvedValueOnce({ ...pending, registrationStatus: 'registered' });
+        renderDialog(<ClaimDialog vehicle={pending} onClose={vi.fn()} />);
+
+        await userEvent.type(screen.getByLabelText('Vehicle name'), 'kart-1');
+        await userEvent.click(screen.getByRole('button', { name: 'Claim' }));
+
+        await waitFor(() => expect(claimMock).toHaveBeenCalled());
+        expect(uploadMock).not.toHaveBeenCalled();
+    });
+
+    it('uploads the attached image after a successful claim, then closes', async () => {
+        claimMock.mockResolvedValueOnce({ ...pending, registrationStatus: 'registered' });
+        uploadMock.mockResolvedValueOnce({
+            id: 'img-1',
+            fileName: 'kart.png',
+            contentType: 'image/png',
+            length: 3,
+            uploadedAt: '2026-06-07T10:00:00Z',
+        });
+        const onClose = vi.fn();
+        const { container } = renderDialog(<ClaimDialog vehicle={pending} onClose={onClose} />);
+
+        await userEvent.type(screen.getByLabelText('Vehicle name'), 'kart-1');
+        const input = container.querySelector('input[type="file"]') as HTMLInputElement;
+        const file = new File([new Uint8Array([1, 2, 3])], 'kart.png', { type: 'image/png' });
+        await userEvent.upload(input, file);
+        await userEvent.click(screen.getByRole('button', { name: 'Claim' }));
+
+        await waitFor(() => expect(uploadMock).toHaveBeenCalledWith('GUID-PENDING', file));
+        await waitFor(() => expect(onClose).toHaveBeenCalled());
     });
 });

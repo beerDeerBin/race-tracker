@@ -30,4 +30,12 @@ public sealed class Vehicle : IEntity
 
     /// <summary>Free-form metadata (<c>/D20/</c>); empty when none was supplied.</summary>
     public Dictionary<string, string> Metadata { get; set; } = new();
+
+    /// <summary>
+    /// Id of the image (in the vehicle's gallery) shown as the vehicle's title/avatar, or
+    /// <c>null</c> when none is chosen. The first uploaded image becomes the title automatically;
+    /// deleting that image clears this back to <c>null</c>. References a
+    /// <see cref="RaceTracker.Management.Domain.Images.VehicleImage.Id"/> belonging to this vehicle.
+    /// </summary>
+    public string? TitleImageId { get; set; }
 }

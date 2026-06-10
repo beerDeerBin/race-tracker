@@ -5,6 +5,7 @@ using RaceTracker.Management.Application.Commands;
 using RaceTracker.Management.Application.Configuration;
 using RaceTracker.Management.Application.Crud;
 using RaceTracker.Management.Application.Discovery;
+using RaceTracker.Management.Application.Images;
 using RaceTracker.Management.Application.Observability;
 
 namespace RaceTracker.Management.Application;
@@ -36,6 +37,11 @@ public static class ApplicationServiceCollectionExtensions
         // Generic CRUD use case (/A70/): one open-generic registration serves every entity that
         // binds it (Vehicle today). Its IRepository<T>/IUnitOfWork ports are bound in Infrastructure.
         services.AddScoped(typeof(CrudService<>));
+
+        // Vehicle gallery use case: validates + stores images and keeps the title image consistent.
+        // Scoped because it reuses the scoped CrudService<Vehicle> single-commit boundary; its
+        // IVehicleImageStore port is bound to the real GridFS adapter in Infrastructure.
+        services.AddScoped<VehicleImageService>();
 
         // Device-discovery use case (story 5.4): lazily registers unknown GUIDs as pending vehicles.
         // Scoped because it reuses the scoped CrudService<Vehicle>; the hosted consumer resolves it

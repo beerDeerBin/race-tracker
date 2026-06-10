@@ -40,6 +40,7 @@ docker_compose([
     './persistence/docker-compose.yml',
     './management/docker-compose.yml',
     './realtime/docker-compose.yml',
+    './frontend/docker-compose.yml',
 ])
 
 # ── brokers ─────────────────────────────────────────────────────────────────
@@ -124,18 +125,13 @@ dc_resource(
 )
 
 # ── frontend ──────────────────────────────────────────────────────────────────
-# TP-FE: the React SPA (story 7.1+), served by the Vite dev server on the host (not
-# containerized in dev — mirrors the config-editor local_resource pattern). `cmd` keeps
-# node_modules in sync with package.json before the server starts.
-local_resource(
+# TP-FE: the React SPA (story 7.1+), built and served as a Compose service (multi-stage
+# build → nginx) like the backend services — no host Node toolchain required. Tilt rebuilds
+# the image when the frontend sources change.
+dc_resource(
     'frontend',
-    cmd='npm install --no-fund --no-audit',
-    serve_cmd='npm run dev',
-    dir='frontend',
-    serve_dir='frontend',
     labels=['frontend'],
     links=[link('http://localhost:5173', 'Web SPA')],
-    deps=['frontend/package.json'],
     resource_deps=['management', 'persistence', 'realtime'],
 )
 

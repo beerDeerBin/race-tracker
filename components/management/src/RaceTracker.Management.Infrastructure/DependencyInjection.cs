@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
+using MongoDB.Driver.GridFS;
 using RaceTracker.Management.Application.Abstractions;
 using RaceTracker.Management.Application.Abstractions.Crud;
 using RaceTracker.Management.Application.Configuration;
@@ -11,6 +12,7 @@ using RaceTracker.Management.Infrastructure.Messaging;
 using RaceTracker.Management.Infrastructure.Mqtt;
 using RaceTracker.Management.Infrastructure.Persistence;
 using RaceTracker.Management.Infrastructure.Persistence.Crud;
+using RaceTracker.Management.Infrastructure.Persistence.Images;
 
 namespace RaceTracker.Management.Infrastructure;
 
@@ -65,6 +67,18 @@ public static class InfrastructureServiceCollectionExtensions
             var database = provider.GetRequiredService<IOptions<ManagementOptions>>().Value.Mongo.Database;
             return client.GetDatabase(database).GetCollection<Vehicle>("vehicles");
         });
+
+        // Vehicle gallery image store (GridFS): a named bucket in the same Mongo database, mirroring
+        // the collection registration above. Singleton — the bucket is thread-safe and reuses the
+        // pooled Mongo client. Bound to its Application port (/A30/).
+        services.AddSingleton<IGridFSBucket>(provider =>
+        {
+            var client = provider.GetRequiredService<IMongoClient>();
+            var database = provider.GetRequiredService<IOptions<ManagementOptions>>().Value.Mongo.Database;
+            return new GridFSBucket(
+                client.GetDatabase(database), new GridFSBucketOptions { BucketName = "vehicleImages" });
+        });
+        services.AddSingleton<IVehicleImageStore, GridFsVehicleImageStore>();
 
         // Hosted status-event consumer (story 5.4, anti-stub): drives device discovery off rt.status.
         services.AddHostedService<RabbitMqStatusConsumer>();

@@ -40,7 +40,8 @@ public sealed class VehiclesController
     }
 
     protected override VehicleResponse ToResponse(Vehicle entity) => new(
-        entity.Id, entity.Name, entity.Owner, entity.RegistrationStatus, entity.CreatedAt, entity.Metadata);
+        entity.Id, entity.Name, entity.Owner, entity.RegistrationStatus, entity.CreatedAt,
+        entity.Metadata, entity.TitleImageId);
 
     /// <summary>
     /// Claims a discovered vehicle (story 5.4, <c>/F20/</c>): sets its name + owner and flips its
@@ -62,5 +63,26 @@ public sealed class VehiclesController
         }, cancellationToken);
 
         return claimed is null ? NotFound() : Ok(ToResponse(claimed));
+    }
+
+    /// <summary>
+    /// Releases a claimed vehicle (the inverse of <see cref="Claim"/>): clears the owner, resets the
+    /// display name back to the device GUID (the discovery default) and flips the status back to
+    /// <see cref="RegistrationStatus.Pending"/>. The gallery/title image is left untouched. Returns
+    /// 404 when the GUID is unknown.
+    /// </summary>
+    [HttpPost("{id}/unclaim")]
+    public async Task<ActionResult<VehicleResponse>> Unclaim(
+        string id, CancellationToken cancellationToken)
+    {
+        Vehicle? released = await Service.UpdateAsync(id, existing =>
+        {
+            existing.Name = existing.Id; // back to the discovery default until claimed again.
+            existing.Owner = "";
+            existing.RegistrationStatus = RegistrationStatus.Pending;
+            return existing;
+        }, cancellationToken);
+
+        return released is null ? NotFound() : Ok(ToResponse(released));
     }
 }

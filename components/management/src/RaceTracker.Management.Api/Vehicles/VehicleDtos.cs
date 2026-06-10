@@ -66,4 +66,13 @@ public sealed record VehicleResponse(
     string Owner,
     RegistrationStatus RegistrationStatus,
     DateTimeOffset CreatedAt,
-    IReadOnlyDictionary<string, string> Metadata);
+    IReadOnlyDictionary<string, string> Metadata,
+    string? TitleImageId);
+
+/// <summary>One gallery image's metadata as returned to clients; the binary is fetched separately.</summary>
+public sealed record VehicleImageResponse(
+    string Id,
+    string FileName,
+    string ContentType,
+    long Length,
+    DateTimeOffset UploadedAt);
